@@ -1,0 +1,235 @@
+/* HistoryView Component Styles */
+
+.tx-section {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.tx-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.tx-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tx-section-link {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.tx-section-link:hover {
+    color: var(--accent-primary);
+}
+
+.tx-list {
+    width: 100%;
+}
+
+.tx-empty {
+    padding: var(--space-3xl);
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* Ghost Floating Animation */
+@keyframes ghostFloat {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translateY(-10px);
+        opacity: 0.8;
+    }
+}
+
+.ghost-icon {
+    animation: ghostFloat 3s ease-in-out infinite;
+    color: var(--text-tertiary);
+}
+
+.tx-empty-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto var(--space-lg);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+}
+
+/* Tab Pills */
+.tab-pills {
+    display: flex;
+    gap: var(--space-xs);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-xs);
+    margin-bottom: var(--space-xl);
+    width: fit-content;
+}
+
+.tab-pill {
+    padding: var(--space-xs) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.tab-pill:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tab-pill.active {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+/* Pending Tab */
+.tab-pill-pending {
+    color: var(--warning);
+}
+
+.tab-pill-pending.active {
+    color: var(--warning);
+    background: var(--warning-bg);
+}
+
+/* ===== Skeleton Loading Styles ===== */
+.tx-skeleton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.tx-skeleton-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tx-skeleton-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.tx-skeleton-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tx-skeleton-title {
+    width: 80px;
+    height: 14px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.tx-skeleton-subtitle {
+    width: 100px;
+    height: 10px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    animation: pulse 1.5s ease-in-out infinite;
+    animation-delay: 0.1s;
+}
+
+.tx-skeleton-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.tx-skeleton-amount {
+    width: 60px;
+    height: 14px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    animation: pulse 1.5s ease-in-out infinite;
+    animation-delay: 0.2s;
+}
+
+.tx-skeleton-time {
+    width: 40px;
+    height: 10px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    animation: pulse 1.5s ease-in-out infinite;
+    animation-delay: 0.3s;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+.history-scroll-container {
+    height: 380px;
+    /* Fixed height to enable scroll */
+    overflow-y: auto;
+    padding-bottom: var(--space-3xl);
+    /* Space for last items */
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+}
+
+.history-scroll-container::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
+}
+
+.tx-load-more {
+    padding: var(--space-md) 0;
+    opacity: 0.7;
+}
+
+.tx-end {
+    padding: var(--space-2xl) 0;
+    text-align: center;
+}
+
+.tx-end p {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}

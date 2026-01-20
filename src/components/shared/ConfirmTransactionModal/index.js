@@ -1,0 +1,1 @@
+export { ConfirmTransactionModal } from './ConfirmTransactionModal';

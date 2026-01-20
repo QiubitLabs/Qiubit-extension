@@ -1,0 +1,213 @@
+/* Transaction Detail Modal Styles - Minimalist Edition */
+
+/* Status Hero */
+.tx-status-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0 24px;
+}
+
+.tx-large-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 16px;
+}
+
+.tx-large-icon.incoming {
+    color: var(--success);
+}
+
+.tx-large-icon.outgoing {
+    color: var(--text-primary);
+}
+
+.tx-large-icon.shield {
+    color: var(--accent-primary);
+    background: var(--accent-glow);
+    border-color: var(--accent-primary);
+}
+
+.tx-large-icon.unshield {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.tx-large-icon.private {
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+}
+
+.tx-large-icon.claim {
+    color: var(--warning);
+    background: var(--warning-bg);
+}
+
+.tx-large-amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+}
+
+.tx-large-amount.incoming {
+    color: var(--success);
+}
+
+.tx-large-amount.shield,
+.tx-large-amount.private {
+    color: var(--text-primary);
+}
+
+.tx-large-amount.unshield,
+.tx-large-amount.claim {
+    color: var(--success);
+}
+
+.tx-status-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--success);
+    padding: 4px 12px;
+    background: var(--success-bg);
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tx-status-badge.pending {
+    color: var(--warning);
+    background: var(--warning-bg);
+}
+
+.tx-status-badge.confirmed {
+    color: var(--success);
+    background: var(--success-bg);
+}
+
+/* Details List */
+.tx-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.tx-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    /* Added gap to prevent "mepet" */
+}
+
+.tx-detail-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.tx-detail-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.tx-detail-value.mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.tx-detail-value-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Hash Section */
+.tx-hash-section {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.tx-hash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.tx-hash-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tx-hash-value {
+    font-size: 12px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    line-height: 1.5;
+    text-decoration: underline;
+    display: block;
+    cursor: pointer;
+}
+
+.tx-hash-value.clickable:hover {
+    color: var(--accent-primary);
+}
+
+.tx-mini-copy {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tx-mini-copy:hover {
+    background: var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.tx-mini-copy:active {
+    transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,284 @@
+.send-view {
+    padding: var(--space-xl);
+    padding-bottom: calc(var(--nav-height) + var(--space-xl));
+}
+
+.header-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.header-icon-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+/* Balance Card */
+.send-balance-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.send-balance-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+}
+
+.send-balance-info {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: var(--space-xl);
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.send-max-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.send-max-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-default);
+}
+
+.form-error {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: var(--space-xs);
+}
+
+/* Fee Row - OKX/MetaMask Style */
+.fee-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    margin-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.fee-row-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.fee-toggle {
+    display: flex;
+    background: var(--bg-elevated);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.fee-pill {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.fee-pill:hover {
+    color: var(--text-secondary);
+}
+
+.fee-pill.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Confirmation Styles */
+.confirm-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+}
+
+.confirm-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.confirm-row:last-child {
+    border-bottom: none;
+}
+
+.confirm-row-total {
+    margin-top: 4px;
+    padding-top: 14px !important;
+    border-top: 1px solid var(--border-default) !important;
+    border-bottom: none !important;
+}
+
+.confirm-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.confirm-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.confirm-amount-large {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -1px;
+}
+
+/* --- Sending Loader Animation (Minimal) --- */
+.sending-animation-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-xl);
+}
+
+.quantum-ring-outer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--border-subtle);
+    border-top-color: var(--text-secondary);
+    animation: spin-simple 1s linear infinite;
+}
+
+.quantum-ring-inner {
+    display: none;
+}
+
+.quantum-core {
+    width: 16px;
+    height: 16px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    animation: pulse-simple 1.5s ease-in-out infinite;
+}
+
+@keyframes spin-simple {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse-simple {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* --- Success Check Animation (Professional Green) --- */
+.success-check-premium {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-xl);
+}
+
+.success-circle-reveal {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 200, 83, 0.1);
+    border-radius: 50%;
+    animation: success-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.success-svg {
+    width: 60px;
+    height: 60px;
+    color: var(--success);
+    z-index: 2;
+}
+
+.checkmark-path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: draw-check 0.6s ease-out 0.2s forwards;
+}
+
+@keyframes success-pop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes draw-check {
+    to {
+        stroke-dashoffset: 0;
+    }
+}

@@ -1,0 +1,573 @@
+/* Dashboard Component Styles */
+
+/* Header Component */
+.wallet-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+    height: var(--header-height);
+}
+
+.wallet-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.wallet-logo-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wallet-logo-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-icon-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.header-icon-btn:hover {
+    background: transparent !important;
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.header-icon-btn:active {
+    transform: scale(0.95);
+    background: transparent !important;
+}
+
+.header-icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Refresh Spin Animation */
+.spin-animation {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Address Pill in Header */
+.header-address-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.header-address-pill:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+.address-pill-text {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+/* Rename Wallet Modal specific adjustments */
+.rename-wallet-modal {
+    width: 100%;
+    max-width: 320px !important;
+    /* Smaller width */
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.rename-wallet-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Ensure toast doesn't overlap modal too aggressively */
+.toast {
+    z-index: 10000;
+    /* Higher than modal */
+}
+
+/* Wallet Content */
+.wallet-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-xl);
+    padding-bottom: calc(var(--nav-height) + var(--space-xl));
+}
+
+/* Balance Display */
+.balance-container {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+    padding: var(--space-xl);
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+}
+
+.balance-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--space-sm);
+    font-weight: 600;
+}
+
+.balance-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    font-family: var(--font-mono);
+    letter-spacing: -1px;
+}
+
+.balance-currency {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-left: var(--space-sm);
+}
+
+/* Address Display */
+.address-display {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.address-display:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* OKX-Style Action Buttons Row */
+.action-buttons-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+}
+
+.action-btn:active {
+    transform: scale(0.96);
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+}
+
+.action-btn-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: var(--radius-md);
+    color: white;
+}
+
+.action-btn-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Tab Content moved to App.css or unused */
+
+/* Bottom Navigation - OKX Style */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 var(--space-lg);
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: var(--space-sm);
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex: 1;
+    max-width: 80px;
+}
+
+.nav-item:hover {
+    color: var(--text-secondary);
+}
+
+.nav-item.active {
+    color: var(--accent-primary);
+}
+
+.nav-item-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-item-label {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Wallet Switcher */
+/* Wallet Switcher styles removed - using shared WalletSelector */
+
+/* Overlay removed */
+.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Bottom Navigation - Clean Phantom-style */
+.wallet-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+    height: var(--nav-height);
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Active indicator line */
+.nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--accent-primary);
+    border-radius: 1px;
+    transform: translateX(-50%);
+    transition: width 0.2s ease;
+}
+
+.nav-item.active::after {
+    width: 24px;
+}
+
+.nav-item:hover {
+    background: var(--bg-hover);
+}
+
+.nav-item:active {
+    transform: scale(0.95);
+}
+
+.nav-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--text-tertiary);
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover .nav-icon {
+    color: var(--text-secondary);
+    transform: translateY(-1px);
+}
+
+.nav-item:active .nav-icon {
+    transform: scale(0.9);
+}
+
+.nav-item.active .nav-icon {
+    color: var(--accent-primary);
+}
+
+.nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover .nav-label {
+    color: var(--text-secondary);
+}
+
+.nav-item.active .nav-label {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.nav-item-disabled {
+    opacity: 0.4;
+    cursor: not-allowed !important;
+}
+
+.nav-item-disabled:hover {
+    background: transparent;
+    transform: none;
+}
+
+.nav-item-disabled:hover .nav-icon {
+    color: var(--text-tertiary);
+    transform: none;
+}
+
+/* --- Playful Micro Interactions --- */
+/* Each tab has its own unique personality */
+
+/* Base Active State: Slightly bigger */
+.nav-item.active .nav-icon {
+    transform: scale(1.15);
+    /* Membesar sedikit saat aktif */
+    color: var(--accent-primary);
+    background: transparent;
+    /* Remove pill background */
+    padding: 0;
+    /* Remove pill padding */
+    width: 22px;
+    /* Reset width */
+    height: 22px;
+    /* Reset height */
+    border-radius: 0;
+}
+
+.nav-item.active .nav-label {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+/* 1. Home - Pop Bounce */
+@keyframes navPop {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.4);
+    }
+
+    /* Extra bounce */
+    100% {
+        transform: scale(1.15);
+    }
+
+    /* Land at 1.15 */
+}
+
+.nav-home.active .nav-icon {
+    animation: navPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 2. Send - Fly Up Right */
+@keyframes navFlyUp {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(2px, -4px) scale(1.15);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1.15);
+    }
+}
+
+.nav-send.active .nav-icon {
+    animation: navFlyUp 0.4s ease-out forwards;
+}
+
+/* 3. Receive - Fly Down */
+@keyframes navFlyDown {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(0, 4px) scale(1.15);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1.15);
+    }
+}
+
+.nav-receive.active .nav-icon {
+    animation: navFlyDown 0.4s ease-out forwards;
+}
+
+/* 4. Privacy - Pulse Shield */
+@keyframes navPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+}
+
+.nav-privacy.active .nav-icon {
+    animation: navPulse 0.5s ease-in-out forwards;
+}
+
+/* 5. History - Rotate Clock */
+@keyframes navRotate {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    30% {
+        transform: rotate(-25deg) scale(1.1);
+    }
+
+    70% {
+        transform: rotate(20deg) scale(1.15);
+    }
+
+    100% {
+        transform: rotate(0deg) scale(1.15);
+    }
+}
+
+.nav-history.active .nav-icon {
+    animation: navRotate 0.5s ease-in-out forwards;
+}
+
+/* Reset base icon styles (override previous Pill styles) */
+.nav-icon {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 0;
+    transition: color 0.2s ease;
+    background: transparent;
+    position: relative;
+    z-index: 2;
+}
+
+/* Clean Button Effect - No Neon/Spotlight */
+.nav-item {
+    position: relative;
+    border-radius: 12px;
+    transition: background 0.2s ease;
+    /* overflow: visible; Allow animations */
+}
+
+/* No background on active state - Clean icon only */
+.nav-item.active {
+    background: transparent;
+}
+
+/* Minimal click feedback (Grey tint) */
+.nav-item:active {
+    background: rgba(255, 255, 255, 0.05);
+}

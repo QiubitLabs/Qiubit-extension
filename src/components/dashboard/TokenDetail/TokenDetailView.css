@@ -1,0 +1,207 @@
+/* Token Detail - Minimal No Background */
+
+.td {
+    display: block;
+    padding: 0;
+}
+
+/* Navigation */
+.td-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.td-back {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+}
+
+.td-back:hover {
+    color: var(--text-primary);
+}
+
+.td-nav-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Hero */
+.td-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.td-token-name {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Balance */
+.td-balance {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.td-balance-amt {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.td-balance-sym {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Actions - No background, just icons */
+.td-actions {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.td-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.td-action:hover:not(:disabled) {
+    opacity: 0.6;
+}
+
+.td-action:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+.td-action-icon {
+    color: var(--text-secondary);
+}
+
+.td-action-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.td-action span {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+/* Section */
+.td-section {
+    display: block;
+}
+
+.td-section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+}
+
+/* Empty */
+.td-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 32px 0;
+    color: var(--text-tertiary);
+    font-size: 11px;
+}
+
+/* Transactions */
+.td-txs {
+    display: block;
+}
+
+.td-tx {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.td-tx:last-child {
+    border-bottom: none;
+}
+
+.td-tx-clickable {
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.td-tx-clickable:hover {
+    opacity: 0.7;
+}
+
+.td-tx-clickable:active {
+    opacity: 0.5;
+}
+
+.td-tx-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.td-tx-icon.in {
+    color: var(--success);
+}
+
+.td-tx-icon.out {
+    color: var(--text-secondary);
+}
+
+.td-tx-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.td-tx-info {
+    flex: 1;
+}
+
+.td-tx-type {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.td-tx-date {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.td-tx-amt {
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+}
+
+.td-tx-amt.in {
+    color: var(--success);
+}

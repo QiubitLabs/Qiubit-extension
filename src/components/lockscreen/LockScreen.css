@@ -1,0 +1,384 @@
+/* ===== Lock Screen - Professional Minimal ===== */
+.lock-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    background: var(--bg-primary);
+    position: relative;
+}
+
+.lock-screen-content {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+}
+
+/* Lock Icon - Minimal, no background */
+.lock-icon-container {
+    width: 48px;
+    height: 48px;
+    border-radius: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 32px;
+    color: var(--text-secondary);
+}
+
+/* Branding */
+.lock-branding {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.lock-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.lock-subtitle {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-bottom: 32px;
+}
+
+/* Form */
+.lock-form {
+    width: 100%;
+}
+
+.lock-form .form-group {
+    margin-bottom: 16px;
+}
+
+.lock-form .input {
+    background: var(--bg-elevated);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 48px 14px 16px;
+    font-size: 14px;
+}
+
+.lock-form .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--text-tertiary);
+}
+
+.lock-form .input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.lock-form .input-with-icon {
+    position: relative;
+}
+
+.lock-form .input-icon-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 8px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lock-form .input-icon-btn:hover {
+    color: var(--text-secondary);
+}
+
+/* Unlock Button */
+.lock-form .btn-primary {
+    background: var(--bg-elevated);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: background 0.15s;
+}
+
+.lock-form .btn-primary:hover:not(:disabled) {
+    background: var(--bg-hover);
+}
+
+.lock-form .btn-primary:disabled {
+    opacity: 0.4;
+}
+
+/* Network Badge */
+.lock-network-badge {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin: 0;
+    font-weight: 400;
+}
+
+/* Forgot Password Button */
+.forgot-password-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 16px;
+    margin-top: 8px;
+    transition: color 0.15s;
+    text-align: center;
+}
+
+.forgot-password-btn:hover {
+    color: var(--text-secondary);
+}
+
+/* Forgot Password Back Button */
+.forgot-back-btn {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+}
+
+.forgot-back-btn:hover {
+    color: var(--text-primary);
+}
+
+/* Recovery Options */
+.recovery-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.recovery-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-elevated);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background 0.15s;
+    color: var(--text-secondary);
+}
+
+.recovery-option:hover {
+    background: var(--bg-hover);
+}
+
+.recovery-option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recovery-option-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.recovery-option-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Recovery Divider - Minimal Separator */
+.recovery-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.recovery-divider::before,
+.recovery-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+    opacity: 0.5;
+}
+
+/* Danger Option - Simple & Minimal */
+.recovery-option-danger {
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 14px 20px;
+    margin-top: 4px;
+}
+
+.recovery-option-danger:hover {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.recovery-option-danger .recovery-option-title {
+    color: var(--error);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.recovery-option-danger-desc {
+    color: var(--text-tertiary) !important;
+    opacity: 0.9;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* Recovery Textarea */
+.recovery-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 14px 16px;
+    background: var(--bg-elevated);
+    border: none;
+    border-radius: 12px;
+    resize: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+.recovery-textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+.recovery-textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--text-tertiary);
+}
+
+/* Error */
+.lock-form .form-error {
+    font-size: 12px;
+    color: var(--error);
+    margin-top: 8px;
+    text-align: left;
+}
+
+/* ===== Password Setup - Minimal & Centered ===== */
+.setup-password {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 24px;
+}
+
+.setup-password-header {
+    text-align: center;
+    margin-bottom: 32px;
+    max-width: 300px;
+}
+
+/* Setup Icon - Minimal */
+.setup-icon-container {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 20px;
+    background: transparent;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.setup-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.setup-subtitle {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+}
+
+.setup-form {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.setup-form .form-group {
+    margin-bottom: 0;
+}
+
+.setup-form .form-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.setup-form .input {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 48px 14px 16px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.setup-form .input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.setup-form .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px var(--text-tertiary);
+}
+
+.setup-form .btn {
+    margin-top: auto;
+}
+
+/* Password Strength styles moved to App.css */
+/* Shake Animation moved to App.css */

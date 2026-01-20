@@ -1,0 +1,176 @@
+/* TransactionItem Component Styles - Minimalist */
+
+.tx-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.tx-item:last-child {
+    border-bottom: none;
+}
+
+.tx-item:hover {
+    background: var(--bg-card);
+}
+
+.tx-item-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tx-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.tx-item-icon.incoming {
+    color: var(--success);
+}
+
+.tx-item-icon.outgoing {
+    color: var(--text-primary);
+}
+
+.tx-item-icon.shield {
+    color: var(--accent-primary);
+    background: var(--accent-glow);
+    border-color: var(--accent-primary);
+}
+
+.tx-item-icon.unshield {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.tx-item-icon.private {
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+}
+
+.tx-item-icon.claim {
+    color: var(--warning);
+    background: var(--warning-bg);
+    border-color: var(--warning);
+}
+
+.tx-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.tx-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tx-item-subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+    margin-top: 1px;
+}
+
+.tx-item-side {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+}
+
+.tx-item-amount {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.tx-item-amount.incoming {
+    color: var(--success);
+}
+
+.tx-item-amount.outgoing {
+    color: var(--text-primary);
+}
+
+.tx-item-amount.shield,
+.tx-item-amount.private {
+    color: var(--text-primary);
+}
+
+.tx-item-amount.unshield,
+.tx-item-amount.claim {
+    color: var(--success);
+}
+
+.tx-item-time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+}
+
+/* Pending Badge */
+.tx-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    border-radius: 4px;
+    border: 1px solid var(--warning);
+}
+
+/* Copy Button */
+.tx-copy-btn {
+    padding: 4px;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tx-copy-btn:hover {
+    color: var(--accent-primary);
+    background: var(--bg-hover);
+}
+
+.tx-copy-btn:active {
+    transform: scale(0.95);
+}
+
+/* ===== Pending Transaction Style ===== */
+.tx-item.pending {
+    opacity: 0.8;
+}
+
+.tx-item.pending .tx-item-icon {
+    border-color: var(--warning);
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.tx-item.pending .tx-item-title {
+    color: var(--text-secondary);
+}
+
+.tx-item.pending .tx-item-amount {
+    color: var(--warning) !important;
+}

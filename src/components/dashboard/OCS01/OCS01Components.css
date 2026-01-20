@@ -1,0 +1,160 @@
+/* OCS01 Components Styles */
+
+.ocs01-token-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.ocs01-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.ocs01-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.ocs01-icon {
+    font-size: 16px;
+}
+
+.ocs01-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.ocs01-token-list {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.ocs01-token-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) 0;
+    background: transparent;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    transition: all var(--transition-fast);
+}
+
+.ocs01-token-item:last-child {
+    border-bottom: none;
+}
+
+.ocs01-token-item:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ocs01-token-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.ocs01-token-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.ocs01-token-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.ocs01-token-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ocs01-token-address {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+}
+
+.ocs01-token-balance {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.ocs01-token-symbol {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: var(--space-xs);
+}
+
+.ocs01-empty {
+    padding: var(--space-xl);
+    text-align: center;
+}
+
+.ocs01-claim-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.ocs01-claim-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.claim-icon {
+    font-size: 16px;
+}
+
+.claim-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.claim-result {
+    font-size: 11px;
+    margin-top: var(--space-sm);
+    text-align: center;
+    width: 100%;
+}
+
+.claim-result.success {
+    color: var(--success);
+}
+
+.claim-result.error {
+    color: var(--error);
+}

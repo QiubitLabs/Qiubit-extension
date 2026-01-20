@@ -1,0 +1,353 @@
+/* Confirm Transaction Modal - OKX Style */
+.confirm-tx-modal {
+    max-width: 340px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* Header - With Icon */
+.ctm-header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px 20px;
+    background: var(--bg-elevated);
+}
+
+.ctm-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.ctm-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.ctm-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(0, 199, 190, 0.15));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--success);
+    margin-bottom: 12px;
+}
+
+.ctm-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+}
+
+.ctm-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 0;
+}
+
+.ctm-amount-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.ctm-amount-symbol {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Body */
+.ctm-body {
+    padding: 16px 20px;
+}
+
+/* Rows */
+.ctm-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.ctm-row:last-child {
+    border-bottom: none;
+}
+
+.ctm-row-clickable {
+    cursor: pointer;
+    margin: 0 -12px;
+    padding: 14px 12px;
+    border-radius: 8px;
+    border-bottom: none;
+    transition: background 0.15s ease;
+}
+
+.ctm-row-clickable:hover {
+    background: var(--bg-hover);
+}
+
+.ctm-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.ctm-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.ctm-address {
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+/* Fee Info (with arrow) */
+.ctm-fee-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-tertiary);
+}
+
+.ctm-fee-value {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Fee Options Dropdown */
+.ctm-fee-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 0;
+    margin-bottom: 8px;
+}
+
+.ctm-fee-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ctm-fee-option:hover {
+    border-color: var(--border-default);
+}
+
+.ctm-fee-option.active {
+    border-color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.ctm-fee-option-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.ctm-fee-option-value {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-family: var(--font-mono);
+}
+
+.ctm-fee-option.active .ctm-fee-option-value {
+    color: var(--text-secondary);
+}
+
+/* Total Row */
+.ctm-row-total {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-default);
+}
+
+.ctm-row-total .ctm-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ctm-total {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Footer */
+.ctm-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px 20px;
+}
+
+.ctm-footer .btn {
+    flex: 1;
+    height: 48px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 12px;
+}
+
+/* Fee Badge */
+.ctm-fee-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 6px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    color: var(--text-secondary);
+}
+
+/* ===== Fee Selection Mini Popup ===== */
+.fee-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    animation: fadeIn 0.15s ease;
+}
+
+.fee-popup {
+    width: 280px;
+    background: var(--bg-card);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: scaleIn 0.2s ease;
+    overflow: hidden;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.fee-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.fee-popup-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.fee-popup-close {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.fee-popup-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.fee-popup-options {
+    padding: 8px;
+}
+
+.fee-popup-option {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-bottom: 4px;
+}
+
+.fee-popup-option:last-child {
+    margin-bottom: 0;
+}
+
+.fee-popup-option:hover {
+    background: var(--bg-hover);
+}
+
+.fee-popup-option.active {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+}
+
+.fee-popup-option-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.fee-popup-option-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.fee-popup-option-desc {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.fee-popup-option-value {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.fee-popup-option.active .fee-popup-option-value {
+    color: var(--success);
+}

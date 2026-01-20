@@ -1,0 +1,124 @@
+/* Confirmation Modal - Minimal & Professional */
+
+.confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.15s ease;
+    padding: 20px;
+}
+
+.confirm-modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    animation: slideUp 0.25s ease;
+}
+
+.confirm-modal-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.confirm-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.confirm-modal-body {
+    margin-bottom: 28px;
+}
+
+.confirm-warning-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+}
+
+.confirm-warning-icon {
+    flex-shrink: 0;
+    color: var(--error);
+    opacity: 0.9;
+}
+
+.confirm-modal-message {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin: 0;
+    white-space: pre-line;
+}
+
+.confirm-modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.confirm-modal-footer .btn {
+    flex: 1;
+    min-width: 110px;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+/* Clean hover without movement */
+.confirm-modal-footer .btn:hover {
+    opacity: 0.9;
+}
+
+.confirm-modal-footer .btn:active {
+    opacity: 0.8;
+}
+
+.btn-danger {
+    background: var(--error);
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

@@ -1,0 +1,186 @@
+/* Step Header Component - Professional Consistent Layout */
+
+.step-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* Row 1: Back Button + Title */
+.step-header-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 28px;
+}
+
+/* Back Button - Left aligned */
+.step-header-back {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.15s;
+}
+
+.step-header-back:hover {
+    color: var(--text-primary);
+}
+
+/* Title - Centered */
+.step-header-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Spacer for balance */
+.step-header-spacer {
+    position: absolute;
+    right: 0;
+    width: 28px;
+}
+
+/* Row 2: Step Indicators */
+.step-header-indicators {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- ANIMATIONS START --- */
+@keyframes popBounce {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.25);
+    }
+
+    80% {
+        transform: scale(0.95);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.step-header-dot {
+    width: 32px;
+    /* Increased from 26px for better visibility on mobile */
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    /* Slightly larger font */
+    font-weight: 600;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.35);
+    transition: all 0.2s ease;
+}
+
+.step-header-dot.active {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #000000;
+}
+
+.step-header-dot.completed {
+    background: var(--success);
+    border-color: var(--success);
+    color: #ffffff;
+}
+
+/* Only animate Bounce if strictly instructed via .animate class */
+.step-header-dot.animate {
+    animation: popBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes expandWidth {
+    from {
+        width: 0%;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+.step-header-line {
+    width: 32px;
+    /* Matching the dot size for visual balance */
+    height: 2px;
+    /* Thicker line (was 1.5px) */
+    background: rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+    border-radius: 1px;
+}
+
+/* Base state for the filler */
+.step-header-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--success);
+    width: 0%;
+}
+
+/* Standard completed state (static 100%) */
+.step-header-line.completed::after {
+    width: 100%;
+}
+
+/* Animated state (Using Keyframes is safer for mount animations) */
+.step-header-line.animate::after {
+    /* Important: Start at 0 and unify with animation */
+    width: 100%;
+    animation: expandWidth 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    /* Duration: 0.6s. No delay needed if internal bezier is smooth, but we can add delay if you want */
+    animation-delay: 0.2s;
+    /* Wait for circle pop */
+    animation-fill-mode: both;
+}
+
+.step-lottie-wrapper {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.step-lottie-wrapper>div {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Make checkmark visible on green background */
+.step-lottie-wrapper svg path {
+    stroke: #ffffff !important;
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Signing Simulation</title>
+    <!-- Load tweetnacl from CDN or local -->
+    <script src="../../dist/assets/nacl-fast-rdfD5n9e.js"></script>
+    <!-- Fallback if dist not built or path wrong, try inline simulation -->
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #111;
+            color: #eee;
+        }
+
+        .success {
+            color: #4f4;
+        }
+
+        .error {
+            color: #f44;
+        }
+
+        .log {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Signing Logic Simulation</h1>
+    <div id="logs"></div>
+
+    <script>
+        function log(msg, type = 'info') {
+            const el = document.createElement('div');
+            el.className = `log ${type}`;
+            el.innerText = `[${type.toUpperCase()}] ${msg}`;
+            document.getElementById('logs').appendChild(el);
+        }
+
+        async function runTest() {
+            try {
+                if (!window.nacl) {
+                    log('Nacl not loaded! waiting...', 'error');
+                    return;
+                }
+                log('Nacl loaded. simulating background.js logic...');
+
+                // 1. Generate a valid random keypair (mocking wallet)
+                const realKeyPair = nacl.sign.keyPair();
+                const seed = realKeyPair.secretKey.slice(0, 32); // 32 bytes seed
+
+                // Mock what comes from storage (Likely just the seed based on "privateKeyB64" naming in utils which usually stores seed for Ed25519)
+                // Let's assume privateKeyB64 is the 32-byte seed encoded
+                const privateKeyB64 = btoa(String.fromCharCode.apply(null, seed));
+
+                log(`Mock PrivateKeyB64 (Seed): ${privateKeyB64.substring(0, 20)}...`);
+
+                // 2. Decode (Current background.js logic)
+                const privateKeyBytes = Uint8Array.from(atob(privateKeyB64), c => c.charCodeAt(0));
+                log(`Decoded Bytes Length: ${privateKeyBytes.length}`); // Should be 32
+
+                // 3. Prepare message
+                const message = new TextEncoder().encode("Hello World");
+
+                // 4. ATTEMPT 1: Sign with seed directly (Current Buggy Logic)
+                try {
+                    log('Attempting sign with 32-byte seed directly...');
+                    // This is what background.js is doing: nacl.sign.detached(msg, privateKeyBytes)
+                    // where privateKeyBytes is 32 bytes.
+                    nacl.sign.detached(message, privateKeyBytes);
+                    log('SUCCESS? (Unexpected)', 'success');
+                } catch (e) {
+                    log(`FAILED: ${e.message}`, 'error'); // Expect "bad secret key size"
+                }
+
+                // 5. ATTEMPT 2: Derive KeyPair first (The Fix)
+                try {
+                    log('Attempting sign with derived keypair...');
+                    const keyPair = nacl.sign.keyPair.fromSeed(privateKeyBytes);
+                    const secretKey = keyPair.secretKey;
+                    log(`Derived SecretKey Length: ${secretKey.length}`); // Should be 64
+
+                    const signature = nacl.sign.detached(message, secretKey);
+                    log(`SUCCESS! Signature generated. Length: ${signature.length}`, 'success');
+                } catch (e) {
+                    log(`FAILED: ${e.message}`, 'error');
+                }
+
+            } catch (err) {
+                log(`Critical: ${err.message}`, 'error');
+            }
+        }
+
+        // Wait for nacl
+        setTimeout(runTest, 1000);
+    </script>
+</body>
+
+</html>

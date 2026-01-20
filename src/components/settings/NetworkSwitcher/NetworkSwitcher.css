@@ -1,0 +1,140 @@
+/* Network Switcher Styles - Minimalist Edition */
+
+.network-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.network-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-align: left;
+}
+
+.network-option:hover:not(:disabled) {
+    background: var(--bg-card);
+}
+
+.network-option.active {
+    background: var(--bg-card);
+    border-color: var(--text-primary);
+}
+
+.network-option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.network-option-indicator {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--border-default);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.network-option.active .network-option-indicator {
+    border-color: var(--text-primary);
+}
+
+.network-option-dot {
+    width: 10px;
+    height: 10px;
+    background: var(--text-primary);
+    border-radius: 50%;
+}
+
+.network-option-content {
+    flex: 1;
+}
+
+.network-option-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.network-option-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.network-soon-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+}
+
+/* Switching Animation Overlay - Simplified */
+.network-switching-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: simpleFade 1.5s ease-in-out forwards;
+}
+
+@keyframes simpleFade {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.network-switching-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.network-switch-icon {
+    color: var(--text-primary);
+    animation: subtleRotate 1.5s infinite linear;
+}
+
+@keyframes subtleRotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.network-switching-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}

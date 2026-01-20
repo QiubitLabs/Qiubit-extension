@@ -1,0 +1,473 @@
+/* Settings Screen - Professional Minimal Design */
+
+.settings-section {
+    margin-bottom: 28px;
+}
+
+.settings-section-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+
+/* Settings Item - Clean List */
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    margin-bottom: 0;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item:hover {
+    opacity: 0.7;
+}
+
+.settings-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.settings-item-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.settings-item-value {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Danger Item */
+.settings-item-danger {
+    border-color: transparent;
+}
+
+.settings-item-danger .settings-item-label {
+    color: var(--error);
+}
+
+/* Toggle Switch */
+.settings-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.settings-toggle.active {
+    background: var(--text-primary);
+}
+
+.settings-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: var(--bg-primary);
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.settings-toggle.active::after {
+    transform: translateX(20px);
+}
+
+/* Mnemonic Grid */
+.mnemonic-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 12px;
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mnemonic-word {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+}
+
+.mnemonic-word-num {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    min-width: 14px;
+}
+
+.mnemonic-word-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+/* Phrase Actions - Professional */
+.phrase-actions {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0;
+    width: 100%;
+}
+
+.phrase-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.phrase-action-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+.phrase-action-btn:active {
+    transform: scale(0.98);
+}
+
+.phrase-action-btn.active {
+    color: var(--success);
+    border-color: var(--success);
+    background: rgba(52, 199, 89, 0.08);
+}
+
+/* Primary variant - Blue */
+.phrase-action-btn-primary {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: rgba(0, 122, 255, 0.3);
+    color: #007AFF;
+}
+
+.phrase-action-btn-primary:hover {
+    background: rgba(0, 122, 255, 0.15);
+    border-color: rgba(0, 122, 255, 0.5);
+}
+
+.phrase-action-btn-primary.active {
+    background: rgba(0, 122, 255, 0.15);
+    border-color: #007AFF;
+    color: #007AFF;
+}
+
+/* Private Key Display */
+.private-key-display {
+    padding: 16px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 16px;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+/* ===== Security UI - Professional Minimal ===== */
+
+/* Animated Icon Container */
+.security-icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.security-icon-pulse {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+/* Security Notice */
+.security-notice {
+    padding: 12px 14px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--text-tertiary);
+    margin-bottom: 20px;
+}
+
+.security-notice p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
+    text-align: center;
+}
+
+/* Secret Display (Private Key / Mnemonic) */
+.secret-display {
+    padding: 16px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 16px;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+/* Secret Actions Row */
+.secret-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Secret Button Base */
+.secret-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.secret-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+.secret-btn:active {
+    transform: scale(0.98);
+}
+
+/* Toggle Button (Show/Hide) - 20% */
+.secret-btn-toggle {
+    flex: 0 0 20%;
+    color: var(--text-secondary);
+}
+
+.secret-btn-toggle:hover {
+    color: var(--text-primary);
+}
+
+/* Copy Button - 80% */
+.secret-btn-copy {
+    flex: 1;
+}
+
+.secret-btn-copy.copied {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+/* Settings Modal */
+.settings-modal {
+    max-width: 340px;
+}
+
+.settings-modal .modal-body {
+    padding: 0 20px 20px;
+}
+
+/* Recovery Notice - Professional */
+.recovery-notice {
+    padding: 12px 14px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--text-tertiary);
+    margin-bottom: 16px;
+}
+
+.recovery-notice p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Chevron Icon */
+.settings-item-arrow {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+/* Premium Mnemonic Grid & Cards - Professional Minimal */
+.mnemonic-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+
+.mnemonic-word-premium {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    transition: border-color 0.15s ease;
+}
+
+.mnemonic-word-premium:hover {
+    border-color: var(--border-default);
+}
+
+.mnemonic-word-num-premium {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+}
+
+.mnemonic-word-text-premium {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+/* Warning Card - Professional Minimal (No Neon) */
+.warning-card {
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+}
+
+.warning-card-critical {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+}
+
+.warning-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.warning-card-header svg {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.warning-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.warning-card-text {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+/* Mnemonic Card Container */
+.mnemonic-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    padding: 16px;
+}
+
+/* Mnemonic Hidden State */
+.mnemonic-hidden-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+}
+
+.lock-icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Utility classes */
+.btn-text-link {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+    border: 1px solid var(--border-subtle);
+}
+
+.btn-text-link:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+}

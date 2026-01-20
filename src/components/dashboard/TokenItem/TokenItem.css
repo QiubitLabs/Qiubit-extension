@@ -1,0 +1,70 @@
+/* TokenItem Component Styles */
+
+.token-item {
+    display: flex;
+    align-items: center;
+    padding: var(--space-md);
+    margin: 0 -var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    transition: background var(--transition-fast);
+    cursor: pointer;
+    transform: none;
+}
+
+.token-item:last-child {
+    border-bottom: none;
+}
+
+.token-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: transparent;
+    transform: none;
+}
+
+.token-item-icon {
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.token-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.token-item-symbol {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.token-item-balance-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.token-item-market {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.token-item-value-fiat {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.token-item-price {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
