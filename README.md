@@ -55,11 +55,6 @@ First, you need to build the project from source.
 4.  Select the `dist` folder generated in the build step.
 5.  The Qiubit Wallet extension should now appear in your browser toolbar.
 
-#### Firefox
-1.  Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
-2.  Click **Load Temporary Add-on...**.
-3.  Navigate to the `dist` folder and select the `manifest.json` file.
-4.  The extension will be installed temporarily (until you restart Firefox).
 
 ## Usage Guide
 
