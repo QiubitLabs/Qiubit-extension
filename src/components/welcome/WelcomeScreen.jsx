@@ -120,6 +120,7 @@ export function CreateWalletScreen({ onBack, onComplete }) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
+    const [isAgreed, setIsAgreed] = useState(false);
 
     const [wallet, setWallet] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -337,10 +338,24 @@ export function CreateWalletScreen({ onBack, onComplete }) {
 
                             {passwordError && <p className="form-error">{passwordError}</p>}
 
+                            <div className="privacy-policy-container">
+                                <label className="privacy-policy-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAgreed}
+                                        onChange={(e) => setIsAgreed(e.target.checked)}
+                                        className="privacy-checkbox"
+                                    />
+                                    <span className="privacy-text">
+                                        I agree to the <a href="https://qiubitwallet.com/privacy-terms" target="_blank" rel="noopener noreferrer" className="privacy-link">Privacy Policy & Terms</a>
+                                    </span>
+                                </label>
+                            </div>
+
                             <button
                                 className="btn btn-primary btn-full"
                                 onClick={handleSetPassword}
-                                disabled={password.length < 8 || password !== confirmPassword}
+                                disabled={password.length < 8 || password !== confirmPassword || !isAgreed}
                             >
                                 Continue
                             </button>
@@ -493,6 +508,7 @@ export function ImportWalletScreen({ onBack, onComplete }) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
+    const [isAgreed, setIsAgreed] = useState(false);
 
     const [importType, setImportType] = useState(null);
     const [mnemonic, setMnemonic] = useState('');
@@ -637,10 +653,24 @@ export function ImportWalletScreen({ onBack, onComplete }) {
 
                             {passwordError && <p className="form-error">{passwordError}</p>}
 
+                            <div className="privacy-policy-container">
+                                <label className="privacy-policy-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAgreed}
+                                        onChange={(e) => setIsAgreed(e.target.checked)}
+                                        className="privacy-checkbox"
+                                    />
+                                    <span className="privacy-text">
+                                        I agree to the <a href="https://qiubitwallet.com/privacy-terms" target="_blank" rel="noopener noreferrer" className="privacy-link">Privacy Policy & Terms</a>
+                                    </span>
+                                </label>
+                            </div>
+
                             <button
                                 className="btn btn-primary btn-full"
                                 onClick={handleSetPassword}
-                                disabled={password.length < 8 || password !== confirmPassword}
+                                disabled={password.length < 8 || password !== confirmPassword || !isAgreed}
                             >
                                 Continue
                             </button>

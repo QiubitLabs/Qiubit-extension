@@ -57,7 +57,7 @@ export async function logActivity(action, metadata = {}, level = 'INFO') {
                 INFO: '[INFO]',
                 WARN: '[WARN]',
                 ERROR: '[ERROR]'
-            }[level] || 'ℹ️';
+            }[level] || '[INFO]';
 
             console.log(`${emoji} [${level}] ${action}`, metadata);
         }

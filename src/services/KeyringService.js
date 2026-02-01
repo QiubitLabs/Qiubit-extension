@@ -269,7 +269,7 @@ class KeyringService {
                 to_: txParams.to,
                 amount: String(amountRaw),
                 nonce: providedNonce, // Use validated nonce
-                ou: txParams.fee ? String(Math.floor(txParams.fee * μ)) : '2000',
+                ou: txParams.fee ? String(Math.floor(txParams.fee * μ)) : '20000',
                 timestamp: timestamp
             };
 

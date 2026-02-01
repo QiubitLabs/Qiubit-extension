@@ -8,7 +8,7 @@ import { getRpcClient } from '../utils/rpc';
 import { backgroundSync } from '../services/BackgroundSyncService';
 import { decryptSession } from '../utils/crypto';
 
-console.log('[Background] Qiubit Service Worker starting...');
+// console.log('[Background] Qiubit Service Worker starting...');
 
 // Background task: Update balances in storage periodically (Every 1 minute)
 chrome.alarms.create('bgBalanceSync', { periodInMinutes: 3 });
@@ -18,7 +18,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         const wallet = await getWalletFromStorage();
         // Only sync if we have an active (unlocked) session
         if (wallet && wallet.address) {
-            console.log('[Background] Auto-syncing for', wallet.address);
+            // console.log('[Background] Auto-syncing for', wallet.address);
             await backgroundSync.syncAll(wallet.address, wallet.network || 'mainnet');
         }
     }
@@ -42,7 +42,7 @@ let memorySessionKey = null; // ZERO-TRUST KEY (Memory Only)
         const sessionData = await chrome.storage.session.get(['dapp_wallet_session']);
         if (sessionData && sessionData.dapp_wallet_session) {
             activeSessionCache = JSON.parse(sessionData.dapp_wallet_session);
-            console.log('[Background] Restored encrypted session from storage');
+            // console.log('[Background] Restored encrypted session from storage');
         }
     } catch (e) {
         console.warn('[Background] Session restore error:', e);
@@ -105,7 +105,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             memorySessionKey = null;
             dappConnections.clear();
             dappApprovals.clear();
-            console.log('!!! RESET COMPLETE !!!');
+            // console.log('!!! RESET COMPLETE !!!');
             sendResponse({ success: true });
         })();
         return true;
@@ -121,7 +121,7 @@ async function handleSyncSession(data) {
     // If receiving a Key, store it in memory
     if (data.sessionKey) {
         memorySessionKey = data.sessionKey;
-        console.log('[Background] Received ephemeral session key');
+        // console.log('[Background] Received ephemeral session key');
 
         // Also refresh the data cache
         const sessionData = await chrome.storage.session.get(['dapp_wallet_session']);
@@ -133,7 +133,7 @@ async function handleSyncSession(data) {
 
     // Legacy/Full Sync handling
     if (data.session) {
-        console.log('[Background] Received SYNC_SESSION (Full)');
+        // console.log('[Background] Received SYNC_SESSION (Full)');
         activeSessionCache = data.session;
         // Don't save to storage here, App.jsx does it. Just update memory.
         return { success: true };
@@ -175,7 +175,7 @@ loadConnections();
 async function handleDappRequest(message, sender) {
     const { id, method, params, origin, title, favicon } = message;
 
-    console.log('[Background] dApp request:', method, 'from', origin);
+    // console.log('[Background] dApp request:', method, 'from', origin);
 
     switch (method) {
         case 'connect':
@@ -286,7 +286,7 @@ async function handleConnect(origin, title, favicon, params) {
     const isLocked = !wallet || (!wallet.privateKey && !wallet.privateKeyB64);
 
     if (isLocked) {
-        console.log('[Background] Wallet locked or missing session. Prompting unlock via popup...');
+        console.warn('[Background] Wallet locked or missing session. Prompting unlock via popup...');
     }
 
     // Request User Approval (Will trigger unlock UI if needed)
@@ -327,7 +327,7 @@ async function handleConnect(origin, title, favicon, params) {
     dappConnections.set(origin, connection);
     await saveConnections();
 
-    console.log('[Background] Connected:', origin);
+    // console.log('[Background] Connected:', origin);
 
     return {
         result: {
@@ -347,7 +347,7 @@ async function handleConnect(origin, title, favicon, params) {
 async function handleDisconnect(origin) {
     dappConnections.delete(origin);
     await saveConnections();
-    console.log('[Background] Disconnected:', origin);
+    // console.log('[Background] Disconnected:', origin);
     return { result: true };
 }
 
@@ -391,7 +391,7 @@ async function handleGetBalance(params) {
         const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://octra.network';
         const baseUrl = RPC_URL.replace(/\/+$/, '');
 
-        console.log('[Background] Fetching balance for', address);
+        // console.log('[Background] Fetching balance for', address);
         const response = await fetch(`${baseUrl}/balance/${address}`);
 
         if (response.ok) {
@@ -489,7 +489,7 @@ async function handleSignTransaction(origin, params) {
 
     // 2. Request User Approval
     try {
-        console.log('[Background] Requesting transaction signature approval...');
+        // console.log('[Background] Requesting transaction signature approval...');
         const result = await requestApproval(origin, 'signTransaction', params, wallet);
         return result;
     } catch (err) {
@@ -525,7 +525,7 @@ async function handleSendTransaction(origin, params) {
 
     // 2. Request User Approval
     try {
-        console.log('[Background] Requesting transaction send approval...');
+        // console.log('[Background] Requesting transaction send approval...');
         const result = await requestApproval(origin, 'sendTransaction', params, wallet);
         return result;
     } catch (err) {
@@ -537,7 +537,7 @@ async function handleSendTransaction(origin, params) {
 async function ensureNonce(txParams, address) {
     if (txParams.nonce === undefined || txParams.nonce === null) {
         try {
-            console.log('[Background] Nonce missing, fetching from network...');
+            // console.log('[Background] Nonce missing, fetching from network...');
             const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://octra.network';
             const baseUrl = RPC_URL.replace(/\/+$/, '');
             const resp = await fetch(`${baseUrl}/balance/${address}`);
@@ -634,7 +634,7 @@ async function handleResolveApproval(data) {
     // If the UI sends a session key with approval, use it immediately
     if (sessionKey) {
         memorySessionKey = sessionKey;
-        console.log('[Background] Received session key via Approval Handoff');
+        // console.log('[Background] Received session key via Approval Handoff');
     }
 
     const approval = dappApprovals.get(id);
@@ -655,7 +655,7 @@ async function handleResolveApproval(data) {
                 const freshWallet = await getWalletFromStorage();
                 if (freshWallet && (freshWallet.privateKey || freshWallet.privateKeyB64)) {
                     signingWallet = freshWallet;
-                    console.log('[Background] Refreshed wallet session for signing');
+                    // console.log('[Background] Refreshed wallet session for signing');
                 } else {
                     throw new Error('Wallet is locked. Please unlock the extension.');
                 }
@@ -707,7 +707,7 @@ async function handleResolveApproval(data) {
  * Helper: Sign Transaction ONLY (No Broadcast)
  */
 async function signTransactionOnly(params, wallet) {
-    console.log('[Background] SignTransactionOnly requested');
+    // console.log('[Background] SignTransactionOnly requested');
     const privateKey = wallet.privateKey || wallet.privateKeyB64;
 
     const txParams = params.transaction || params;
@@ -783,7 +783,7 @@ async function signAndBroadcastTransaction(params, wallet) {
     const signedTransaction = await signTransactionOnly(params, wallet);
 
     // Broadcast
-    console.log('[Background] Broadcasting transaction...');
+    // console.log('[Background] Broadcasting transaction...');
     const RPC_URL = import.meta.env.VITE_RPC_URL || 'https://octra.network';
     const broadcastUrl = `${RPC_URL.replace(/\/+$/, '')}/send-tx`;
 

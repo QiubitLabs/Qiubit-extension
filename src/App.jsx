@@ -124,17 +124,17 @@ function App() {
   }, []);
 
   const saveActiveSession = useCallback(async (pwd) => {
-    console.log('[DEBUG] saveActiveSession called. Pwd len:', pwd ? pwd.length : 0);
+    // console.log('[DEBUG] saveActiveSession called. Pwd len:', pwd ? pwd.length : 0);
     try {
       const expiry = Date.now() + SESSION_DURATION;
 
       let sessionKey = localStorage.getItem('octra_session_key');
-      console.log('[DEBUG] Session Key Check:', sessionKey ? 'EXISTS' : 'MISSING');
+      // console.log('[DEBUG] Session Key Check:', sessionKey ? 'EXISTS' : 'MISSING');
 
       if (!sessionKey) {
         sessionKey = generateSessionKey();
         localStorage.setItem('octra_session_key', sessionKey);
-        console.log('[DEBUG] generated new session key');
+        // console.log('[DEBUG] generated new session key');
       }
 
       if (!pwd) {
@@ -142,14 +142,14 @@ function App() {
         return;
       }
 
-      console.log('[DEBUG] Encrypting session...');
+      // console.log('[DEBUG] Encrypting session...');
       const encryptedPwd = await encryptSession(pwd, sessionKey);
 
       if (encryptedPwd) {
         localStorage.setItem('octra_session_data', encryptedPwd);
         localStorage.setItem('octra_session_expiry', expiry.toString());
         setSessionExpiry(expiry);
-        console.log('[App] Session saved SUCCESS (expires in 5m)');
+        // console.log('[App] Session saved SUCCESS (expires in 5m)');
       } else {
         console.error('[App] Session encryption returned null');
       }
@@ -165,7 +165,7 @@ function App() {
 
       const expiry = parseInt(expiryStr, 10);
       if (Date.now() > expiry) {
-        console.log('[App] Session expired');
+        // console.log('[App] Session expired');
         clearActiveSession();
         return null;
       }
@@ -184,7 +184,7 @@ function App() {
             const newExpiry = Date.now() + SESSION_DURATION;
             localStorage.setItem('octra_session_expiry', newExpiry.toString());
             setSessionExpiry(newExpiry);
-            console.log('[App] Session restored from persistence');
+            // console.log('[App] Session restored from persistence');
             return pwd;
           } else {
             console.warn('[App] Stored session password invalid');
@@ -417,7 +417,7 @@ function App() {
         currentBalances[wallet.address] = data.balance; // Update specific address
 
         await chrome.storage.local.set({ balances: currentBalances });
-        console.log('[App] Synced balance to background. Addr:', wallet.address, 'Val:', data.balance);
+        // console.log('[App] Synced balance to background. Addr:', wallet.address, 'Val:', data.balance);
       }
 
     } catch (error) {
@@ -536,7 +536,7 @@ function App() {
             // Found a known transaction, no need to go further back
             // UNLESS we are doing a deep fetch (Load More) which forces beyond
             if (!customLimit) {
-              console.log('[History] Smart Sync: Found known tx, stopping fetch.', ref.hash);
+              // console.log('[History] Smart Sync: Found known tx, stopping fetch.', ref.hash);
               break;
             }
           }
@@ -548,7 +548,7 @@ function App() {
         }
 
         if (hashesToFetch.length > 0) {
-          console.log(`[History] Fetching details for ${hashesToFetch.length} new/pending txs...`);
+          // console.log(`[History] Fetching details for ${hashesToFetch.length} new/pending txs...`);
 
           // Batched Fetching (Concurrency: 5)
           const TX_CONCURRENCY = 5;
@@ -595,7 +595,7 @@ function App() {
 
           newConfirmedTxs = newConfirmedTxs.filter(Boolean);
         } else {
-          console.log('[History] All synced! No new details to fetch.');
+          // console.log('[History] All synced! No new details to fetch.');
         }
       }
 
@@ -673,7 +673,7 @@ function App() {
         chrome.storage.local.get('balances').then((result) => {
           const cachedBal = result.balances?.[wallet.address];
           if (cachedBal !== undefined) {
-            console.log('[App] Instant load balance:', cachedBal);
+            // console.log('[App] Instant load balance:', cachedBal);
             setBalance(cachedBal);
           }
         });
@@ -808,7 +808,7 @@ function App() {
     keyringService.panicLock();
 
     setView('lock');
-    console.log('[App] [SECURE] Wallet locked (Session cleared, memory wiped)');
+    // console.log('[App] [SECURE] Wallet locked (Session cleared, memory wiped)');
   }, []);
 
   // Unlock wallet with password
@@ -829,7 +829,7 @@ function App() {
       // This ensures future unlocks won't trigger emergency recovery
       try {
         await saveWallets(loadedWallets, enteredPassword);
-        console.log('[App] Wallets re-encrypted with correct HMAC');
+        // console.log('[App] Wallets re-encrypted with correct HMAC');
       } catch (resaveError) {
         // Non-critical error, just log it
         console.warn('[App] Could not re-save wallets:', resaveError);
@@ -858,8 +858,8 @@ function App() {
           loadedWallets[savedIndex]?.privateKeyB64 ||
           loadedWallets[savedIndex]?.privateKey;
 
-        console.log('[DEBUG] Saving Session for Addr:', activeAddr);
-        console.log('[DEBUG] Private Key Present?', !!activePk, 'Length:', activePk ? activePk.length : 0);
+        // console.log('[DEBUG] Saving Session for Addr:', activeAddr);
+        // console.log('[DEBUG] Private Key Present?', !!activePk, 'Length:', activePk ? activePk.length : 0);
 
         if (!activePk) {
           console.error('[App] CRITICAL: Attempted to save session without private key!');
@@ -888,7 +888,7 @@ function App() {
           await chrome.storage.session.set({
             dapp_wallet_session: JSON.stringify(sessionData)
           });
-          console.log('[App] Zero-Trust Session Synced (Encrypted)');
+          // console.log('[App] Zero-Trust Session Synced (Encrypted)');
 
           // 4. Send KEY to background memory (via secure message)
           // The key never touches storage!
@@ -947,14 +947,14 @@ function App() {
 
       // FINAL SUCCESS: Only save persistent session if everything above succeeded
       await saveActiveSession(enteredPassword);
-      console.log('[App] Session saved with AES-GCM encryption, expires in 5 minutes');
+      // console.log('[App] Session saved with AES-GCM encryption, expires in 5 minutes');
 
 
       // [RABBY-STYLE] Instant fetch history after unlock
       // Optimization: Fetch only 20 latest txs on unlock for speed
       setTimeout(() => refreshTransactions(20), 100);
 
-      console.log('[App] Login successful - Data restored from cache');
+      // console.log('[App] Login successful - Data restored from cache');
     } catch (error) {
       console.error('[App] Failed to unlock:', error);
       // Assuming setError is a state setter for an error state
@@ -966,7 +966,7 @@ function App() {
   // Handle wallet recovery from seed phrase or private key
   const handleRecover = useCallback(async ({ type, value, newPassword }) => {
     try {
-      console.log('[App] Starting wallet recovery...', { type });
+      // console.log('[App] Starting wallet recovery...', { type });
 
       // Clear existing data first
       localStorage.clear();
@@ -981,12 +981,12 @@ function App() {
         // Recover from seed phrase
         const { importFromMnemonic } = await import('./utils/crypto');
         recoveredWallet = await importFromMnemonic(value);
-        console.log('[App] [OK] Wallet recovered from mnemonic');
+        // console.log('[App] [OK] Wallet recovered from mnemonic');
       } else {
         // Recover from private key
         const { importFromPrivateKey } = await import('./utils/crypto');
         recoveredWallet = await importFromPrivateKey(value);
-        console.log('[App] [OK] Wallet recovered from private key');
+        // console.log('[App] [OK] Wallet recovered from private key');
       }
 
       // Save recovered wallet (This encrypts it with newPassword)
@@ -1028,7 +1028,7 @@ function App() {
       }
 
       setView('dashboard');
-      console.log('[App] [OK] Wallet recovery complete');
+      // console.log('[App] [OK] Wallet recovery complete');
 
     } catch (error) {
       console.error('[App] [ERROR] Recovery failed:', error);
@@ -1098,7 +1098,7 @@ function App() {
           }
           localStorage.clear();
           sessionStorage.clear();
-          console.log('[App] Forced data clear before wallet creation');
+          // console.log('[App] Forced data clear before wallet creation');
         } catch (clearErr) {
           console.warn('[App] Could not force clear:', clearErr);
         }
@@ -1134,7 +1134,7 @@ function App() {
       privacyService.setPrivateKey(newWallet.privateKeyB64, passToUse);
 
       // [FAST] OPTIMIZATION: Skip RPC calls for new wallet (balance is always 0)
-      console.log('[App] [FAST] New wallet created - skipping balance fetch (will be 0)');
+      // console.log('[App] [FAST] New wallet created - skipping balance fetch (will be 0)');
       setBalance(0);
       setNonce(0);
       setTransactions([]);
@@ -1160,7 +1160,7 @@ function App() {
           }
           localStorage.clear();
           sessionStorage.clear();
-          console.log('[App] Forced data clear before wallet import');
+          // console.log('[App] Forced data clear before wallet import');
         } catch (clearErr) {
           console.warn('[App] Could not force clear:', clearErr);
         }
@@ -1243,7 +1243,7 @@ function App() {
 
     // If network changed, reset balance and transactions
     if (newNetwork && previousNetwork !== newNetwork) {
-      console.log(`Network changed from ${previousNetwork} to ${newNetwork}`);
+      // console.log(`Network changed from ${previousNetwork} to ${newNetwork}`);
       setBalance(0);
       setTransactions(getTxHistory(newNetwork));
       // Data will auto-refresh from useEffect hooks in Dashboard

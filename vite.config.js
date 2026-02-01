@@ -23,6 +23,12 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       emptyOutDir: true,
       minify: isProduction ? 'terser' : false,
+      terserOptions: {
+        compress: {
+          drop_console: false, // Start false, then specify what to drop
+          pure_funcs: ['console.log', 'console.info', 'console.debug'], // Drop these specific functions
+        },
+      },
       rollupOptions: {
         input: {
           popup: resolve(__dirname, 'index.html'),

@@ -1,10 +1,10 @@
 {
     "manifest_version": 3,
-    "name": "Qiubit",
+    "name": "Qiubit Wallet",
     "short_name": "Qiubit",
-    "version": "1.0.2",
+    "version": "1.0.1",
     "description": "Secure non-custodial wallet for Octra Network. Manage assets, send transactions, and connect to dApps.",
-    "author": "Qiubit Dev",
+    "author": "Qiubit Labs",
     "minimum_chrome_version": "88",
     "permissions": [
         "storage",
@@ -12,7 +12,8 @@
     ],
     "host_permissions": [
         "https://octra.network/*",
-        "https://*.octra.network/*"
+        "https://*.octra.network/*",
+        "https://api.coingecko.com/*"
     ],
     "background": {
         "service_worker": "background.js",

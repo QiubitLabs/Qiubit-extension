@@ -67,7 +67,7 @@ export async function initDB() {
                 logStore.createIndex('level', 'level', { unique: false });
             }
 
-            console.log('[IndexedDB] Database initialized/upgraded to v' + DB_VERSION);
+            // console.log('[IndexedDB] Database initialized/upgraded to v' + DB_VERSION);
         };
     });
 }
@@ -245,7 +245,7 @@ export async function migrateTransactionsFromLocalStorage(address, network) {
         const stored = localStorage.getItem(key);
 
         if (!stored) {
-            console.log('[IndexedDB] No localStorage data to migrate');
+            // console.log('[IndexedDB] No localStorage data to migrate');
             return 0;
         }
 
@@ -256,7 +256,7 @@ export async function migrateTransactionsFromLocalStorage(address, network) {
             await saveTransaction(tx);
         }
 
-        console.log(`[IndexedDB] [OK] Migrated ${oldTxs.length} transactions from localStorage`);
+        // console.log(`[IndexedDB] [OK] Migrated ${oldTxs.length} transactions from localStorage`);
 
         // Optional: Remove old data (commented out for safety)
         // localStorage.removeItem(key);

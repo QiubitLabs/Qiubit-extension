@@ -279,30 +279,30 @@ class RPCClient {
 
             if (result.status === 200 && result.json) {
                 return {
-                    low: parseFloat(result.json.low || 0.001),
-                    medium: parseFloat(result.json.medium || 0.002),
-                    high: parseFloat(result.json.high || 0.003),
-                    baseFee: parseFloat(result.json.base_fee || 0.001)
+                    low: parseFloat(result.json.low || 0.01),
+                    medium: parseFloat(result.json.medium || 0.02),
+                    high: parseFloat(result.json.high || 0.03),
+                    baseFee: parseFloat(result.json.base_fee || 0.01)
                 };
             }
 
             // Fallback: Based on 20 tx analysis from network
-            // OU 1000 = 0.001 OCT (Slow)
-            // OU 2000 = 0.002 OCT (Normal)
-            // OU 3000 = 0.003 OCT (Fast)
+            // OU 10000 = 0.01 OCT (Slow)
+            // OU 20000 = 0.02 OCT (Normal)
+            // OU 30000 = 0.03 OCT (Fast)
             return {
-                low: 0.001,
-                medium: 0.002,
-                high: 0.003,
-                baseFee: 0.001
+                low: 0.01,
+                medium: 0.02,
+                high: 0.03,
+                baseFee: 0.01
             };
         } catch {
             // Default fallback fees - from network analysis
             return {
-                low: 0.001,
-                medium: 0.002,
-                high: 0.003,
-                baseFee: 0.001
+                low: 0.01,
+                medium: 0.02,
+                high: 0.03,
+                baseFee: 0.01
             };
         }
     }

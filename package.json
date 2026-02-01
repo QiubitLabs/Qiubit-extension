@@ -1,12 +1,11 @@
 {
   "name": "octra-wallet",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:extension": "node build-extension.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

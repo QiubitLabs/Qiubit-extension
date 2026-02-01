@@ -49,8 +49,8 @@ export function SendView({ wallet, balance, nonce, onBack, onRefresh, settings, 
     const [txHash, setTxHash] = useState('');
     const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
-    // Fee state - OU based: Slow=1000, Normal=2000, Fast=3000 (fee = OU/1000000 OCT)
-    const [feeEstimates, setFeeEstimates] = useState({ low: 0.001, medium: 0.002, high: 0.003 });
+    // Fee state - OU based: Slow=10000, Normal=20000, Fast=30000 (fee = OU/1000000 OCT)
+    const [feeEstimates, setFeeEstimates] = useState({ low: 0.01, medium: 0.02, high: 0.03 });
     const [feeSpeed, setFeeSpeed] = useState('normal'); // 'slow' | 'normal' | 'fast'
     const [isLoadingFee, setIsLoadingFee] = useState(false);
 
