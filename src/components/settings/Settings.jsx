@@ -28,11 +28,13 @@ import {
 import { NetworkSwitcher } from './NetworkSwitcher/NetworkSwitcher';
 import { keyringService } from '../../services/KeyringService';
 import { calculatePasswordStrength } from '../../utils/validation';
+import { ConfirmModal } from '../shared/ConfirmModal';
 
 export function SettingsScreen({ wallet, settings, password, onUpdateSettings, onDisconnect, onLock, onBack, onPasswordChange }) {
     const [view, setView] = useState('main'); // 'main' | 'network' | 'export' | 'recovery-phrase' | 'change-password'
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [copied, setCopied] = useState('');
+    const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
     const handleCopy = async (text, label) => {
         try {
@@ -51,9 +53,7 @@ export function SettingsScreen({ wallet, settings, password, onUpdateSettings, o
     };
 
     const handleDisconnect = () => {
-        if (window.confirm('Are you sure you want to disconnect this wallet? Make sure you have backed up your recovery phrase or private key.')) {
-            onDisconnect();
-        }
+        setShowDisconnectModal(true);
     };
 
     const handlePanicLock = () => {
@@ -287,6 +287,20 @@ export function SettingsScreen({ wallet, settings, password, onUpdateSettings, o
                     <p className="text-xs text-tertiary mt-xs">{settings.network === 'mainnet' ? 'Mainnet' : 'Testnet'} - Client-side only</p>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showDisconnectModal}
+                title="Disconnect Wallet?"
+                message={`Are you sure you want to remove this wallet from this device?\n\nIMPORTANT: Make sure you have backed up your recovery phrase or private key. You will lose access to this wallet if you haven't saved them.`}
+                confirmText="Disconnect"
+                cancelText="Cancel"
+                isDanger={true}
+                onConfirm={() => {
+                    setShowDisconnectModal(false);
+                    onDisconnect();
+                }}
+                onCancel={() => setShowDisconnectModal(false)}
+            />
         </>
     );
 }
