@@ -68,7 +68,7 @@ First, you need to build the project from source.
     - **Create New Wallet**: Follow the prompts to generate a new seed phrase. **Write this down safely!**
     - **Import Wallet**: Use an existing seed phrase or private key to restore your wallet.
 3.  **Dashboard**:
-    - View your balance in OCTOR.
+    - View your balance in OCTRA.
     - Copy your wallet address.
     - Switch between different wallets if you have multiple.
 4.  **Send**: Click "Send", enter the recipient address and amount. Confirm the transaction details before signing.
