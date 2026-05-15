@@ -81,5 +81,5 @@
         return `${window.location.origin}/favicon.ico`;
     }
 
-    console.log('[ContentScript] Qiubit content script loaded');
+    console.log('[ContentScript] Octra content script loaded');
 })();

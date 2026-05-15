@@ -1,9 +1,10 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { resolve } from 'path'
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
   const isProduction = mode === 'production';
 
   return {
@@ -13,7 +14,7 @@ export default defineConfig(({ mode }) => {
         targets: [
           { src: 'manifest.json', dest: '.' },
           { src: 'public/icon.svg', dest: '.' },
-          { src: 'public/octra-icon.svg', dest: '.' }
+          { src: 'public/qiubit-icon.svg', dest: '.' }
         ]
       })
     ],
@@ -53,6 +54,16 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash][extname]',
           manualChunks: undefined
+        }
+      }
+    },
+
+    server: {
+      proxy: {
+        '/api': {
+          target: env.VITE_RPC_URL || 'https://rpc.octra.network', // Fallback just in case env is missing during dev init, but intended to be from env
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '')
         }
       }
     },

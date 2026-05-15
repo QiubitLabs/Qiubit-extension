@@ -3,17 +3,16 @@
 .token-item {
     display: flex;
     align-items: center;
-    padding: var(--space-md);
-    margin: 0 -var(--space-md);
-    border-bottom: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: var(--radius-md);
     transition: background var(--transition-fast);
     cursor: pointer;
-    transform: none;
 }
 
 .token-item:last-child {
-    border-bottom: none;
+    /* No border to remove */
 }
 
 .token-item:hover {

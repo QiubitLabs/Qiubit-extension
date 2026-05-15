@@ -66,7 +66,7 @@
             try {
                 cb(data);
             } catch (e) {
-                console.error('[Octra] Event listener error:', e);
+                console.error('[Qiubit] Event listener error:', e);
             }
         });
     }
@@ -74,9 +74,9 @@
     // Create provider object
     const provider = {
         isOctraWallet: true,
-        isQiubit: true,
+        isOctra: true,
         version: '1.0.0',
-        name: 'Qiubit',
+        name: 'Octra',
 
         // State
         isConnected: false,
@@ -205,6 +205,45 @@
         },
 
         /**
+         * Call contract method (state-modifying)
+         */
+        async callContract(contractAddress, method, params = [], options = {}) {
+            if (!this.isConnected) {
+                throw { code: 4100, message: 'Not connected' };
+            }
+
+            return sendRequest('contractCall', {
+                address: contractAddress,
+                method: method,
+                params: params,
+                amount: options.amount || '0'
+            });
+        },
+
+        /**
+         * Call contract view method (read-only)
+         */
+        async callContractView(contractAddress, method, params = []) {
+            return sendRequest('contractView', {
+                address: contractAddress,
+                method: method,
+                params: params,
+                caller: this.selectedAddress
+            });
+        },
+
+        /**
+         * Get pending transactions
+         */
+        async getPendingTransactions() {
+            if (!this.isConnected) {
+                throw { code: 4100, message: 'Not connected' };
+            }
+
+            return sendRequest('getPendingTransactions');
+        },
+
+        /**
          * Generic request method
          */
         async request(args) {
@@ -226,6 +265,15 @@
 
                 case 'octra_sendTransaction':
                     return this.sendTransaction(params);
+
+                case 'octra_callContract':
+                    return this.callContract(params.address, params.method, params.params, params.options);
+
+                case 'octra_callContractView':
+                    return this.callContractView(params.address, params.method, params.params);
+
+                case 'octra_getPendingTransactions':
+                    return this.getPendingTransactions();
 
                 default:
                     throw { code: 4200, message: `Method not supported: ${method}` };
@@ -262,11 +310,11 @@
     // Expose provider
     window.octra = provider;
 
-    // Also expose as qiubit for branding
-    window.qiubit = provider;
+    // Also expose as octra for branding
+    window.octra = provider;
 
     // Dispatch initialization event
     window.dispatchEvent(new Event('octra#initialized'));
 
-    console.log('[Qiubit] Provider injected');
+    console.log('[Octra] Provider injected');
 })();

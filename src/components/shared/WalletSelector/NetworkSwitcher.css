@@ -1,0 +1,81 @@
+/* ===== Network Switcher ===== */
+.network-switcher-wrapper {
+    position: relative;
+}
+
+.network-switcher-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.network-switcher-btn:hover {
+    border-color: var(--border-default);
+    color: var(--text-primary);
+}
+
+.network-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: var(--space-xs);
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 150px;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.network-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.network-dropdown-item:hover:not(.disabled) {
+    background: var(--bg-hover);
+}
+
+.network-dropdown-item.active {
+    background: var(--accent-glow);
+}
+
+.network-dropdown-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.network-dropdown-name {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.network-soon-badge {
+    padding: 2px 6px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: var(--space-sm);
+}
+
+.network-dropdown-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+}

@@ -233,3 +233,23 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
+
+/* Pending Transactions */
+.tx-pending {
+    border-left: 3px solid var(--warning);
+}
+
+.tx-pending-badge {
+    padding: 2px 6px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    border-radius: var(--radius-sm);
+    font-size: 9px;
+    font-weight: 600;
+    margin-left: var(--space-sm);
+}
+
+/* Padding override */
+.tx-section {
+    padding-bottom: var(--space-xl);
+}

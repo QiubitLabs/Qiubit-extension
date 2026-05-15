@@ -190,7 +190,7 @@
     margin-bottom: var(--space-xl);
 }
 
-.quantum-ring-outer {
+.qiubit-ring-outer {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -200,11 +200,11 @@
     animation: spin-simple 1s linear infinite;
 }
 
-.quantum-ring-inner {
+.qiubit-ring-inner {
     display: none;
 }
 
-.quantum-core {
+.qiubit-core {
     width: 16px;
     height: 16px;
     background: var(--text-secondary);
@@ -281,4 +281,258 @@
     to {
         stroke-dashoffset: 0;
     }
+}
+
+/* --- Confirm V2 Exact Layout --- */
+.confirm-v2-title {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    text-align: left;
+    letter-spacing: -0.3px;
+}
+
+.confirm-v2-title-highlight {
+    color: var(--accent-primary);
+}
+
+.confirm-v2-amount-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    justify-content: flex-start;
+}
+
+.confirm-v2-amount-val {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.confirm-v2-amount-sym {
+    font-size: 24px;
+    font-weight: 700;
+    color: #666666; /* tertiary looking */
+}
+
+.confirm-v2-details {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #222;
+    padding-top: 20px;
+}
+
+.confirm-v2-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.confirm-v2-row.align-top {
+    align-items: flex-start;
+}
+
+.confirm-v2-row.align-center {
+    align-items: center;
+}
+
+.confirm-v2-row.p-b-md {
+    padding-bottom: 16px;
+}
+
+.confirm-v2-row.py-md {
+    padding: 16px 0;
+}
+
+.confirm-v2-row.border-b {
+    border-bottom: 1px solid #222;
+    margin-bottom: 16px;
+}
+
+.confirm-v2-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    width: 100px; /* fixed width for label */
+    flex-shrink: 0;
+}
+
+.confirm-v2-value-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: 1;
+    min-width: 0;
+}
+
+.confirm-v2-address {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: #888888;
+    word-break: break-all;
+    text-align: right;
+    line-height: 1.4;
+}
+
+.confirm-v2-wallet-badge {
+    font-size: 11px;
+    color: #ffffff;
+    background: #1a1a1a;
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.confirm-v2-value {
+    font-size: 14px;
+    color: #888888;
+}
+
+.confirm-v2-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f5a623;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 24px;
+}
+
+.confirm-v2-btn-wrapper {
+    margin-top: auto;
+    padding: 16px 0 24px 0;
+}
+
+.confirm-v2-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    background: #1c1c1c;
+    color: #444444;
+    font-weight: 600;
+    font-size: 16px;
+    border: none;
+    cursor: not-allowed;
+    text-align: center;
+}
+
+/* --- Fee Selection Popup --- */
+.fee-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    z-index: 1000;
+    animation: fade-in 0.2s ease-out;
+}
+
+.fee-popup {
+    background: #151515;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    padding: 24px 20px 40px 20px;
+    animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.fee-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 0 4px;
+}
+
+.fee-popup-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+}
+
+.fee-popup-close {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.fee-popup-close:hover {
+    color: #ffffff;
+}
+
+.fee-popup-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fee-popup-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.fee-popup-option:hover {
+    border-color: #333;
+    background: #1e1e1e;
+}
+
+.fee-popup-option.active {
+    border-color: #00e5ff; /* Teal accent */
+    background: #1a1a1a;
+}
+
+.fee-popup-option-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fee-popup-option-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.fee-popup-option-desc {
+    font-size: 13px;
+    color: #888888;
+}
+
+.fee-popup-option-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.fee-popup-option.active .fee-popup-option-value {
+    color: #00e5ff;
+}
+
+@keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
 }

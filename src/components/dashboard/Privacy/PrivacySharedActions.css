@@ -1,0 +1,212 @@
+/* Shared Token List & Form Styles - Professional Standard */
+
+.token-list-view,
+.action-form-view {
+    padding-bottom: var(--space-xl);
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Token List */
+.token-items-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Tighter gap for professional look */
+}
+
+/* Match TokenItem styling from HomeView */
+.token-select-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    text-align: left;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+}
+
+.token-select-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.token-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.token-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.token-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.token-sym {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.token-name {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.token-balance-col {
+    text-align: right;
+}
+
+.token-bal-amount {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+/* Action Form Styles - Matching SendView */
+.form-info-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: var(--space-lg);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.info-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: var(--space-lg);
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding-left: 4px;
+}
+
+.amount-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Standardized Wallet Inputs */
+.input-field {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text-primary);
+    font-size: 15px;
+    transition: all 0.2s ease;
+}
+
+.input-field:focus {
+    border-color: var(--accent-primary);
+    outline: none;
+    background: var(--bg-card);
+}
+
+.input-field.amount {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    padding-right: 60px;
+}
+
+.max-btn-link {
+    position: absolute;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.max-btn-link:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Submit Button - Matching Design System */
+.btn-action-submit {
+    width: 100%;
+    padding: 16px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-top: var(--space-md);
+}
+
+.btn-action-submit:hover:not(:disabled) {
+    background: #f0f0f0;
+    opacity: 0.95;
+}
+
+.btn-action-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-action-submit:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+/* Action Specific Overrides */
+.action-form-view.shield .btn-action-submit {
+    background: var(--accent-primary);
+    color: #000;
+}
+
+.action-form-view.unshield .btn-action-submit {
+    background: var(--text-secondary);
+    color: var(--bg-primary);
+}

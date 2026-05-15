@@ -112,10 +112,17 @@
     font-weight: 500;
     color: var(--text-primary);
     transition: background 0.15s;
+    min-height: 50px;
 }
 
 .lock-form .btn-primary:hover:not(:disabled) {
     background: var(--bg-hover);
+    transform: none;
+}
+
+.lock-form .btn-primary:active:not(:disabled) {
+    opacity: 1;
+    transform: none;
 }
 
 .lock-form .btn-primary:disabled {
@@ -379,6 +386,3 @@
 .setup-form .btn {
     margin-top: auto;
 }
-
-/* Password Strength styles moved to App.css */
-/* Shake Animation moved to App.css */

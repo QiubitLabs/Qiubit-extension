@@ -1,1 +1,0 @@
-export { ReceiveView } from './ReceiveView';

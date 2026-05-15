@@ -50,3 +50,4 @@ SOCIAL_MEDIA_CAPTIONS.txt
 # Separate repositories (have their own git)
 repos/
 osm/
+webcli/

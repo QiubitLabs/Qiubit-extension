@@ -1,0 +1,128 @@
+/* Security.css - Shared styles for security components */
+
+/* Animated Icon Container */
+.security-icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.security-icon-pulse {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+/* Security Notice */
+.security-notice {
+    padding: 12px 14px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--text-tertiary);
+    margin-bottom: 20px;
+}
+
+.security-notice p {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
+    text-align: center;
+}
+
+/* Secret Display (Private Key / Mnemonic) */
+.secret-display {
+    padding: 16px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 16px;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+/* Secret Actions Row */
+.secret-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Secret Button Base */
+.secret-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.secret-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+.secret-btn:active {
+    transform: scale(0.98);
+}
+
+/* Toggle Button (Show/Hide) - 20% */
+.secret-btn-toggle {
+    flex: 0 0 20%;
+    color: var(--text-secondary);
+}
+
+.secret-btn-toggle:hover {
+    color: var(--text-primary);
+}
+
+/* Copy Button - 80% */
+.secret-btn-copy {
+    flex: 1;
+}
+
+.secret-btn-copy.copied {
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+}
+
+/* Lock Icon Circle */
+.lock-icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+}

@@ -1,0 +1,7 @@
+@import '../PrivacySharedActions.css';
+
+/* Unshield Specific Styles */
+.action-form-view.unshield .btn-action-submit {
+    background: var(--text-secondary);
+    color: var(--bg-primary);
+}

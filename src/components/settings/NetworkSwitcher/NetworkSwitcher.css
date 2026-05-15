@@ -1,57 +1,160 @@
-/* Network Switcher Styles - Minimalist Edition */
+/* 
+ * NetworkSwitcher.css
+ * Styles for the Network Switcher component and Wallet Rename feature.
+ */
+/* ===== Wallet Rename ===== */
+.wallet-switcher-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    border-radius: 50%;
+    /* Added based on context, standard avatar style */
+}
+
+.wallet-switcher-icon {
+    width: 100%;
+    height: 100%;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.wallet-switcher-edit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.wallet-switcher-avatar:hover .wallet-switcher-edit {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.wallet-switcher-avatar:hover .wallet-switcher-icon {
+    filter: brightness(0.6);
+}
+
+/* Mobile: Always show edit icon */
+@media (hover: none) {
+    .wallet-switcher-edit {
+        opacity: 0.8;
+        pointer-events: auto;
+    }
+}
+
+.rename-wallet-modal {
+    max-width: 320px;
+    width: 100%;
+}
+
+/* ===== Network Switcher UI ===== */
+.wallet-header {
+    padding: var(--space-xl);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-primary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* Border bottom optional */
+}
+
+.header-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: var(--space-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.header-icon-btn:hover {
+    background: var(--bg-hover);
+}
 
 .network-options {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-md);
 }
 
 .network-option {
     display: flex;
-    align-items: center;
-    gap: var(--space-lg);
+    align-items: flex-start;
+    gap: var(--space-md);
     padding: var(--space-lg);
-    background: transparent;
+    background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    cursor: pointer;
-    transition: background 0.2s ease;
+    color: var(--text-primary);
     text-align: left;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
 }
 
 .network-option:hover:not(:disabled) {
-    background: var(--bg-card);
+    background: var(--bg-hover);
+    border-color: var(--border-default);
+    /* Removed transform as requested */
 }
 
 .network-option.active {
-    background: var(--bg-card);
-    border-color: var(--text-primary);
+    background: rgba(0, 212, 255, 0.05);
+    border-color: var(--accent-primary);
 }
 
-.network-option:disabled {
+.network-option.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    filter: grayscale(1);
 }
 
 .network-option-indicator {
     width: 20px;
     height: 20px;
-    border: 1.5px solid var(--border-default);
     border-radius: 50%;
+    border: 2px solid var(--border-default);
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: 2px;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
 }
 
 .network-option.active .network-option-indicator {
-    border-color: var(--text-primary);
+    border-color: var(--accent-primary);
 }
 
 .network-option-dot {
     width: 10px;
     height: 10px;
-    background: var(--text-primary);
     border-radius: 50%;
+    background: var(--accent-primary);
 }
 
 .network-option-content {
@@ -59,82 +162,87 @@
 }
 
 .network-option-name {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    margin-bottom: 4px;
 }
 
 .network-option-desc {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary);
-    margin-top: 2px;
+    line-height: 1.4;
 }
 
-.network-soon-badge {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    padding: 1px 6px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    color: var(--text-tertiary);
-}
-
-/* Switching Animation Overlay - Simplified */
+/* Switching Animation Overlay */
 .network-switching-overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--bg-primary);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(13, 13, 13, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-    animation: simpleFade 1.5s ease-in-out forwards;
-}
-
-@keyframes simpleFade {
-    0% {
-        opacity: 0;
-    }
-
-    10% {
-        opacity: 1;
-    }
-
-    90% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0;
-    }
+    animation: fadeIn var(--transition-normal);
 }
 
 .network-switching-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-md);
+    justify-content: center;
+    text-align: center;
 }
 
 .network-switch-icon {
-    color: var(--text-primary);
-    animation: subtleRotate 1.5s infinite linear;
+    color: var(--accent-primary);
+    margin-bottom: var(--space-lg);
 }
 
-@keyframes subtleRotate {
-    from {
-        transform: rotate(0deg);
-    }
+.network-switch-arrow-1 {
+    animation: switchArrow1 1.5s infinite ease-in-out;
+    transform-origin: center;
+}
 
-    to {
-        transform: rotate(360deg);
-    }
+.network-switch-arrow-2 {
+    animation: switchArrow2 1.5s infinite ease-in-out;
+    transform-origin: center;
 }
 
 .network-switching-text {
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-primary);
+    animation: pulse 2s infinite;
+}
+
+@keyframes switchArrow1 {
+
+    0%,
+    100% {
+        transform: translateX(0);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translateX(4px);
+        opacity: 1;
+    }
+}
+
+@keyframes switchArrow2 {
+
+    0%,
+    100% {
+        transform: translateX(0);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translateX(-4px);
+        opacity: 1;
+    }
 }

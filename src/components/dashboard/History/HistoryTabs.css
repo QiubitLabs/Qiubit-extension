@@ -1,0 +1,52 @@
+/* 
+ * HistoryTabs.css
+ * Styles for transaction history tabs and badges.
+ */
+/* ===== History Tabs ===== */
+.history-tabs {
+    display: flex;
+    gap: var(--space-xs);
+    padding: var(--space-xs);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+}
+
+.history-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.history-tab:hover {
+    color: var(--text-primary);
+}
+
+.history-tab.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.history-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 600;
+}

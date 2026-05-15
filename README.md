@@ -7,12 +7,12 @@
 </div>
 
 ## Overview
-Qiubit Wallet is a secure, non-custodial cryptocurrency wallet extension for the Octra Network. It is designed to run as a browser extension (Chrome, Edge, Firefox, Brave) to provide a seamless and secure experience for managing your Octra assets.
+Qiubit Wallet is a secure, non-custodial cryptocurrency wallet extension for the Qiubit Network. It is designed to run as a browser extension (Chrome, Edge, Firefox, Brave) to provide a seamless and secure experience for managing your Qiubit assets.
 
 ## Features
 - **Non-Custodial**: You own your keys. Your private keys never leave your device.
 - **Secure Storage**: Advanced client-side encryption (AES-256-GCM) protecting your wallet data.
-- **Privacy First**: No tracking, no analytics, no external data collection. Direct communication with Octra RPC nodes.
+- **Privacy First**: No tracking, no analytics, no external data collection. Direct communication with Qiubit RPC nodes.
 - **Full Functionality**: Send and receive OCT, view transaction history, and manage multiple wallets.
 - **Modern UI**: Clean, responsive, and intuitive interface with dark mode support.
 
@@ -63,7 +63,7 @@ First, you need to build the project from source.
     - **Create New Wallet**: Follow the prompts to generate a new seed phrase. **Write this down safely!**
     - **Import Wallet**: Use an existing seed phrase or private key to restore your wallet.
 3.  **Dashboard**:
-    - View your balance in OCTRA.
+    - View your balance in QIUBIT.
     - Copy your wallet address.
     - Switch between different wallets if you have multiple.
 4.  **Send**: Click "Send", enter the recipient address and amount. Confirm the transaction details before signing.
@@ -104,7 +104,7 @@ If you are developing or contributing to the code:
 
 If you find this project helpful and want to support its development, you can send donations to:
 
-**Octra Address:**
+**Qiubit Address:**
 ```
 octHSp2A5VdWZYTCgts4voPPmdDSEwwKaqJzbxrFJeP3n1E
 ```
@@ -112,4 +112,4 @@ octHSp2A5VdWZYTCgts4voPPmdDSEwwKaqJzbxrFJeP3n1E
 Your support helps maintain and improve the Qiubit Wallet. Thank you!
 
 ## License
-Proprietary - All rights reserved
+Licensed under the MIT License. See [LICENSE](LICENSE) for more information.

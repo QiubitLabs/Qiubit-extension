@@ -1,0 +1,135 @@
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+}
+
+.address-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    padding: 16px 20px 32px;
+    z-index: 1001;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.drawer-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.drawer-close {
+    background: var(--bg-secondary);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.drawer-close:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+.drawer-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.address-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.address-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.network-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.address-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.address-card:hover {
+    border-color: var(--accent-color);
+    background: rgba(var(--accent-color-rgb), 0.05);
+}
+
+.address-card.disabled {
+    cursor: default;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    opacity: 0.6;
+}
+
+.address-text {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    word-break: break-all;
+    max-width: 85%;
+    line-height: 1.4;
+}
+
+.copy-indicator {
+    color: var(--text-tertiary);
+}
+
+.drawer-footer {
+    margin-top: 24px;
+}
+
+.mt-lg {
+    margin-top: 24px;
+}

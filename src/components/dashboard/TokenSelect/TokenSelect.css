@@ -14,10 +14,10 @@
 .token-select-item {
     display: flex;
     align-items: center;
-    padding: 14px 0;
+    padding: 10px 0;
     background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-subtle);
+    border: none !important;
+    box-shadow: none !important;
     border-radius: 0;
     cursor: pointer;
     transition: opacity 0.15s;
@@ -28,7 +28,7 @@
 }
 
 .token-select-item:last-child {
-    border-bottom: none;
+    /* No border to remove */
 }
 
 .token-select-item:hover {
