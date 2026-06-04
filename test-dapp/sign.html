@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Test — Octra Wallet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .nav a { color: #00D4FF; font-size: 12px; text-decoration: none; padding: 4px 10px; border: 1px solid #1e293b; border-radius: 6px; }
+  .nav a:hover { background: #1e293b; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .card p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; margin: 4px 4px 4px 0; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #00D4FF; color: #000; }
+  .btn-outline { background: transparent; color: #00D4FF; border: 1px solid #00D4FF; }
+  .btn-purple { background: transparent; color: #a78bfa; border: 1px solid #a78bfa; }
+  .btn-green { background: transparent; color: #4ade80; border: 1px solid #4ade80; }
+  .btn-danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
+  .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; margin-top: 12px; }
+  textarea { width: 100%; background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; color: #e2e8f0; font-family: monospace; font-size: 11px; padding: 10px; resize: vertical; min-height: 80px; }
+  .log { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; max-height: 180px; overflow-y: auto; margin-top: 12px; }
+  .log-line { padding: 2px 0; line-height: 1.6; }
+  .log-line.ok { color: #4ade80; }
+  .log-line.err { color: #f87171; }
+  .log-line.info { color: #94a3b8; }
+  .sig-box { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 10px; word-break: break-all; color: #a78bfa; margin-top: 10px; display: none; }
+  .full-col { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<h1>Signing Test</h1>
+<p class="subtitle">personal_sign · eth_sign · eth_signTypedData_v4 · SIWE (ERC-4361)</p>
+
+<nav class="nav">
+  <a href="index.html">← All Tests</a>
+  <a href="connect.html">Connect</a>
+  <a href="transaction.html">Transaction</a>
+  <a href="network.html">Network</a>
+  <a href="contract.html">Contract</a>
+</nav>
+
+<div class="grid">
+
+  <!-- personal_sign -->
+  <div class="card">
+    <h2>personal_sign</h2>
+    <p>Signs an arbitrary UTF-8 message prefixed with <code>\x19Ethereum Signed Message:</code>. Most common signing method used by login flows.</p>
+    <div class="label">Message</div>
+    <textarea id="personalSignMsg">Hello from Octra Wallet! Timestamp: {{ts}}</textarea>
+    <button class="btn btn-primary" onclick="doPersonalSign()">Sign Message</button>
+    <div class="log" id="personalSignLog"><div class="log-line info">Result will appear here…</div></div>
+    <div class="sig-box" id="personalSignSig"></div>
+  </div>
+
+  <!-- eth_sign -->
+  <div class="card">
+    <h2>eth_sign</h2>
+    <p>Signs a raw 32-byte hash directly — <strong>no prefix</strong>. Dangerous: only use when you know the exact bytes. Many wallets restrict this.</p>
+    <div class="label">Message (will be UTF-8 hex-encoded)</div>
+    <textarea id="ethSignMsg">Test raw sign — Octra</textarea>
+    <button class="btn btn-outline" onclick="doEthSign()">eth_sign</button>
+    <div class="log" id="ethSignLog"><div class="log-line info">Result will appear here…</div></div>
+    <div class="sig-box" id="ethSignSig"></div>
+  </div>
+
+  <!-- EIP-712 Mail -->
+  <div class="card">
+    <h2>eth_signTypedData_v4 — Mail</h2>
+    <p>Structured typed data signing (EIP-712). Shows human-readable domain and fields in the wallet approval UI.</p>
+    <div class="label">Typed Data (EIP-712 Mail)</div>
+    <textarea id="typedDataMail" style="min-height:120px;" readonly></textarea>
+    <button class="btn btn-purple" onclick="doTypedDataMail()">Sign Mail</button>
+    <div class="log" id="typedMailLog"><div class="log-line info">Result will appear here…</div></div>
+    <div class="sig-box" id="typedMailSig"></div>
+  </div>
+
+  <!-- EIP-712 Permit -->
+  <div class="card">
+    <h2>eth_signTypedData_v4 — ERC-20 Permit</h2>
+    <p>Used by Uniswap, Aave etc. to approve token spending without a separate transaction (gasless approvals).</p>
+    <div class="label">Permit TypedData</div>
+    <textarea id="typedDataPermit" style="min-height:120px;" readonly></textarea>
+    <button class="btn btn-purple" onclick="doTypedDataPermit()">Sign Permit</button>
+    <div class="log" id="typedPermitLog"><div class="log-line info">Result will appear here…</div></div>
+    <div class="sig-box" id="typedPermitSig"></div>
+  </div>
+
+  <!-- SIWE -->
+  <div class="card full-col">
+    <h2>Sign-In With Ethereum (ERC-4361 / SIWE)</h2>
+    <p>Standard login-with-wallet flow. The message below is a valid SIWE message. After signing, a backend would verify the signature against the address.</p>
+    <div class="label">SIWE Message</div>
+    <textarea id="siweMsg" style="min-height:140px;"></textarea>
+    <div style="margin-top:10px;">
+      <button class="btn btn-green" onclick="doSiweSign()">Sign SIWE Message</button>
+      <button class="btn btn-outline" onclick="refreshSiwe()">Refresh Nonce</button>
+    </div>
+    <div class="log" id="siweLog"><div class="log-line info">Result will appear here…</div></div>
+    <div class="sig-box" id="siweSig"></div>
+  </div>
+
+</div>
+
+<script>
+function ts() { return new Date().toTimeString().slice(0,8); }
+function nowTs() { return new Date().toISOString(); }
+function randHex(n) { return [...Array(n)].map(()=>Math.floor(Math.random()*16).toString(16)).join(''); }
+
+function log(id, msg, cls = 'info') {
+  const el = document.getElementById(id);
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = `[${ts()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function showSig(id, sig) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.textContent = sig;
+}
+
+function toHex(str) {
+  return '0x' + Array.from(new TextEncoder().encode(str)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function getAccount() {
+  if (!window.ethereum) throw new Error('window.ethereum not found. Connect wallet first.');
+  const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+  if (!accounts.length) {
+    const req = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    return req[0];
+  }
+  return accounts[0];
+}
+
+// personal_sign
+async function doPersonalSign() {
+  try {
+    const account = await getAccount();
+    const rawMsg = document.getElementById('personalSignMsg').value;
+    log('personalSignLog', `Signing as ${account}…`, 'info');
+    const sig = await window.ethereum.request({
+      method: 'personal_sign',
+      params: [toHex(rawMsg), account],
+    });
+    log('personalSignLog', `Signature OK (${sig.length} chars)`, 'ok');
+    showSig('personalSignSig', sig);
+  } catch (e) {
+    log('personalSignLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+// eth_sign
+async function doEthSign() {
+  try {
+    const account = await getAccount();
+    const rawMsg = document.getElementById('ethSignMsg').value;
+    log('ethSignLog', `eth_sign as ${account}…`, 'info');
+    const sig = await window.ethereum.request({
+      method: 'eth_sign',
+      params: [account, toHex(rawMsg)],
+    });
+    log('ethSignLog', `Signature OK (${sig.length} chars)`, 'ok');
+    showSig('ethSignSig', sig);
+  } catch (e) {
+    log('ethSignLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+// EIP-712 Mail typed data
+function buildMailTypedData(fromAddr) {
+  return {
+    domain: {
+      name: 'Ether Mail',
+      version: '1',
+      chainId: 11155111,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+    },
+    types: {
+      Person: [
+        { name: 'name', type: 'string' },
+        { name: 'wallet', type: 'address' },
+      ],
+      Mail: [
+        { name: 'from', type: 'Person' },
+        { name: 'to', type: 'Person' },
+        { name: 'contents', type: 'string' },
+      ],
+    },
+    primaryType: 'Mail',
+    message: {
+      from: { name: 'Alice', wallet: fromAddr || '0x0000000000000000000000000000000000000001' },
+      to: { name: 'Bob', wallet: '0x0000000000000000000000000000000000000002' },
+      contents: 'Hello Bob! Testing Octra Wallet EIP-712.',
+    },
+  };
+}
+
+// EIP-712 Permit typed data
+function buildPermitTypedData(fromAddr) {
+  const deadline = Math.floor(Date.now() / 1000) + 3600;
+  return {
+    domain: {
+      name: 'LINK Token',
+      version: '1',
+      chainId: 11155111,
+      verifyingContract: '0x779877A7B0D9E8603169DdbD7836e478b4624789',
+    },
+    types: {
+      Permit: [
+        { name: 'owner', type: 'address' },
+        { name: 'spender', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+      ],
+    },
+    primaryType: 'Permit',
+    message: {
+      owner: fromAddr || '0x0000000000000000000000000000000000000001',
+      spender: '0x0000000000000000000000000000000000000003',
+      value: '1000000000000000000',
+      nonce: '0',
+      deadline: String(deadline),
+    },
+  };
+}
+
+async function doTypedDataMail() {
+  try {
+    const account = await getAccount();
+    const data = buildMailTypedData(account);
+    document.getElementById('typedDataMail').value = JSON.stringify(data, null, 2);
+    log('typedMailLog', `Signing EIP-712 Mail as ${account}…`, 'info');
+    const sig = await window.ethereum.request({
+      method: 'eth_signTypedData_v4',
+      params: [account, JSON.stringify(data)],
+    });
+    log('typedMailLog', `Signature OK (${sig.length} chars)`, 'ok');
+    showSig('typedMailSig', sig);
+  } catch (e) {
+    log('typedMailLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+async function doTypedDataPermit() {
+  try {
+    const account = await getAccount();
+    const data = buildPermitTypedData(account);
+    document.getElementById('typedDataPermit').value = JSON.stringify(data, null, 2);
+    log('typedPermitLog', `Signing ERC-20 Permit as ${account}…`, 'info');
+    const sig = await window.ethereum.request({
+      method: 'eth_signTypedData_v4',
+      params: [account, JSON.stringify(data)],
+    });
+    log('typedPermitLog', `Signature OK (${sig.length} chars)`, 'ok');
+    showSig('typedPermitSig', sig);
+  } catch (e) {
+    log('typedPermitLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+// SIWE
+function buildSiweMessage(address, nonce) {
+  const domain = location.hostname || 'localhost';
+  const uri = location.href;
+  const issuedAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 24*60*60*1000).toISOString();
+  return `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+I accept the Terms of Service at ${uri}
+
+URI: ${uri}
+Version: 1
+Chain ID: 11155111
+Nonce: ${nonce}
+Issued At: ${issuedAt}
+Expiration Time: ${expiresAt}`;
+}
+
+function refreshSiwe() {
+  const addr = window.ethereum?.selectedAddress || '0x0000000000000000000000000000000000000001';
+  const nonce = randHex(8);
+  document.getElementById('siweMsg').value = buildSiweMessage(addr, nonce);
+}
+
+async function doSiweSign() {
+  try {
+    const account = await getAccount();
+    const msgEl = document.getElementById('siweMsg');
+    if (!msgEl.value.trim()) refreshSiwe();
+    const msg = msgEl.value;
+    log('siweLog', `Signing SIWE as ${account}…`, 'info');
+    const sig = await window.ethereum.request({
+      method: 'personal_sign',
+      params: [toHex(msg), account],
+    });
+    log('siweLog', `SIWE signature OK — backend would verify address=${account}`, 'ok');
+    showSig('siweSig', sig);
+  } catch (e) {
+    log('siweLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+// Init
+window.addEventListener('load', () => {
+  document.getElementById('personalSignMsg').value =
+    'Hello from Octra Wallet! Timestamp: ' + new Date().toISOString();
+
+  setTimeout(async () => {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(()=>[]);
+      const addr = accounts[0] || '0x0000000000000000000000000000000000000001';
+      document.getElementById('typedDataMail').value = JSON.stringify(buildMailTypedData(addr), null, 2);
+      document.getElementById('typedDataPermit').value = JSON.stringify(buildPermitTypedData(addr), null, 2);
+      refreshSiwe();
+    } else {
+      refreshSiwe();
+    }
+  }, 400);
+});
+</script>
+</body>
+</html>

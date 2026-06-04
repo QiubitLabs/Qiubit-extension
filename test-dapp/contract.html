@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contract Test — Octra Wallet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .nav a { color: #00D4FF; font-size: 12px; text-decoration: none; padding: 4px 10px; border: 1px solid #1e293b; border-radius: 6px; }
+  .nav a:hover { background: #1e293b; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 680px) { .grid { grid-column: 1fr; } }
+  .card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .card .contract-addr { font-family: monospace; font-size: 11px; color: #64748b; margin-bottom: 14px; }
+  .card p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; margin: 4px 4px 4px 0; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #00D4FF; color: #000; }
+  .btn-outline { background: transparent; color: #00D4FF; border: 1px solid #00D4FF; }
+  .btn-warn { background: transparent; color: #fbbf24; border: 1px solid #fbbf24; }
+  .btn-danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
+  .field-row { margin-bottom: 10px; }
+  .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
+  input[type=text], input[type=number] {
+    width: 100%; background: #0d1117; border: 1px solid #1e293b; border-radius: 8px;
+    color: #e2e8f0; font-family: monospace; font-size: 12px; padding: 8px 10px;
+  }
+  .log { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto; margin-top: 12px; }
+  .log-line { padding: 2px 0; line-height: 1.6; }
+  .log-line.ok { color: #4ade80; }
+  .log-line.err { color: #f87171; }
+  .log-line.info { color: #94a3b8; }
+  .value-display { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; color: #00D4FF; margin-bottom: 10px; text-align: center; }
+  .tag-read { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 8px; }
+  .tag-write { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 8px; }
+  .link-out { color: #00D4FF; text-decoration: none; font-size: 11px; }
+  .link-out:hover { text-decoration: underline; }
+  .full-col { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<h1>Contract Interaction Test</h1>
+<p class="subtitle">Sepolia LINK Token (ERC-20) — Read + Write via eth_call / eth_sendTransaction</p>
+
+<nav class="nav">
+  <a href="index.html">← All Tests</a>
+  <a href="connect.html">Connect</a>
+  <a href="sign.html">Sign</a>
+  <a href="transaction.html">Transaction</a>
+  <a href="network.html">Network</a>
+</nav>
+
+<div style="background:#111827;border:1px solid #1e293b;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+  <div>
+    <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Contract</div>
+    <div style="font-family:monospace;font-size:13px;color:#e2e8f0;">LINK Token (Sepolia)</div>
+  </div>
+  <div style="font-family:monospace;font-size:11px;color:#00D4FF;">0x779877A7B0D9E8603169DdbD7836e478b4624789</div>
+  <a href="https://sepolia.etherscan.io/token/0x779877A7B0D9E8603169DdbD7836e478b4624789" class="link-out" target="_blank" rel="noopener" style="margin-left:auto;">View on Etherscan →</a>
+</div>
+
+<div class="grid">
+
+  <!-- totalSupply -->
+  <div class="card">
+    <h2>totalSupply <span class="tag-read">READ</span></h2>
+    <p>Calls totalSupply() via eth_call. Returns the total LINK supply on Sepolia.</p>
+    <div class="value-display" id="totalSupplyVal">—</div>
+    <button class="btn btn-outline" onclick="getTotalSupply()">Call totalSupply()</button>
+    <div class="log" id="tsLog"><div class="log-line info">Click to fetch…</div></div>
+  </div>
+
+  <!-- balanceOf -->
+  <div class="card">
+    <h2>balanceOf <span class="tag-read">READ</span></h2>
+    <p>Calls balanceOf(address) via eth_call to get the LINK balance of any address.</p>
+    <div class="field-row">
+      <label class="label">Address</label>
+      <input type="text" id="balanceOfAddr" placeholder="0x…">
+    </div>
+    <button class="btn btn-outline" onclick="getBalanceOf()">balanceOf()</button>
+    <button class="btn btn-outline" onclick="fillMyAddr()">Use My Address</button>
+    <div class="value-display" id="balanceOfVal">—</div>
+    <div class="log" id="balLog"><div class="log-line info">Click to fetch…</div></div>
+  </div>
+
+  <!-- name / symbol / decimals -->
+  <div class="card">
+    <h2>Token Metadata <span class="tag-read">READ</span></h2>
+    <p>Reads name(), symbol(), and decimals() from the LINK contract on Sepolia.</p>
+    <button class="btn btn-outline" onclick="getTokenMeta()">Read All Metadata</button>
+    <div class="log" id="metaLog"><div class="log-line info">Click to fetch…</div></div>
+  </div>
+
+  <!-- allowance -->
+  <div class="card">
+    <h2>allowance <span class="tag-read">READ</span></h2>
+    <p>Calls allowance(owner, spender) — how much LINK a spender is allowed to transfer.</p>
+    <div class="field-row">
+      <label class="label">Owner</label>
+      <input type="text" id="allowanceOwner" placeholder="0x… (your address)">
+    </div>
+    <div class="field-row">
+      <label class="label">Spender</label>
+      <input type="text" id="allowanceSpender" value="0x000000000000000000000000000000000000dEaD">
+    </div>
+    <button class="btn btn-outline" onclick="getAllowance()">allowance()</button>
+    <button class="btn btn-outline" onclick="fillOwner()">Use My Address as Owner</button>
+    <div class="log" id="allowLog"><div class="log-line info">Click to fetch…</div></div>
+  </div>
+
+  <!-- approve -->
+  <div class="card">
+    <h2>approve <span class="tag-write">WRITE</span></h2>
+    <p>Sends an ERC-20 approve() transaction. Opens the wallet approval popup showing the approve calldata decoded.</p>
+    <div class="field-row">
+      <label class="label">Spender Address</label>
+      <input type="text" id="approveSpender" value="0x000000000000000000000000000000000000dEaD">
+    </div>
+    <div class="field-row">
+      <label class="label">Amount (LINK, whole tokens)</label>
+      <input type="number" id="approveAmount" value="100" min="0">
+    </div>
+    <button class="btn btn-warn" onclick="doApprove()">approve() — Opens Wallet Popup</button>
+    <div class="log" id="approveLog"><div class="log-line info">Click to send…</div></div>
+  </div>
+
+  <!-- transfer -->
+  <div class="card">
+    <h2>transfer <span class="tag-write">WRITE</span></h2>
+    <p>Sends an ERC-20 transfer() transaction. Opens the wallet approval popup.</p>
+    <div class="field-row">
+      <label class="label">Recipient</label>
+      <input type="text" id="transferTo" value="0x000000000000000000000000000000000000dEaD">
+    </div>
+    <div class="field-row">
+      <label class="label">Amount (LINK, whole tokens)</label>
+      <input type="number" id="transferAmount" value="1" min="0">
+    </div>
+    <button class="btn btn-danger" onclick="doTransfer()">transfer() — Opens Wallet Popup</button>
+    <div class="log" id="transferLog"><div class="log-line info">Click to send…</div></div>
+  </div>
+
+  <!-- Raw eth_call -->
+  <div class="card full-col">
+    <h2>Raw eth_call <span class="tag-read">READ</span></h2>
+    <p>Send a raw eth_call with any calldata selector to any contract. Useful for debugging ABI encoding.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field-row">
+        <label class="label">Contract Address</label>
+        <input type="text" id="rawCallTo" value="0x779877A7B0D9E8603169DdbD7836e478b4624789">
+      </div>
+      <div class="field-row">
+        <label class="label">Calldata (hex)</label>
+        <input type="text" id="rawCallData" value="0x18160ddd">
+      </div>
+    </div>
+    <button class="btn btn-outline" onclick="doRawCall()">eth_call</button>
+    <div class="log" id="rawCallLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+</div>
+
+<script>
+const LINK_ADDRESS = '0x779877A7B0D9E8603169DdbD7836e478b4624789';
+const DECIMALS = 18n;
+
+function ts() { return new Date().toTimeString().slice(0,8); }
+
+function log(id, msg, cls = 'info') {
+  const el = document.getElementById(id);
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = `[${ts()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function hexToUint(hex) { return BigInt(hex); }
+function formatToken(raw, decimals = 18n) {
+  const d = 10n ** decimals;
+  const whole = raw / d;
+  const frac = raw % d;
+  return whole.toLocaleString() + '.' + frac.toString().padStart(Number(decimals), '0').slice(0, 4);
+}
+
+// ABI encode helpers (manual, no library dependency)
+function encodeAddress(addr) {
+  return addr.slice(2).toLowerCase().padStart(64, '0');
+}
+function encodeUint256(n) {
+  return BigInt(n).toString(16).padStart(64, '0');
+}
+
+async function ethCall(to, data) {
+  return window.ethereum.request({
+    method: 'eth_call',
+    params: [{ to, data }, 'latest'],
+  });
+}
+
+async function getAccount() {
+  if (!window.ethereum) throw new Error('window.ethereum not found');
+  let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+  if (!accounts.length) accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  return accounts[0];
+}
+
+async function ensureSepolia() {
+  const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+  if (chainId !== '0xaa36a7') {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0xaa36a7' }],
+    });
+  }
+}
+
+async function getTotalSupply() {
+  try {
+    if (!window.ethereum) throw new Error('window.ethereum not found');
+    await ensureSepolia();
+    log('tsLog', 'Calling totalSupply()…', 'info');
+    const result = await ethCall(LINK_ADDRESS, '0x18160ddd');
+    const supply = hexToUint(result);
+    const formatted = formatToken(supply) + ' LINK';
+    document.getElementById('totalSupplyVal').textContent = formatted;
+    log('tsLog', `Total supply: ${formatted}`, 'ok');
+  } catch (e) {
+    log('tsLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getBalanceOf() {
+  try {
+    if (!window.ethereum) throw new Error('window.ethereum not found');
+    await ensureSepolia();
+    const addr = document.getElementById('balanceOfAddr').value.trim();
+    if (!addr) { log('balLog', 'Enter an address', 'err'); return; }
+    log('balLog', `Calling balanceOf(${addr.slice(0,10)}…)`, 'info');
+    const data = '0x70a08231' + encodeAddress(addr);
+    const result = await ethCall(LINK_ADDRESS, data);
+    const balance = hexToUint(result);
+    const formatted = formatToken(balance) + ' LINK';
+    document.getElementById('balanceOfVal').textContent = formatted;
+    log('balLog', `Balance: ${formatted}`, 'ok');
+  } catch (e) {
+    log('balLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillMyAddr() {
+  try {
+    const account = await getAccount();
+    document.getElementById('balanceOfAddr').value = account;
+  } catch (e) {
+    log('balLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillOwner() {
+  try {
+    const account = await getAccount();
+    document.getElementById('allowanceOwner').value = account;
+  } catch (e) {
+    log('allowLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getTokenMeta() {
+  try {
+    if (!window.ethereum) throw new Error('window.ethereum not found');
+    await ensureSepolia();
+    log('metaLog', 'Fetching name, symbol, decimals…', 'info');
+    const [nameRaw, symbolRaw, decimalsRaw] = await Promise.all([
+      ethCall(LINK_ADDRESS, '0x06fdde03'),
+      ethCall(LINK_ADDRESS, '0x95d89b41'),
+      ethCall(LINK_ADDRESS, '0x313ce567'),
+    ]);
+    // Decode ABI-encoded string: offset(32) + length(32) + data
+    const decodeStr = (hex) => {
+      const bytes = hex.slice(2);
+      const len = parseInt(bytes.slice(64, 128), 16);
+      const str = bytes.slice(128, 128 + len * 2);
+      return Array.from({ length: str.length / 2 }, (_, i) =>
+        String.fromCharCode(parseInt(str.slice(i * 2, i * 2 + 2), 16))
+      ).join('');
+    };
+    const name = decodeStr(nameRaw);
+    const symbol = decodeStr(symbolRaw);
+    const dec = parseInt(decimalsRaw, 16);
+    log('metaLog', `name: "${name}"`, 'ok');
+    log('metaLog', `symbol: "${symbol}"`, 'ok');
+    log('metaLog', `decimals: ${dec}`, 'ok');
+  } catch (e) {
+    log('metaLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getAllowance() {
+  try {
+    if (!window.ethereum) throw new Error('window.ethereum not found');
+    await ensureSepolia();
+    const owner = document.getElementById('allowanceOwner').value.trim();
+    const spender = document.getElementById('allowanceSpender').value.trim();
+    if (!owner || !spender) { log('allowLog', 'Enter owner and spender', 'err'); return; }
+    log('allowLog', 'Calling allowance(owner, spender)…', 'info');
+    const data = '0xdd62ed3e' + encodeAddress(owner) + encodeAddress(spender);
+    const result = await ethCall(LINK_ADDRESS, data);
+    const amount = hexToUint(result);
+    log('allowLog', `Allowance: ${formatToken(amount)} LINK`, 'ok');
+  } catch (e) {
+    log('allowLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function doApprove() {
+  try {
+    const account = await getAccount();
+    await ensureSepolia();
+    const spender = document.getElementById('approveSpender').value.trim();
+    const amt = BigInt(document.getElementById('approveAmount').value) * (10n ** 18n);
+    const data = '0x095ea7b3' + encodeAddress(spender) + encodeUint256(amt);
+    log('approveLog', `approve(${spender.slice(0,10)}…, ${formatToken(amt)} LINK)`, 'info');
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to: LINK_ADDRESS, data, value: '0x0' }],
+    });
+    log('approveLog', `TX: ${txHash}`, 'ok');
+  } catch (e) {
+    log('approveLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+async function doTransfer() {
+  try {
+    const account = await getAccount();
+    await ensureSepolia();
+    const to = document.getElementById('transferTo').value.trim();
+    const amt = BigInt(document.getElementById('transferAmount').value) * (10n ** 18n);
+    const data = '0xa9059cbb' + encodeAddress(to) + encodeUint256(amt);
+    log('transferLog', `transfer(${to.slice(0,10)}…, ${formatToken(amt)} LINK)`, 'info');
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to: LINK_ADDRESS, data, value: '0x0' }],
+    });
+    log('transferLog', `TX: ${txHash}`, 'ok');
+  } catch (e) {
+    log('transferLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+async function doRawCall() {
+  try {
+    if (!window.ethereum) throw new Error('window.ethereum not found');
+    const to = document.getElementById('rawCallTo').value.trim();
+    const data = document.getElementById('rawCallData').value.trim();
+    log('rawCallLog', `eth_call to=${to.slice(0,10)}… data=${data}`, 'info');
+    const result = await ethCall(to, data);
+    log('rawCallLog', `Result: ${result}`, 'ok');
+  } catch (e) {
+    log('rawCallLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+// Init
+window.addEventListener('load', () => {
+  setTimeout(async () => {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+      if (accounts[0]) {
+        document.getElementById('balanceOfAddr').value = accounts[0];
+        document.getElementById('allowanceOwner').value = accounts[0];
+      }
+    }
+  }, 400);
+});
+</script>
+</body>
+</html>

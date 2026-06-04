@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction Test — Octra Wallet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .nav a { color: #00D4FF; font-size: 12px; text-decoration: none; padding: 4px 10px; border: 1px solid #1e293b; border-radius: 6px; }
+  .nav a:hover { background: #1e293b; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .card p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; margin: 4px 4px 4px 0; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #00D4FF; color: #000; }
+  .btn-outline { background: transparent; color: #00D4FF; border: 1px solid #00D4FF; }
+  .btn-warn { background: transparent; color: #fbbf24; border: 1px solid #fbbf24; }
+  .btn-danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
+  .field-row { margin-bottom: 10px; }
+  .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
+  input[type=text], input[type=number], textarea {
+    width: 100%; background: #0d1117; border: 1px solid #1e293b; border-radius: 8px;
+    color: #e2e8f0; font-family: monospace; font-size: 12px; padding: 8px 10px;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .log { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; max-height: 180px; overflow-y: auto; margin-top: 12px; }
+  .log-line { padding: 2px 0; line-height: 1.6; }
+  .log-line.ok { color: #4ade80; }
+  .log-line.err { color: #f87171; }
+  .log-line.info { color: #94a3b8; }
+  .link-out { color: #00D4FF; text-decoration: none; font-size: 11px; }
+  .link-out:hover { text-decoration: underline; }
+  .full-col { grid-column: 1 / -1; }
+  .gas-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .gas-val { background: #0d1117; border: 1px solid #1e293b; border-radius: 6px; padding: 5px 10px; font-family: monospace; font-size: 12px; color: #a78bfa; flex: 1; }
+</style>
+</head>
+<body>
+
+<h1>Transaction Test</h1>
+<p class="subtitle">eth_sendTransaction · eth_estimateGas · eth_gasPrice — Sepolia testnet</p>
+
+<nav class="nav">
+  <a href="index.html">← All Tests</a>
+  <a href="connect.html">Connect</a>
+  <a href="sign.html">Sign</a>
+  <a href="network.html">Network</a>
+  <a href="contract.html">Contract</a>
+</nav>
+
+<div class="grid">
+
+  <!-- Send ETH -->
+  <div class="card">
+    <h2>Send ETH (Sepolia)</h2>
+    <p>Send a small amount of Sepolia ETH. Triggers the transaction approval popup in the wallet.</p>
+    <div class="field-row">
+      <label class="label">To Address</label>
+      <input type="text" id="sendTo" value="0x000000000000000000000000000000000000dEaD">
+    </div>
+    <div class="field-row">
+      <label class="label">Value (ETH)</label>
+      <input type="number" id="sendValue" value="0.0001" step="0.0001" min="0">
+    </div>
+    <button class="btn btn-primary" onclick="sendEth()">Send ETH</button>
+    <div class="log" id="sendEthLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Send with calldata -->
+  <div class="card">
+    <h2>Send with Calldata</h2>
+    <p>Send ETH with raw hex calldata. The wallet should decode and display the function selector.</p>
+    <div class="field-row">
+      <label class="label">To Address (contract)</label>
+      <input type="text" id="calldataTo" value="0x779877A7B0D9E8603169DdbD7836e478b4624789">
+    </div>
+    <div class="field-row">
+      <label class="label">Calldata (hex)</label>
+      <textarea id="calldataHex">0xa9059cbb000000000000000000000000000000000000000000000000000000000000dEaD0000000000000000000000000000000000000000000000000de0b6b3a7640000</textarea>
+    </div>
+    <button class="btn btn-warn" onclick="sendWithCalldata()">Send with Data</button>
+    <div class="log" id="calldataLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Gas estimation -->
+  <div class="card">
+    <h2>eth_estimateGas</h2>
+    <p>Estimate gas for a transaction without sending it.</p>
+    <div class="field-row">
+      <label class="label">To</label>
+      <input type="text" id="estimateTo" value="0x000000000000000000000000000000000000dEaD">
+    </div>
+    <div class="field-row">
+      <label class="label">Value (ETH)</label>
+      <input type="number" id="estimateValue" value="0.001" step="0.001">
+    </div>
+    <button class="btn btn-outline" onclick="estimateGas()">Estimate Gas</button>
+    <div class="gas-row">
+      <span class="label" style="margin:0;">Gas Units:</span>
+      <span class="gas-val" id="gasUnits">—</span>
+      <span class="label" style="margin:0;">Gas Price (Gwei):</span>
+      <span class="gas-val" id="gasPriceVal">—</span>
+    </div>
+    <div class="log" id="gasLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- eth_getBalance -->
+  <div class="card">
+    <h2>eth_getBalance</h2>
+    <p>Fetch ETH balance of an address on Sepolia.</p>
+    <div class="field-row">
+      <label class="label">Address</label>
+      <input type="text" id="balanceAddr" value="">
+    </div>
+    <button class="btn btn-outline" onclick="getBalance()">Get Balance</button>
+    <button class="btn btn-outline" onclick="fillMyAddress()">Use My Address</button>
+    <div class="log" id="balanceLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Nonce & Block -->
+  <div class="card">
+    <h2>Nonce & Block Info</h2>
+    <p>Fetch transaction count (nonce) and current block number.</p>
+    <button class="btn btn-outline" onclick="getTransactionCount()">eth_getTransactionCount (nonce)</button>
+    <button class="btn btn-outline" onclick="getBlockNumber()">eth_blockNumber</button>
+    <button class="btn btn-outline" onclick="getGasPrice()">eth_gasPrice</button>
+    <div class="log" id="nonceLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Recent TX -->
+  <div class="card">
+    <h2>Last Transaction Hash</h2>
+    <p>Track the most recently submitted transaction. Click the link to view it on Sepolia Etherscan.</p>
+    <div class="gas-val" id="lastTxHash" style="margin-bottom:10px;word-break:break-all;min-height:36px;">—</div>
+    <a id="lastTxLink" class="link-out" href="#" target="_blank" rel="noopener">View on Sepolia Etherscan →</a>
+    <div class="log" id="txTrackLog"><div class="log-line info">Submit a transaction to track it…</div></div>
+  </div>
+
+</div>
+
+<script>
+const SEPOLIA_EXPLORER = 'https://sepolia.etherscan.io/tx/';
+
+function ts() { return new Date().toTimeString().slice(0,8); }
+
+function log(id, msg, cls = 'info') {
+  const el = document.getElementById(id);
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = `[${ts()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setLastTx(hash) {
+  document.getElementById('lastTxHash').textContent = hash;
+  const link = document.getElementById('lastTxLink');
+  link.href = SEPOLIA_EXPLORER + hash;
+  log('txTrackLog', `TX: ${hash}`, 'ok');
+}
+
+function ethToWei(eth) {
+  return '0x' + BigInt(Math.round(parseFloat(eth) * 1e18)).toString(16);
+}
+
+async function getAccount() {
+  if (!window.ethereum) throw new Error('window.ethereum not found. Connect wallet first.');
+  let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+  if (!accounts.length) accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  return accounts[0];
+}
+
+async function ensureSepolia() {
+  const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+  if (chainId !== '0xaa36a7') {
+    log('sendEthLog', 'Switching to Sepolia…', 'info');
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0xaa36a7' }],
+    });
+  }
+}
+
+async function sendEth() {
+  const logId = 'sendEthLog';
+  try {
+    const account = await getAccount();
+    await ensureSepolia();
+    const to = document.getElementById('sendTo').value.trim();
+    const value = ethToWei(document.getElementById('sendValue').value);
+    log(logId, `Sending from ${account}…`, 'info');
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to, value, gas: '0x5208' }],
+    });
+    log(logId, `TX submitted: ${txHash}`, 'ok');
+    setLastTx(txHash);
+  } catch (e) {
+    log(logId, `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+async function sendWithCalldata() {
+  const logId = 'calldataLog';
+  try {
+    const account = await getAccount();
+    await ensureSepolia();
+    const to = document.getElementById('calldataTo').value.trim();
+    const data = document.getElementById('calldataHex').value.trim();
+    log(logId, `Sending with calldata selector ${data.slice(0,10)}…`, 'info');
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to, value: '0x0', data }],
+    });
+    log(logId, `TX submitted: ${txHash}`, 'ok');
+    setLastTx(txHash);
+  } catch (e) {
+    log(logId, `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+async function estimateGas() {
+  try {
+    const account = await getAccount();
+    const to = document.getElementById('estimateTo').value.trim();
+    const value = ethToWei(document.getElementById('estimateValue').value);
+    log('gasLog', 'Estimating gas…', 'info');
+    const [gasHex, gasPriceHex] = await Promise.all([
+      window.ethereum.request({ method: 'eth_estimateGas', params: [{ from: account, to, value }] }),
+      window.ethereum.request({ method: 'eth_gasPrice' }),
+    ]);
+    const gasUnits = parseInt(gasHex, 16);
+    const gasPriceGwei = (parseInt(gasPriceHex, 16) / 1e9).toFixed(3);
+    const costEth = (gasUnits * parseInt(gasPriceHex, 16) / 1e18).toFixed(8);
+    document.getElementById('gasUnits').textContent = gasUnits.toLocaleString();
+    document.getElementById('gasPriceVal').textContent = gasPriceGwei + ' Gwei';
+    log('gasLog', `Gas: ${gasUnits} units @ ${gasPriceGwei} Gwei = ${costEth} ETH`, 'ok');
+  } catch (e) {
+    log('gasLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getBalance() {
+  const logId = 'balanceLog';
+  try {
+    const addr = document.getElementById('balanceAddr').value.trim();
+    if (!addr) { log(logId, 'Enter an address first', 'err'); return; }
+    const balHex = await window.ethereum.request({
+      method: 'eth_getBalance',
+      params: [addr, 'latest'],
+    });
+    const ethBal = (parseInt(balHex, 16) / 1e18).toFixed(6);
+    log(logId, `Balance of ${addr.slice(0,10)}…: ${ethBal} ETH`, 'ok');
+  } catch (e) {
+    log(logId, `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillMyAddress() {
+  try {
+    const account = await getAccount();
+    document.getElementById('balanceAddr').value = account;
+  } catch (e) {
+    log('balanceLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getTransactionCount() {
+  const logId = 'nonceLog';
+  try {
+    const account = await getAccount();
+    const countHex = await window.ethereum.request({
+      method: 'eth_getTransactionCount',
+      params: [account, 'latest'],
+    });
+    log(logId, `Nonce for ${account.slice(0,10)}…: ${parseInt(countHex, 16)}`, 'ok');
+  } catch (e) {
+    log(logId, `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getBlockNumber() {
+  const logId = 'nonceLog';
+  try {
+    const bn = await window.ethereum.request({ method: 'eth_blockNumber' });
+    log(logId, `Latest block: ${parseInt(bn, 16).toLocaleString()} (${bn})`, 'ok');
+  } catch (e) {
+    log(logId, `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getGasPrice() {
+  const logId = 'nonceLog';
+  try {
+    const gp = await window.ethereum.request({ method: 'eth_gasPrice' });
+    log(logId, `Gas price: ${(parseInt(gp, 16) / 1e9).toFixed(3)} Gwei (${gp})`, 'ok');
+  } catch (e) {
+    log(logId, `Error: ${e.message}`, 'err');
+  }
+}
+
+// Init
+window.addEventListener('load', () => {
+  setTimeout(async () => {
+    if (window.ethereum) {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+      if (accounts[0]) {
+        document.getElementById('balanceAddr').value = accounts[0];
+      }
+    }
+  }, 400);
+});
+</script>
+</body>
+</html>

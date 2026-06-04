@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qiubit Wallet — Test DApp</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161e;
+    --border: rgba(255,255,255,0.07);
+    --accent: #00d4ff;
+    --accent2: #627eea;
+    --purple: #8b5cf6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --text: #f0f0f8;
+    --muted: #6b7280;
+    --mono: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* Layout */
+  .app { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .logo h1 { font-size: 18px; font-weight: 700; }
+  .logo span { font-size: 11px; color: var(--muted); margin-top: 1px; display: block; }
+  .badge { padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 500; border: 1px solid; }
+  .badge.connected { color: var(--green); border-color: var(--green); background: rgba(34,197,94,0.08); }
+  .badge.disconnected { color: var(--muted); border-color: var(--border); background: transparent; }
+
+  /* Wallet info bar */
+  .wallet-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .wallet-bar .field { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 120px; }
+  .wallet-bar .field label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .wallet-bar .field value { font-family: var(--mono); font-size: 12px; color: var(--accent); word-break: break-all; }
+
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; flex-wrap: wrap; }
+  .nav button { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-radius: 7px; font-size: 13px; font-weight: 500; transition: all 0.15s; white-space: nowrap; }
+  .nav button.active { background: var(--card); color: var(--text); }
+  .nav button:hover:not(.active) { color: var(--text); }
+
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .section.active.list { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-tag { font-size: 10px; padding: 2px 8px; border-radius: 100px; background: rgba(99,126,234,0.15); color: var(--accent2); border: 1px solid rgba(99,126,234,0.25); white-space: nowrap; }
+  .card-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* Inputs */
+  .input { width: 100%; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; font-family: inherit; }
+  .input:focus { border-color: var(--accent); }
+  .input::placeholder { color: var(--muted); }
+  textarea.input { resize: vertical; min-height: 72px; font-family: var(--mono); font-size: 11px; }
+
+  /* Buttons */
+  .btn { padding: 9px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover:not(:disabled) { background: #00c4ef; }
+  .btn-secondary { background: rgba(255,255,255,0.07); color: var(--text); }
+  .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+  .btn-danger { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.2); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Status */
+  .status { padding: 8px 12px; border-radius: 8px; font-size: 12px; display: flex; align-items: flex-start; gap: 8px; word-break: break-all; line-height: 1.5; }
+  .status.idle { background: transparent; color: var(--muted); border: 1px dashed var(--border); }
+  .status.loading { background: rgba(99,126,234,0.08); color: var(--accent2); border: 1px solid rgba(99,126,234,0.2); }
+  .status.success { background: rgba(34,197,94,0.08); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .status.error { background: rgba(239,68,68,0.08); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .status.warning { background: rgba(245,158,11,0.08); color: var(--orange); border: 1px solid rgba(245,158,11,0.2); }
+  .status .icon { flex-shrink: 0; margin-top: 1px; }
+  .status pre { font-family: var(--mono); font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+
+  /* Console log */
+  .console { background: #0c0c14; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 11px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .log-line { display: flex; gap: 8px; }
+  .log-line .ts { color: var(--muted); flex-shrink: 0; }
+  .log-line.info .msg { color: #a5b4fc; }
+  .log-line.success .msg { color: var(--green); }
+  .log-line.error .msg { color: var(--red); }
+  .log-line.warn .msg { color: var(--orange); }
+  .log-line.data .msg { color: #e2e8f0; }
+
+  /* Chain pill */
+  .chain-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 500; }
+  .chain-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.15); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <div>
+        <h1>Qiubit Wallet Test DApp</h1>
+        <span>Multi-Chain · EVM / Solana / Sui · EIP-1193 / EIP-6963</span>
+      </div>
+    </div>
+    <span id="badge" class="badge disconnected">Not Connected</span>
+  </div>
+
+  <!-- Wallet info bar -->
+  <div class="wallet-bar" id="walletBar" style="display:none">
+    <div class="field">
+      <label>EVM Address</label>
+      <value id="infoEvmAddress">—</value>
+    </div>
+    <div class="field">
+      <label>Octra Address</label>
+      <value id="infoOctraAddress">—</value>
+    </div>
+    <div class="field">
+      <label>Chain / Net</label>
+      <value id="infoNetwork">—</value>
+    </div>
+    <div class="field">
+      <label>EVM Balance</label>
+      <value id="infoBalance">—</value>
+    </div>
+    <div class="field">
+      <label>Solana Balance</label>
+      <value id="infoSolBalance">—</value>
+    </div>
+    <div class="field">
+      <label>Sui Balance</label>
+      <value id="infoSuiBalance">—</value>
+    </div>
+    <div class="field">
+      <label>Octra Balance</label>
+      <value id="infoOctraBalance">—</value>
+    </div>
+  </div>
+
+  <!-- Focused test pages -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <span style="font-size:11px;color:#6b7280;align-self:center;margin-right:2px;">Focused pages:</span>
+    <a href="connect.html" style="color:#00d4ff;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #1e293b;border-radius:6px;">Connect</a>
+    <a href="sign.html" style="color:#a78bfa;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #1e293b;border-radius:6px;">Sign</a>
+    <a href="transaction.html" style="color:#fbbf24;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #1e293b;border-radius:6px;">Transaction</a>
+    <a href="network.html" style="color:#4ade80;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #1e293b;border-radius:6px;">Network</a>
+    <a href="contract.html" style="color:#f87171;font-size:12px;text-decoration:none;padding:4px 10px;border:1px solid #1e293b;border-radius:6px;">Contract</a>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav">
+    <button class="active" onclick="showTab('connect')">Connect (EVM)</button>
+    <button onclick="showTab('network')">Network (EVM)</button>
+    <button onclick="showTab('sign')">Sign (EVM)</button>
+    <button onclick="showTab('tx')">Transaction (EVM)</button>
+    <button onclick="showTab('contract')">Contract (EVM)</button>
+    <button onclick="showTab('solana')">Solana</button>
+    <button onclick="showTab('sui')">Sui</button>
+    <button onclick="showTab('octra')">Octra SDK (Native)</button>
+    <button onclick="showTab('console')">Console Log</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 1 — Connect
+  ═══════════════════════════════════════════════════ -->
+  <div class="section active" id="tab-connect">
+
+    <!-- Connect -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Connect Wallet</span>
+        <span class="card-tag">eth_requestAccounts</span>
+      </div>
+      <p class="card-desc">Request account access. Opens the Octra Wallet popup for approval.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doConnect()">Connect</button>
+      </div>
+      <div id="st-connect" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Get Chain ID -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Get Chain ID</span>
+        <span class="card-tag">eth_chainId</span>
+      </div>
+      <p class="card-desc">Read the current chain ID from the wallet provider.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doChainId()">Get Chain ID</button>
+      </div>
+      <div id="st-chainId" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Get Accounts -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Get Accounts</span>
+        <span class="card-tag">eth_accounts</span>
+      </div>
+      <p class="card-desc">Get the list of permitted accounts (no popup if already connected).</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doGetAccounts()">Get Accounts</button>
+      </div>
+      <div id="st-accounts" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Get Permissions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Get Permissions</span>
+        <span class="card-tag">wallet_getPermissions</span>
+      </div>
+      <p class="card-desc">Read the current dApp permissions granted by the user.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doGetPermissions()">Get Permissions</button>
+      </div>
+      <div id="st-perms" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- EIP-6963 detection -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">EIP-6963 Discovery</span>
+        <span class="card-tag">eip6963:requestProvider</span>
+      </div>
+      <p class="card-desc">Modern wallet discovery. wagmi v2 / RainbowKit v2 use this instead of window.ethereum.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doEip6963()">Discover Providers</button>
+      </div>
+      <div id="st-6963" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Disconnect -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Disconnect</span>
+        <span class="card-tag">octra_disconnect</span>
+      </div>
+      <p class="card-desc">Clear the local connection state (provider events: accountsChanged, disconnect).</p>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="doDisconnect()">Disconnect</button>
+      </div>
+      <div id="st-disconnect" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 2 — Network
+  ═══════════════════════════════════════════════════ -->
+  <div class="section" id="tab-network">
+
+    <!-- Switch to Sepolia -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Switch to Sepolia</span>
+        <span class="card-tag">wallet_switchEthereumChain</span>
+      </div>
+      <p class="card-desc">Switch the active chain to Sepolia (chainId 0xaa36a7 = 11155111).</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doSwitchSepolia()">Switch to Sepolia</button>
+      </div>
+      <div id="st-switch-sepolia" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Switch to Ethereum Mainnet -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Switch to Ethereum</span>
+        <span class="card-tag">wallet_switchEthereumChain</span>
+      </div>
+      <p class="card-desc">Switch to Ethereum mainnet (chainId 0x1 = 1).</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doSwitchMainnet()">Switch to Mainnet</button>
+      </div>
+      <div id="st-switch-mainnet" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add Polygon -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add Polygon Network</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Adds the Polygon mainnet. Opens approval popup with network details for user review.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddPolygon()">Add Polygon</button>
+      </div>
+      <div id="st-add-polygon" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add BNB Chain -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add BNB Smart Chain</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Adds BNB Smart Chain (BSC) — chainId 0x38 = 56.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddBSC()">Add BSC</button>
+      </div>
+      <div id="st-add-bsc" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add Base -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add Base</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Adds Base mainnet (chainId 0x2105 = 8453). Coinbase L2 on Ethereum.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddBase()">Add Base</button>
+        <button class="btn btn-secondary" onclick="doSwitchChain('0x2105','st-add-base')">Switch to Base</button>
+      </div>
+      <div id="st-add-base" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add Arbitrum -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add Arbitrum One</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Adds Arbitrum One (chainId 0xa4b1 = 42161). Optimistic rollup L2.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddArbitrum()">Add Arbitrum</button>
+        <button class="btn btn-secondary" onclick="doSwitchChain('0xa4b1','st-add-arbitrum')">Switch to Arbitrum</button>
+      </div>
+      <div id="st-add-arbitrum" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add Optimism -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add Optimism</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Adds Optimism mainnet (chainId 0xa = 10). OP Stack L2.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddOptimism()">Add Optimism</button>
+        <button class="btn btn-secondary" onclick="doSwitchChain('0xa','st-add-optimism')">Switch to Optimism</button>
+      </div>
+      <div id="st-add-optimism" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add Avalanche -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Add Avalanche C-Chain</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Adds Avalanche C-Chain (chainId 0xa86a = 43114). AVAX EVM network.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddAvalanche()">Add Avalanche</button>
+        <button class="btn btn-secondary" onclick="doSwitchChain('0xa86a','st-add-avalanche')">Switch to Avalanche</button>
+      </div>
+      <div id="st-add-avalanche" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Add Custom Network -->
+    <div class="card" style="grid-column: 1 / -1">
+      <div class="card-header">
+        <span class="card-title">Add Custom Network</span>
+        <span class="card-tag">wallet_addEthereumChain</span>
+      </div>
+      <p class="card-desc">Fill in a custom EIP-3085 network and add it to the wallet.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <input class="input" id="custom-name" placeholder="Chain Name (e.g. Base)" value="Base">
+        <input class="input" id="custom-chainid" placeholder="Chain ID hex (e.g. 0x2105)" value="0x2105">
+        <input class="input" id="custom-symbol" placeholder="Symbol (e.g. ETH)" value="ETH">
+        <input class="input" id="custom-rpc" placeholder="RPC URL" value="https://mainnet.base.org">
+        <input class="input" id="custom-explorer" placeholder="Block Explorer URL" value="https://basescan.org" style="grid-column:1/-1">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doAddCustom()">Add Custom Network</button>
+      </div>
+      <div id="st-add-custom" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 3 — Sign
+  ═══════════════════════════════════════════════════ -->
+  <div class="section" id="tab-sign">
+
+    <!-- personal_sign -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Personal Sign</span>
+        <span class="card-tag">personal_sign</span>
+      </div>
+      <p class="card-desc">Sign a plain-text message. Used for login / authentication (SIWE, etc.).</p>
+      <input class="input" id="msg-personal" value="Hello from Octra Wallet Test DApp">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doPersonalSign()">Sign Message</button>
+      </div>
+      <div id="st-personal" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- eth_sign (legacy) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Legacy eth_sign</span>
+        <span class="card-tag">eth_sign</span>
+      </div>
+      <p class="card-desc">Legacy signing method. Params are (address, hex_message). Same EVM path as personal_sign.</p>
+      <input class="input" id="msg-ethsign" placeholder="Hex message" value="0x48656c6c6f2c20576f726c6421">
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doEthSign()">eth_sign</button>
+      </div>
+      <div id="st-ethsign" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- EIP-712 Simple -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">EIP-712 Typed Data</span>
+        <span class="card-tag">eth_signTypedData_v4</span>
+      </div>
+      <p class="card-desc">Structured data signing (Uniswap Permit2, OpenSea Seaport, SIWE). Human-readable in Rabby-style UI.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doSignTyped()">Sign Typed Data</button>
+        <button class="btn btn-secondary" onclick="doSignPermit()">Sign ERC-20 Permit</button>
+      </div>
+      <div id="st-typed" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- SIWE -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign-In With Ethereum</span>
+        <span class="card-tag">personal_sign · SIWE</span>
+      </div>
+      <p class="card-desc">ERC-4361: standard login message format used by most Web3 apps for authentication.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doSIWE()">Sign SIWE Message</button>
+      </div>
+      <div id="st-siwe" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 4 — Transaction
+  ═══════════════════════════════════════════════════ -->
+  <div class="section" id="tab-tx">
+
+    <!-- Send ETH -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Send ETH (Sepolia)</span>
+        <span class="card-tag">eth_sendTransaction</span>
+      </div>
+      <p class="card-desc">Send a small amount of Sepolia ETH to an address. Opens approval popup.</p>
+      <input class="input" id="tx-to" placeholder="To address" value="0x000000000000000000000000000000000000dead">
+      <input class="input" id="tx-value" placeholder="Value in ETH" value="0.0001">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doSendEth()">Send ETH</button>
+      </div>
+      <div id="st-send-eth" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Send ETH with Data -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Send with Data</span>
+        <span class="card-tag">eth_sendTransaction</span>
+      </div>
+      <p class="card-desc">Transaction with hex calldata. TxDecoder will attempt to decode the function selector.</p>
+      <input class="input" id="tx-data-to" placeholder="To address" value="0x779877A7B0D9E8603169DdbD7836e478b4624789">
+      <input class="input" id="tx-data" placeholder="Calldata (hex)" value="0xa9059cbb000000000000000000000000000000000000000000000000000000000000dead0000000000000000000000000000000000000000000000000000000000000001">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doSendWithData()">Send with Data</button>
+      </div>
+      <div id="st-send-data" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Estimate Gas -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Estimate Gas</span>
+        <span class="card-tag">eth_estimateGas</span>
+      </div>
+      <p class="card-desc">Estimate gas for a simple ETH transfer on Sepolia.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doEstimateGas()">Estimate Gas</button>
+      </div>
+      <div id="st-gas" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Gas Price -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Gas Price</span>
+        <span class="card-tag">eth_gasPrice</span>
+      </div>
+      <p class="card-desc">Get current gas price from the network via provider pass-through.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doGasPrice()">Get Gas Price</button>
+      </div>
+      <div id="st-gasprice" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 5 — Contract
+  ═══════════════════════════════════════════════════ -->
+  <div class="section list" id="tab-contract">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sepolia LINK Token</span>
+        <span class="card-tag">0x779877...4789</span>
+      </div>
+      <p class="card-desc" style="font-family:var(--mono); font-size:11px; color:var(--muted)">
+        Contract: 0x779877A7B0D9E8603169DdbD7836e478b4624789<br>
+        Network: Sepolia Testnet (Chain 11155111)
+      </p>
+    </div>
+
+    <!-- balanceOf (read) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Read: balanceOf</span>
+        <span class="card-tag">eth_call · view</span>
+      </div>
+      <p class="card-desc">Call <code>balanceOf(address)</code> on the Sepolia LINK contract. No gas, no popup.</p>
+      <input class="input" id="bal-addr" placeholder="Address to check balance" id="bal-addr">
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doBalanceOf()">Read Balance</button>
+      </div>
+      <div id="st-balance-of" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- totalSupply (read) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Read: totalSupply</span>
+        <span class="card-tag">eth_call · view</span>
+      </div>
+      <p class="card-desc">Call <code>totalSupply()</code> on the Sepolia LINK contract.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="doTotalSupply()">Read Total Supply</button>
+      </div>
+      <div id="st-supply" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- approve (write) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Write: approve</span>
+        <span class="card-tag">eth_sendTransaction · write</span>
+      </div>
+      <p class="card-desc">Call <code>approve(spender, amount)</code> on LINK token. Opens approval popup for ERC-20 approve.</p>
+      <input class="input" id="approve-spender" placeholder="Spender address" value="0x000000000000000000000000000000000000dead">
+      <input class="input" id="approve-amount" placeholder="Amount (in LINK units)" value="1000000000000000000">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doApprove()">Approve ERC-20</button>
+      </div>
+      <div id="st-approve" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- transfer (write) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Write: transfer</span>
+        <span class="card-tag">eth_sendTransaction · write</span>
+      </div>
+      <p class="card-desc">Call <code>transfer(to, amount)</code> — sends LINK tokens. Approval popup shows decoded function name.</p>
+      <input class="input" id="transfer-to" placeholder="Recipient" value="0x000000000000000000000000000000000000dead">
+      <input class="input" id="transfer-amount" placeholder="Amount (wei units)" value="1">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doTransfer()">Transfer LINK</button>
+      </div>
+      <div id="st-transfer" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB — Solana
+  ═══════════════════════════════════════════════════ -->
+  <div class="section" id="tab-solana">
+
+    <!-- Connect -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Connect Solana</span>
+        <span class="card-tag">solana_connect</span>
+      </div>
+      <p class="card-desc">Connect to the Solana wallet via <code>window.solana</code>. Returns public key on success.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="solConnect()">Connect</button>
+        <button class="btn btn-danger" onclick="solDisconnect()">Disconnect</button>
+      </div>
+      <div id="st-sol-connect" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Get Account -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Account Info</span>
+        <span class="card-tag">window.solana.publicKey</span>
+      </div>
+      <p class="card-desc">Read the connected Solana public key and connection state from the provider object.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="solGetAccount()">Get Account</button>
+      </div>
+      <div id="st-sol-account" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Sign Message -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign Message</span>
+        <span class="card-tag">solana_signMessage</span>
+      </div>
+      <p class="card-desc">Sign a UTF-8 message. Returns a base64-encoded Ed25519 signature.</p>
+      <input class="input" id="sol-msg" value="Hello from Qiubit Wallet — Solana">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="solSignMessage()">Sign Message</button>
+      </div>
+      <div id="st-sol-sign" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Sign Transaction -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign Transaction</span>
+        <span class="card-tag">solana_signTransaction</span>
+      </div>
+      <p class="card-desc">Sign a serialized Solana transaction (base64). Returns signed transaction bytes.</p>
+      <textarea class="input" id="sol-tx" placeholder="Base64 serialized transaction (optional mock)">AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDkK6o8PcCDi6yQ9M6IfxHPYLOdxVHhH2C+aQ5a7EKJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAO4y3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQIAAAQIAQIDBAQ=</textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="solSignTransaction()">Sign Transaction</button>
+      </div>
+      <div id="st-sol-tx" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Send Transaction -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Send Transaction</span>
+        <span class="card-tag">solana_sendTransaction</span>
+      </div>
+      <p class="card-desc">Sign and broadcast a Solana transaction. Returns transaction signature.</p>
+      <textarea class="input" id="sol-send-tx" placeholder="Base64 serialized transaction">AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDkK6o8PcCDi6yQ9M6IfxHPYLOdxVHhH2C+aQ5a7EKJQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAO4y3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQIAAAQIAQIDBAQ=</textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="solSendTransaction()">Send Transaction</button>
+      </div>
+      <div id="st-sol-send" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB — Sui
+  ═══════════════════════════════════════════════════ -->
+  <div class="section" id="tab-sui">
+
+    <!-- Connect -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Connect Sui</span>
+        <span class="card-tag">sui_connect</span>
+      </div>
+      <p class="card-desc">Connect to the Sui wallet via <code>window.sui</code>. Returns the active address on success.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="suiConnect()">Connect</button>
+        <button class="btn btn-danger" onclick="suiDisconnect()">Disconnect</button>
+      </div>
+      <div id="st-sui-connect" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Get Accounts -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Get Accounts</span>
+        <span class="card-tag">sui_getAccounts</span>
+      </div>
+      <p class="card-desc">Retrieve all Sui accounts from the wallet.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="suiGetAccounts()">Get Accounts</button>
+      </div>
+      <div id="st-sui-accounts" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Sign Message -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign Message</span>
+        <span class="card-tag">sui_signMessage</span>
+      </div>
+      <p class="card-desc">Sign an arbitrary message on Sui. Returns signature and public key.</p>
+      <input class="input" id="sui-msg" value="Hello from Qiubit Wallet — Sui">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="suiSignMessage()">Sign Message</button>
+      </div>
+      <div id="st-sui-sign" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Sign Transaction -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign Transaction</span>
+        <span class="card-tag">sui_signTransaction</span>
+      </div>
+      <p class="card-desc">Sign a Sui transaction block (base64 serialized). Returns signed bytes without broadcasting.</p>
+      <textarea class="input" id="sui-tx" placeholder="Base64 Sui transaction block">AAACAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="suiSignTransaction()">Sign Transaction</button>
+      </div>
+      <div id="st-sui-tx" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <!-- Sign & Execute -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign & Execute Transaction</span>
+        <span class="card-tag">sui_signAndExecuteTransaction</span>
+      </div>
+      <p class="card-desc">Sign and broadcast a Sui transaction. Returns transaction digest on success.</p>
+      <textarea class="input" id="sui-exec-tx" placeholder="Base64 Sui transaction block">AAACAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="suiSignAndExecute()">Sign &amp; Execute</button>
+      </div>
+      <div id="st-sui-exec" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 7 — Octra SDK Native
+  ═══════════════════════════════════════════════════ -->
+  <div class="section" id="tab-octra">
+
+    <!-- Connect / Disconnect -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Octra SDK Connect</span>
+        <span class="card-tag">sdk.connect</span>
+      </div>
+      <p class="card-desc">Establish session using the native Octra SDK connection wrapper.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="sdkConnect()">SDK Connect</button>
+        <button class="btn btn-danger" onclick="sdkDisconnect()">SDK Disconnect</button>
+      </div>
+      <div id="st-sdk-connect" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+    <!-- Get Public Key -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Get Public Key</span>
+        <span class="card-tag">sdk.getPublicKey</span>
+      </div>
+      <p class="card-desc">Retrieve the wallet's active OCS-01 cryptographic public key.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="sdkGetPublicKey()">Get Public Key</button>
+      </div>
+      <div id="st-sdk-pubkey" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+    <!-- Balances -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Query Balances</span>
+        <span class="card-tag">sdk.getBalance</span>
+      </div>
+      <p class="card-desc">Read standard account balance or get secure encrypted balance decrypted inside the enclave.</p>
+      <input class="input" id="sdk-bal-address" placeholder="Address (optional, defaults to active)">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="sdkGetBalance()">Get Balance</button>
+        <button class="btn btn-secondary" onclick="sdkGetEncryptedBalance()">Get Encrypted Balance</button>
+      </div>
+      <div id="st-sdk-balance" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+    <!-- Message Signing -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Sign Message</span>
+        <span class="card-tag">sdk.signMessage</span>
+      </div>
+      <p class="card-desc">Sign a plain text string or structured OCS-01 compliant payload.</p>
+      <textarea class="input" id="sdk-msg-content" placeholder="Enter message to sign">Hello from Octra Native SDK</textarea>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="sdkSignMessage()">Sign Message</button>
+      </div>
+      <div id="st-sdk-sign-msg" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+    <!-- Transaction Signing & Send -->
+    <div class="card" style="grid-column: 1 / -1">
+      <div class="card-header">
+        <span class="card-title">Native Transaction (OCS-01)</span>
+        <span class="card-tag">sdk.signTransaction / sendTransaction</span>
+      </div>
+      <p class="card-desc">Draft, sign, and broadcast native Octra transactions.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <input class="input" id="sdk-tx-to" placeholder="To address (oct...)" value="oct1qtr9877a7b0d9e8603169ddbd7836e478b4624789">
+        <input class="input" id="sdk-tx-amount" placeholder="Amount (in oct)" value="1.0">
+        <input class="input" id="sdk-tx-nonce" placeholder="Nonce (optional)">
+        <input class="input" id="sdk-tx-payload" placeholder="Payload / Memo (optional)" value="Native transfer via SDK">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="sdkSignTransaction()">Sign Transaction Only</button>
+        <button class="btn btn-secondary" onclick="sdkSendTransaction()">Sign & Send Transaction</button>
+      </div>
+      <div id="st-sdk-tx" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+    <!-- Smart Contracts -->
+    <div class="card" style="grid-column: 1 / -1">
+      <div class="card-header">
+        <span class="card-title">Smart Contract Calls</span>
+        <span class="card-tag">sdk.contractCall / contractView</span>
+      </div>
+      <p class="card-desc">Interact with native contracts using view (read) or call (write) methods.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <input class="input" id="sdk-contract-addr" placeholder="Contract Address (oct...)" value="oct1contract779877a7b0d9e8603169ddbd7836e478b462">
+        <input class="input" id="sdk-contract-method" placeholder="Method Name (e.g. transfer)" value="transfer">
+        <input class="input" id="sdk-contract-params" placeholder="Params array (JSON format, e.g. [&quot;oct1abc...&quot;, &quot;100&quot;])" value="[&quot;oct1deadbeef000000000000000000000000dead&quot;, &quot;10&quot;]" style="grid-column: 1 / -1">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="sdkContractCall()">Contract Call (Write)</button>
+        <button class="btn btn-secondary" onclick="sdkContractView()">Contract View (Read)</button>
+      </div>
+      <div id="st-sdk-contract" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+    <!-- Mempool Staging -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Mempool Queries</span>
+        <span class="card-tag">sdk.getPendingTransactions</span>
+      </div>
+      <p class="card-desc">Query pending unconfirmed transactions sitting in the wallet mempool.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="sdkGetPending()">Get Pending Transactions</button>
+      </div>
+      <div id="st-sdk-pending" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TAB 6 — Console
+  ═══════════════════════════════════════════════════ -->
+  <div class="section list" id="tab-console">
+    <div class="card" style="padding:0; overflow:hidden">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border)">
+        <span style="font-weight:600; font-size:13px">Event Log</span>
+        <button class="btn btn-secondary" style="padding:5px 10px; font-size:11px" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="console" id="console-log">
+        <div class="log-line info"><span class="ts">--:--:--</span><span class="msg">Console ready. Perform actions to see events.</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Provider State</span>
+        <span class="card-tag">window.ethereum</span>
+      </div>
+      <button class="btn btn-secondary" onclick="dumpProvider()">Dump Provider State</button>
+      <div id="st-provider" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Net Version</span>
+        <span class="card-tag">net_version</span>
+      </div>
+      <button class="btn btn-secondary" onclick="doNetVersion()">Get net_version</button>
+      <div id="st-netversion" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
+    </div>
+
+  </div>
+
+</div><!-- /app -->
+
+<script src="octra-sdk.js"></script>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const LINK_SEPOLIA = '0x779877A7B0D9E8603169DdbD7836e478b4624789';
+const ALCHEMY_KEY  = '_JJxS_y41ePFKtEgApvblp6sBbm_njoi';
+const SEPOLIA_RPC  = `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`;
+const ETH_RPC      = `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`;
+const SOLANA_RPC   = `https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`;
+const SUI_RPC      = `https://sui-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`;
+const SEPOLIA_ID   = '0xaa36a7'; // 11155111
+
+// Minimal ERC-20 ABI function selectors
+const SIG = {
+  balanceOf:   '0x70a08231',
+  totalSupply: '0x18160ddd',
+  approve:     '0x095ea7b3',
+  transfer:    '0xa9059cbb',
+};
+
+let account = null;
+let chainId = null;
+
+// ─── Tab navigation ───────────────────────────────────────────────────────────
+
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── Logging ──────────────────────────────────────────────────────────────────
+
+function log(msg, type = 'info') {
+  const el = document.getElementById('console-log');
+  const ts = new Date().toLocaleTimeString();
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.innerHTML = `<span class="ts">${ts}</span><span class="msg">${escHtml(msg)}</span>`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function clearLog() { document.getElementById('console-log').innerHTML = ''; }
+
+// ─── Status helpers ───────────────────────────────────────────────────────────
+
+function setStatus(id, type, msg, detail) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const icons = { idle:'○', loading:'', success:'✓', error:'✗', warning:'⚠' };
+  const icon = type === 'loading'
+    ? '<span class="spinner"></span>'
+    : `<span class="icon">${icons[type] || '○'}</span>`;
+  const detailHtml = detail ? `<pre>${escHtml(typeof detail === 'object' ? JSON.stringify(detail, null, 2) : detail)}</pre>` : '';
+  el.className = 'status ' + type;
+  el.innerHTML = `${icon}<div><span>${escHtml(msg)}</span>${detailHtml}</div>`;
+}
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
+function getProvider() {
+  if (window.ethereum) return window.ethereum;
+  if (window.octra) return window.octra;
+  return null;
+}
+
+function checkProvider() {
+  const p = getProvider();
+  if (!p) {
+    log('No wallet provider found. Install Octra Wallet extension.', 'error');
+    return null;
+  }
+  return p;
+}
+
+// ─── Wallet bar update ────────────────────────────────────────────────────────
+
+async function updateWalletBar() {
+  const p = getProvider();
+  if (!p || !account) {
+    document.getElementById('walletBar').style.display = 'none';
+    document.getElementById('badge').className = 'badge disconnected';
+    document.getElementById('badge').textContent = 'Not Connected';
+    return;
+  }
+
+  document.getElementById('walletBar').style.display = 'flex';
+  document.getElementById('badge').className = 'badge connected';
+  document.getElementById('badge').textContent = 'Connected';
+
+  // Address resolution
+  const evmAddr = p.evmAddress || (account.startsWith('0x') ? account : null);
+  const octraAddr = p.octraAddress || (account.startsWith('oct') ? account : null) || (window.octra?.selectedAddress?.startsWith('oct') ? window.octra.selectedAddress : null);
+
+  document.getElementById('infoEvmAddress').textContent = evmAddr ? truncAddr(evmAddr) : '—';
+  document.getElementById('infoOctraAddress').textContent = octraAddr ? truncAddr(octraAddr) : '—';
+
+  // Network resolution
+  const netNames = { 1: 'Ethereum', 11155111: 'Sepolia', 137: 'Polygon', 56: 'BSC', 8453: 'Base', 42161: 'Arbitrum One', 10: 'Optimism', 43114: 'Avalanche' };
+  const cid = chainId ? parseInt(chainId, 16) : (p.chainId ? Number(p.chainId) : null);
+  document.getElementById('infoNetwork').textContent = cid ? `${cid} (${netNames[cid] || 'EVM'})` : 'Octra Net';
+
+  // Fetch EVM balance via Alchemy (Sepolia)
+  if (evmAddr) {
+    try {
+      const rpc = cid === 1 ? ETH_RPC : SEPOLIA_RPC;
+      const res = await fetch(rpc, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getBalance', params: [evmAddr, 'latest'] })
+      });
+      const json = await res.json();
+      const eth = parseInt(json.result, 16) / 1e18;
+      const label = cid === 1 ? 'ETH' : 'ETH(Sepolia)';
+      document.getElementById('infoBalance').textContent = eth.toFixed(6) + ' ' + label;
+    } catch { document.getElementById('infoBalance').textContent = '—'; }
+  } else {
+    document.getElementById('infoBalance').textContent = '—';
+  }
+
+  // Fetch Solana balance via Alchemy (if solana is connected)
+  const solPubKey = window.solana?.publicKey?.toString?.() || window.solana?.publicKey;
+  if (solPubKey && typeof solPubKey === 'string' && solPubKey.length > 10) {
+    try {
+      const res = await fetch(SOLANA_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getBalance', params: [solPubKey] })
+      });
+      const json = await res.json();
+      if (json.result?.value !== undefined) {
+        const sol = json.result.value / 1e9;
+        document.getElementById('infoSolBalance').textContent = sol.toFixed(6) + ' SOL';
+      } else {
+        document.getElementById('infoSolBalance').textContent = '—';
+      }
+    } catch { document.getElementById('infoSolBalance').textContent = '—'; }
+  } else {
+    document.getElementById('infoSolBalance').textContent = '—';
+  }
+
+  // Fetch Sui balance via Alchemy (if sui is connected)
+  const suiAddr = window.sui?.address;
+  if (suiAddr) {
+    try {
+      const res = await fetch(SUI_RPC, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'suix_getBalance', params: [suiAddr, '0x2::sui::SUI'] })
+      });
+      const json = await res.json();
+      if (json.result?.totalBalance !== undefined) {
+        const sui = parseInt(json.result.totalBalance) / 1e9;
+        document.getElementById('infoSuiBalance').textContent = sui.toFixed(6) + ' SUI';
+      } else {
+        document.getElementById('infoSuiBalance').textContent = '—';
+      }
+    } catch { document.getElementById('infoSuiBalance').textContent = '—'; }
+  } else {
+    document.getElementById('infoSuiBalance').textContent = '—';
+  }
+
+  // Fetch Octra balance
+  if (octraAddr) {
+    try {
+      const octBal = await p.request({ method: 'getBalance', params: { address: octraAddr } });
+      document.getElementById('infoOctraBalance').textContent = octBal + ' OCT';
+    } catch {
+      document.getElementById('infoOctraBalance').textContent = '—';
+    }
+  } else {
+    document.getElementById('infoOctraBalance').textContent = '—';
+  }
+}
+
+function truncAddr(addr) {
+  return addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : '—';
+}
+
+// ─── Event listeners ──────────────────────────────────────────────────────────
+
+window.addEventListener('load', () => {
+  const p = getProvider();
+  if (!p) {
+    log('No wallet provider detected. Make sure Octra Wallet extension is installed and enabled.', 'error');
+    return;
+  }
+
+  log(`Provider found: isOctraWallet=${p.isOctraWallet}, isMetaMask=${p.isMetaMask}`, 'info');
+
+  p.on('accountsChanged', (accounts) => {
+    log(`accountsChanged: ${JSON.stringify(accounts)}`, 'success');
+    account = accounts[0] || null;
+    updateWalletBar();
+  });
+
+  p.on('chainChanged', (cid) => {
+    log(`chainChanged: ${cid} (${parseInt(cid, 16)})`, 'success');
+    chainId = cid;
+    updateWalletBar();
+  });
+
+  p.on('connect', (info) => {
+    log(`connect event: chainId=${info.chainId}`, 'success');
+  });
+
+  p.on('disconnect', (err) => {
+    log(`disconnect event: ${err?.message || JSON.stringify(err)}`, 'warn');
+    account = null;
+    updateWalletBar();
+  });
+
+  // EIP-6963 listener
+  window.addEventListener('eip6963:announceProvider', (e) => {
+    log(`EIP-6963 provider announced: ${e.detail.info.name} (${e.detail.info.rdns})`, 'success');
+  });
+
+  // Solana provider events
+  if (window.solana) {
+    window.solana.on('connect', (pk) => {
+      log(`solana:connect — publicKey: ${pk?.toString?.() || pk}`, 'success');
+      updateWalletBar();
+    });
+    window.solana.on('disconnect', () => {
+      log('solana:disconnect', 'warn');
+      updateWalletBar();
+    });
+  }
+
+  // Sui provider events
+  if (window.sui) {
+    window.sui.on?.('connect', (data) => {
+      log(`sui:connect — address: ${data?.address || JSON.stringify(data)}`, 'success');
+      updateWalletBar();
+    });
+    window.sui.on?.('disconnect', () => {
+      log('sui:disconnect', 'warn');
+      updateWalletBar();
+    });
+  }
+});
+
+// ─── Connect ──────────────────────────────────────────────────────────────────
+
+async function doConnect() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-connect', 'loading', 'Waiting for approval…');
+  log('Requesting eth_requestAccounts…');
+  try {
+    const accounts = await p.request({ method: 'eth_requestAccounts' });
+    account = accounts[0];
+    chainId = await p.request({ method: 'eth_chainId' });
+    setStatus('st-connect', 'success', `Connected: ${accounts.length} account(s)`, accounts);
+    log(`Connected: ${account}`, 'success');
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-connect', 'error', e.message || 'Rejected', e);
+    log(`Connect failed: ${e.message}`, 'error');
+  }
+}
+
+async function doChainId() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-chainId', 'loading', 'Fetching…');
+  try {
+    const cid = await p.request({ method: 'eth_chainId' });
+    chainId = cid;
+    const dec = parseInt(cid, 16);
+    setStatus('st-chainId', 'success', `Chain ID: ${dec} (hex: ${cid})`);
+    log(`eth_chainId = ${cid} (${dec})`, 'success');
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-chainId', 'error', e.message, e);
+  }
+}
+
+async function doGetAccounts() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-accounts', 'loading', 'Fetching…');
+  try {
+    const accounts = await p.request({ method: 'eth_accounts' });
+    setStatus('st-accounts', 'success', `${accounts.length} account(s)`, accounts);
+    log(`eth_accounts = ${JSON.stringify(accounts)}`, 'success');
+  } catch (e) {
+    setStatus('st-accounts', 'error', e.message, e);
+  }
+}
+
+async function doGetPermissions() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-perms', 'loading', 'Fetching…');
+  try {
+    const perms = await p.request({ method: 'wallet_getPermissions' });
+    setStatus('st-perms', 'success', `${perms.length} permission(s)`, perms);
+    log(`wallet_getPermissions = ${JSON.stringify(perms)}`, 'success');
+  } catch (e) {
+    setStatus('st-perms', 'error', e.message, e);
+  }
+}
+
+function doEip6963() {
+  setStatus('st-6963', 'loading', 'Dispatching eip6963:requestProvider…');
+  log('Dispatching eip6963:requestProvider…');
+  const found = [];
+  const handler = (e) => { found.push(e.detail.info.name); };
+  window.addEventListener('eip6963:announceProvider', handler);
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+  setTimeout(() => {
+    window.removeEventListener('eip6963:announceProvider', handler);
+    if (found.length > 0) {
+      setStatus('st-6963', 'success', `Found ${found.length} provider(s): ${found.join(', ')}`);
+      log(`EIP-6963: found ${found.join(', ')}`, 'success');
+    } else {
+      setStatus('st-6963', 'warning', 'No EIP-6963 providers responded.');
+      log('EIP-6963: no providers responded', 'warn');
+    }
+  }, 500);
+}
+
+async function doDisconnect() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-disconnect', 'loading', 'Disconnecting…');
+  try {
+    if (p.disconnect) await p.disconnect();
+    account = null; chainId = null;
+    setStatus('st-disconnect', 'success', 'Disconnected');
+    log('Disconnected', 'warn');
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-disconnect', 'error', e.message, e);
+  }
+}
+
+// ─── Network ──────────────────────────────────────────────────────────────────
+
+async function doSwitchSepolia() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-switch-sepolia', 'loading', 'Requesting chain switch…');
+  log('wallet_switchEthereumChain → Sepolia (0xaa36a7)');
+  try {
+    await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_ID }] });
+    chainId = SEPOLIA_ID;
+    setStatus('st-switch-sepolia', 'success', 'Switched to Sepolia (11155111)');
+    log('Switched to Sepolia', 'success');
+    updateWalletBar();
+  } catch (e) {
+    if (e.code === 4902) {
+      setStatus('st-switch-sepolia', 'warning', 'Chain not found (4902) — try Add Network first');
+    } else {
+      setStatus('st-switch-sepolia', 'error', e.message, e);
+    }
+    log(`switchChain failed: ${e.message}`, 'error');
+  }
+}
+
+async function doSwitchMainnet() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-switch-mainnet', 'loading', 'Requesting chain switch…');
+  log('wallet_switchEthereumChain → Ethereum (0x1)');
+  try {
+    await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+    chainId = '0x1';
+    setStatus('st-switch-mainnet', 'success', 'Switched to Ethereum Mainnet (1)');
+    log('Switched to Ethereum Mainnet', 'success');
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-switch-mainnet', 'error', e.message, e);
+    log(`switchChain failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddPolygon() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-add-polygon', 'loading', 'Opening approval popup…');
+  log('wallet_addEthereumChain → Polygon (0x89)');
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0x89',
+        chainName: 'Polygon',
+        nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+        rpcUrls: ['https://polygon-rpc.com'],
+        blockExplorerUrls: ['https://polygonscan.com']
+      }]
+    });
+    setStatus('st-add-polygon', 'success', 'Polygon network added (or already present)');
+    log('Polygon added', 'success');
+  } catch (e) {
+    setStatus('st-add-polygon', 'error', e.message, e);
+    log(`addPolygon failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddBSC() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-add-bsc', 'loading', 'Opening approval popup…');
+  log('wallet_addEthereumChain → BSC (0x38)');
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0x38',
+        chainName: 'BNB Smart Chain',
+        nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+        rpcUrls: ['https://bsc-dataseed.binance.org'],
+        blockExplorerUrls: ['https://bscscan.com']
+      }]
+    });
+    setStatus('st-add-bsc', 'success', 'BNB Smart Chain added');
+    log('BSC added', 'success');
+  } catch (e) {
+    setStatus('st-add-bsc', 'error', e.message, e);
+    log(`addBSC failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddCustom() {
+  const p = checkProvider(); if (!p) return;
+  const name     = document.getElementById('custom-name').value.trim();
+  const chainHex = document.getElementById('custom-chainid').value.trim();
+  const symbol   = document.getElementById('custom-symbol').value.trim();
+  const rpc      = document.getElementById('custom-rpc').value.trim();
+  const explorer = document.getElementById('custom-explorer').value.trim();
+  if (!name || !chainHex || !rpc) { setStatus('st-add-custom', 'error', 'Fill in Name, Chain ID, and RPC URL'); return; }
+  setStatus('st-add-custom', 'loading', `Adding ${name}…`);
+  log(`wallet_addEthereumChain → ${name} (${chainHex})`);
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: chainHex.startsWith('0x') ? chainHex : '0x' + parseInt(chainHex).toString(16),
+        chainName: name,
+        nativeCurrency: { name: symbol, symbol, decimals: 18 },
+        rpcUrls: [rpc],
+        blockExplorerUrls: explorer ? [explorer] : undefined
+      }]
+    });
+    setStatus('st-add-custom', 'success', `${name} added`);
+    log(`${name} added`, 'success');
+  } catch (e) {
+    setStatus('st-add-custom', 'error', e.message, e);
+    log(`addCustom failed: ${e.message}`, 'error');
+  }
+}
+
+// ─── Sign ─────────────────────────────────────────────────────────────────────
+
+async function doPersonalSign() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-personal', 'warning', 'Connect wallet first'); return; }
+  const msg = document.getElementById('msg-personal').value;
+  setStatus('st-personal', 'loading', 'Waiting for signature…');
+  log(`personal_sign: "${msg}"`);
+  try {
+    const sig = await p.request({ method: 'personal_sign', params: [msg, account] });
+    setStatus('st-personal', 'success', 'Signed!', sig);
+    log(`Signature: ${sig?.slice(0, 20)}…`, 'success');
+  } catch (e) {
+    setStatus('st-personal', 'error', e.message, e);
+    log(`personal_sign failed: ${e.message}`, 'error');
+  }
+}
+
+async function doEthSign() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-ethsign', 'warning', 'Connect wallet first'); return; }
+  const msg = document.getElementById('msg-ethsign').value;
+  setStatus('st-ethsign', 'loading', 'Waiting for signature…');
+  log(`eth_sign: address=${account}, msg=${msg}`);
+  try {
+    const sig = await p.request({ method: 'eth_sign', params: [account, msg] });
+    setStatus('st-ethsign', 'success', 'Signed!', sig);
+    log(`eth_sign signature: ${sig?.slice(0, 20)}…`, 'success');
+  } catch (e) {
+    setStatus('st-ethsign', 'error', e.message, e);
+    log(`eth_sign failed: ${e.message}`, 'error');
+  }
+}
+
+async function doSignTyped() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-typed', 'warning', 'Connect wallet first'); return; }
+  const typedData = {
+    domain: { name: 'Octra Test DApp', version: '1', chainId: 11155111, verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC' },
+    types: {
+      Person: [{ name: 'name', type: 'string' }, { name: 'wallet', type: 'address' }],
+      Mail: [{ name: 'from', type: 'Person' }, { name: 'to', type: 'Person' }, { name: 'contents', type: 'string' }]
+    },
+    message: {
+      from: { name: 'Alice', wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826' },
+      to: { name: 'Bob', wallet: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF' },
+      contents: 'Hello from Octra!'
+    }
+  };
+  setStatus('st-typed', 'loading', 'Waiting for EIP-712 signature…');
+  log('eth_signTypedData_v4: EIP-712 Mail type');
+  try {
+    const sig = await p.request({ method: 'eth_signTypedData_v4', params: [account, JSON.stringify(typedData)] });
+    setStatus('st-typed', 'success', 'Typed data signed!', sig);
+    log(`EIP-712 signature: ${sig?.slice(0, 20)}…`, 'success');
+  } catch (e) {
+    setStatus('st-typed', 'error', e.message, e);
+    log(`signTypedData failed: ${e.message}`, 'error');
+  }
+}
+
+async function doSignPermit() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-typed', 'warning', 'Connect wallet first'); return; }
+  const deadline = Math.floor(Date.now() / 1000) + 3600;
+  const permitData = {
+    domain: { name: 'Chainlink Token', version: '1', chainId: 11155111, verifyingContract: LINK_SEPOLIA },
+    types: {
+      Permit: [
+        { name: 'owner', type: 'address' },
+        { name: 'spender', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' }
+      ]
+    },
+    message: {
+      owner: account,
+      spender: '0x000000000000000000000000000000000000dead',
+      value: '1000000000000000000',
+      nonce: 0,
+      deadline
+    }
+  };
+  setStatus('st-typed', 'loading', 'Waiting for ERC-20 Permit signature…');
+  log('eth_signTypedData_v4: ERC-20 Permit for LINK');
+  try {
+    const sig = await p.request({ method: 'eth_signTypedData_v4', params: [account, JSON.stringify(permitData)] });
+    setStatus('st-typed', 'success', 'Permit signed!', sig);
+    log(`Permit signature: ${sig?.slice(0, 20)}…`, 'success');
+  } catch (e) {
+    setStatus('st-typed', 'error', e.message, e);
+    log(`signPermit failed: ${e.message}`, 'error');
+  }
+}
+
+async function doSIWE() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-siwe', 'warning', 'Connect wallet first'); return; }
+  const nonce = Math.random().toString(36).slice(2, 10);
+  const issuedAt = new Date().toISOString();
+  const siweMsg = [
+    `${window.location.hostname} wants you to sign in with your Ethereum account:`,
+    account,
+    '',
+    'Sign in to Octra Wallet Test DApp',
+    '',
+    `URI: ${window.location.origin}`,
+    'Version: 1',
+    'Chain ID: 11155111',
+    `Nonce: ${nonce}`,
+    `Issued At: ${issuedAt}`
+  ].join('\n');
+  setStatus('st-siwe', 'loading', 'Waiting for SIWE signature…');
+  log('personal_sign: SIWE message');
+  try {
+    const sig = await p.request({ method: 'personal_sign', params: [siweMsg, account] });
+    setStatus('st-siwe', 'success', 'SIWE signed! (verify server-side with ethers.verifyMessage)', sig);
+    log(`SIWE signed: ${sig?.slice(0, 20)}…`, 'success');
+  } catch (e) {
+    setStatus('st-siwe', 'error', e.message, e);
+    log(`SIWE failed: ${e.message}`, 'error');
+  }
+}
+
+// ─── Transaction ──────────────────────────────────────────────────────────────
+
+async function doSendEth() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-send-eth', 'warning', 'Connect wallet first'); return; }
+  const to = document.getElementById('tx-to').value.trim();
+  const ethVal = parseFloat(document.getElementById('tx-value').value) || 0.0001;
+  const valueHex = '0x' + Math.round(ethVal * 1e18).toString(16);
+  setStatus('st-send-eth', 'loading', `Sending ${ethVal} ETH…`);
+  log(`eth_sendTransaction: to=${to}, value=${ethVal} ETH`);
+  try {
+    const txHash = await p.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to, value: valueHex, chainId: SEPOLIA_ID }]
+    });
+    const explorerUrl = `https://sepolia.etherscan.io/tx/${txHash}`;
+    setStatus('st-send-eth', 'success', `Tx sent!`, { txHash, explorer: explorerUrl });
+    log(`Tx hash: ${txHash}`, 'success');
+  } catch (e) {
+    setStatus('st-send-eth', 'error', e.message, e);
+    log(`sendEth failed: ${e.message}`, 'error');
+  }
+}
+
+async function doSendWithData() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-send-data', 'warning', 'Connect wallet first'); return; }
+  const to   = document.getElementById('tx-data-to').value.trim();
+  const data = document.getElementById('tx-data').value.trim();
+  setStatus('st-send-data', 'loading', 'Sending transaction with calldata…');
+  log(`eth_sendTransaction: to=${to}, data=${data.slice(0,20)}…`);
+  try {
+    const txHash = await p.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to, data, chainId: SEPOLIA_ID }]
+    });
+    setStatus('st-send-data', 'success', `Tx sent!`, { txHash });
+    log(`Tx hash: ${txHash}`, 'success');
+  } catch (e) {
+    setStatus('st-send-data', 'error', e.message, e);
+    log(`sendWithData failed: ${e.message}`, 'error');
+  }
+}
+
+async function doEstimateGas() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-gas', 'loading', 'Estimating…');
+  try {
+    const gas = await p.request({
+      method: 'eth_estimateGas',
+      params: [{ from: account || '0x0000000000000000000000000000000000000001', to: '0x000000000000000000000000000000000000dead', value: '0x0' }]
+    });
+    setStatus('st-gas', 'success', `Gas estimate: ${parseInt(gas, 16)} units (${gas})`);
+    log(`eth_estimateGas = ${gas} (${parseInt(gas, 16)})`, 'success');
+  } catch (e) {
+    setStatus('st-gas', 'error', e.message, e);
+    log(`estimateGas failed: ${e.message}`, 'error');
+  }
+}
+
+async function doGasPrice() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-gasprice', 'loading', 'Fetching…');
+  try {
+    const price = await p.request({ method: 'eth_gasPrice' });
+    const gwei = (parseInt(price, 16) / 1e9).toFixed(4);
+    setStatus('st-gasprice', 'success', `Gas price: ${gwei} Gwei (${price})`);
+    log(`eth_gasPrice = ${gwei} Gwei`, 'success');
+  } catch (e) {
+    setStatus('st-gasprice', 'error', e.message, e);
+    log(`gasPrice failed: ${e.message}`, 'error');
+  }
+}
+
+// ─── Contract helpers ─────────────────────────────────────────────────────────
+
+function padAddress(addr) {
+  return '000000000000000000000000' + addr.replace('0x', '');
+}
+
+function padUint256(n) {
+  return BigInt(n).toString(16).padStart(64, '0');
+}
+
+async function ethCall(to, data, rpc) {
+  const endpoint = rpc || SEPOLIA_RPC;
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to, data }, 'latest'] })
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message);
+  return json.result;
+}
+
+// ─── Contract ─────────────────────────────────────────────────────────────────
+
+async function doBalanceOf() {
+  const addrEl = document.getElementById('bal-addr');
+  const addr = addrEl.value.trim() || account;
+  if (!addr) { setStatus('st-balance-of', 'warning', 'Enter an address or connect wallet'); return; }
+  setStatus('st-balance-of', 'loading', `Calling balanceOf(${addr.slice(0,8)}…)…`);
+  log(`eth_call: LINK.balanceOf(${addr})`);
+  try {
+    const result = await ethCall(LINK_SEPOLIA, SIG.balanceOf + padAddress(addr));
+    const balance = BigInt(result) / BigInt(1e18);
+    setStatus('st-balance-of', 'success', `Balance: ${balance} LINK (raw: ${result})`);
+    log(`balanceOf = ${balance} LINK`, 'success');
+  } catch (e) {
+    setStatus('st-balance-of', 'error', e.message, e);
+    log(`balanceOf failed: ${e.message}`, 'error');
+  }
+}
+
+async function doTotalSupply() {
+  setStatus('st-supply', 'loading', 'Calling totalSupply()…');
+  log('eth_call: LINK.totalSupply()');
+  try {
+    const result = await ethCall(LINK_SEPOLIA, SIG.totalSupply);
+    const supply = BigInt(result) / BigInt(1e18);
+    setStatus('st-supply', 'success', `Total supply: ${supply.toLocaleString()} LINK`);
+    log(`totalSupply = ${supply.toLocaleString()} LINK`, 'success');
+  } catch (e) {
+    setStatus('st-supply', 'error', e.message, e);
+    log(`totalSupply failed: ${e.message}`, 'error');
+  }
+}
+
+async function doApprove() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-approve', 'warning', 'Connect wallet first'); return; }
+  const spender = document.getElementById('approve-spender').value.trim();
+  const amount  = document.getElementById('approve-amount').value.trim();
+  const data = SIG.approve + padAddress(spender) + padUint256(amount);
+  setStatus('st-approve', 'loading', 'Approval popup opening…');
+  log(`eth_sendTransaction: LINK.approve(${spender.slice(0,8)}…, ${amount})`);
+  try {
+    const txHash = await p.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to: LINK_SEPOLIA, data, chainId: SEPOLIA_ID }]
+    });
+    setStatus('st-approve', 'success', 'Approve tx sent!', { txHash, explorer: `https://sepolia.etherscan.io/tx/${txHash}` });
+    log(`approve txHash: ${txHash}`, 'success');
+  } catch (e) {
+    setStatus('st-approve', 'error', e.message, e);
+    log(`approve failed: ${e.message}`, 'error');
+  }
+}
+
+async function doTransfer() {
+  const p = checkProvider(); if (!p) return;
+  if (!account) { setStatus('st-transfer', 'warning', 'Connect wallet first'); return; }
+  const to     = document.getElementById('transfer-to').value.trim();
+  const amount = document.getElementById('transfer-amount').value.trim();
+  const data = SIG.transfer + padAddress(to) + padUint256(amount);
+  setStatus('st-transfer', 'loading', 'Approval popup opening…');
+  log(`eth_sendTransaction: LINK.transfer(${to.slice(0,8)}…, ${amount})`);
+  try {
+    const txHash = await p.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to: LINK_SEPOLIA, data, chainId: SEPOLIA_ID }]
+    });
+    setStatus('st-transfer', 'success', 'Transfer tx sent!', { txHash, explorer: `https://sepolia.etherscan.io/tx/${txHash}` });
+    log(`transfer txHash: ${txHash}`, 'success');
+  } catch (e) {
+    setStatus('st-transfer', 'error', e.message, e);
+    log(`transfer failed: ${e.message}`, 'error');
+  }
+}
+
+// ─── Console tab ──────────────────────────────────────────────────────────────
+
+function dumpProvider() {
+  const p = getProvider();
+  if (!p) { setStatus('st-provider', 'error', 'No provider'); return; }
+  const state = {
+    isOctraWallet: p.isOctraWallet,
+    isMetaMask: p.isMetaMask,
+    isConnected: p.isConnected,
+    selectedAddress: p.selectedAddress,
+    chainId: p.chainId,
+    networkSetting: p.networkSetting,
+    version: p.version
+  };
+  setStatus('st-provider', 'success', 'Provider state:', state);
+  log('Provider state dumped', 'data');
+}
+
+async function doNetVersion() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-netversion', 'loading', 'Fetching…');
+  try {
+    const v = await p.request({ method: 'net_version' });
+    setStatus('st-netversion', 'success', `net_version = ${v}`);
+    log(`net_version = ${v}`, 'success');
+  } catch (e) {
+    setStatus('st-netversion', 'error', e.message, e);
+  }
+}
+
+// ─── Octra SDK Integration ────────────────────────────────────────────────────
+let sdk = null;
+
+// Initialize SDK on load
+window.addEventListener('load', () => {
+  try {
+    sdk = new window.OctraSDK();
+    log('OctraSDK initialized successfully', 'info');
+
+    // Attach event listeners
+    sdk.on('accountsChanged', (accounts) => {
+      log(`[SDK Event] accountsChanged: ${JSON.stringify(accounts)}`, 'success');
+      if (sdk.address) {
+        account = sdk.address;
+        updateWalletBar();
+      }
+    });
+
+    sdk.on('chainChanged', (chainId) => {
+      log(`[SDK Event] chainChanged: ${chainId}`, 'success');
+      updateWalletBar();
+    });
+
+    sdk.on('connect', (info) => {
+      log(`[SDK Event] connect: chainId=${info?.chainId}`, 'success');
+    });
+
+    sdk.on('disconnect', (err) => {
+      log(`[SDK Event] disconnect: ${err?.message || 'Session closed'}`, 'warn');
+      account = null;
+      updateWalletBar();
+    });
+  } catch (e) {
+    log('Failed to initialize OctraSDK: ' + e.message, 'error');
+  }
+});
+
+async function sdkConnect() {
+  if (!sdk) return;
+  setStatus('st-sdk-connect', 'loading', 'Connecting via SDK...');
+  log('Calling sdk.connect()...');
+  try {
+    const res = await sdk.connect({
+      appInfo: {
+        name: 'Octra DApp Testing Suite',
+        url: window.location.origin
+      }
+    });
+    setStatus('st-sdk-connect', 'success', 'Connected successfully', res);
+    log(`[SDK] Connected. Address: ${res.address}, ChainId: ${res.chainId}`, 'success');
+    account = res.address;
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-sdk-connect', 'error', e.message || 'Connection failed', e);
+    log(`[SDK] Connection failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkDisconnect() {
+  if (!sdk) return;
+  setStatus('st-sdk-connect', 'loading', 'Disconnecting via SDK...');
+  log('Calling sdk.disconnect()...');
+  try {
+    await sdk.disconnect();
+    setStatus('st-sdk-connect', 'success', 'Disconnected successfully');
+    log('[SDK] Disconnected session', 'warn');
+    account = null;
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-sdk-connect', 'error', e.message, e);
+    log(`[SDK] Disconnect error: ${e.message}`, 'error');
+  }
+}
+
+async function sdkGetPublicKey() {
+  if (!sdk) return;
+  setStatus('st-sdk-pubkey', 'loading', 'Fetching public key...');
+  log('Calling sdk.getPublicKey()...');
+  try {
+    const pubKey = await sdk.getPublicKey();
+    setStatus('st-sdk-pubkey', 'success', 'Public Key retrieved', pubKey);
+    log(`[SDK] Public Key: ${pubKey}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-pubkey', 'error', e.message, e);
+    log(`[SDK] Get Public Key failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkGetBalance() {
+  if (!sdk) return;
+  const address = document.getElementById('sdk-bal-address').value.trim();
+  setStatus('st-sdk-balance', 'loading', 'Fetching standard balance...');
+  log(`Calling sdk.getBalance(${address || 'active'})...`);
+  try {
+    const balance = await sdk.getBalance(address);
+    setStatus('st-sdk-balance', 'success', `Balance: ${balance}`, balance);
+    log(`[SDK] Balance standard response: ${JSON.stringify(balance)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-balance', 'error', e.message, e);
+    log(`[SDK] Get Balance failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkGetEncryptedBalance() {
+  if (!sdk) return;
+  setStatus('st-sdk-balance', 'loading', 'Decrypting balance inside wallet enclave...');
+  log('Calling sdk.getEncryptedBalance()...');
+  try {
+    const encBalance = await sdk.getEncryptedBalance();
+    setStatus('st-sdk-balance', 'success', 'Enclave-Decrypted Balance retrieved', encBalance);
+    log(`[SDK] Enclave decrypted balance: ${JSON.stringify(encBalance)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-balance', 'error', e.message, e);
+    log(`[SDK] Decrypt balance failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkSignMessage() {
+  if (!sdk) return;
+  const msg = document.getElementById('sdk-msg-content').value;
+  setStatus('st-sdk-sign-msg', 'loading', 'Requesting message signature...');
+  log(`Calling sdk.signMessage("${msg}")...`);
+  try {
+    const signature = await sdk.signMessage(msg);
+    setStatus('st-sdk-sign-msg', 'success', 'Message signed successfully', signature);
+    log(`[SDK] Message Signature: ${JSON.stringify(signature)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-sign-msg', 'error', e.message, e);
+    log(`[SDK] Sign message failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkSignTransaction() {
+  if (!sdk) return;
+  const to = document.getElementById('sdk-tx-to').value.trim();
+  const amount = document.getElementById('sdk-tx-amount').value.trim();
+  const nonce = document.getElementById('sdk-tx-nonce').value.trim();
+  const payload = document.getElementById('sdk-tx-payload').value.trim();
+
+  const txParams = {
+    to,
+    amount,
+    payload
+  };
+  if (nonce) txParams.nonce = parseInt(nonce);
+
+  setStatus('st-sdk-tx', 'loading', 'Requesting offline transaction signature...');
+  log(`Calling sdk.signTransaction(to=${to}, amount=${amount})...`);
+  try {
+    const signedTx = await sdk.signTransaction(txParams);
+    setStatus('st-sdk-tx', 'success', 'Transaction signed successfully', signedTx);
+    log(`[SDK] Signed Transaction: ${JSON.stringify(signedTx)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-tx', 'error', e.message, e);
+    log(`[SDK] Sign transaction failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkSendTransaction() {
+  if (!sdk) return;
+  const to = document.getElementById('sdk-tx-to').value.trim();
+  const amount = document.getElementById('sdk-tx-amount').value.trim();
+  const nonce = document.getElementById('sdk-tx-nonce').value.trim();
+  const payload = document.getElementById('sdk-tx-payload').value.trim();
+
+  const txParams = {
+    to,
+    amount,
+    payload
+  };
+  if (nonce) txParams.nonce = parseInt(nonce);
+
+  setStatus('st-sdk-tx', 'loading', 'Requesting sign & broadcast of transaction...');
+  log(`Calling sdk.sendTransaction(to=${to}, amount=${amount})...`);
+  try {
+    const txHash = await sdk.sendTransaction(txParams);
+    setStatus('st-sdk-tx', 'success', 'Transaction sent successfully', txHash);
+    log(`[SDK] Broadcasted Tx Hash: ${JSON.stringify(txHash)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-tx', 'error', e.message, e);
+    log(`[SDK] Send transaction failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkContractCall() {
+  if (!sdk) return;
+  const contract = document.getElementById('sdk-contract-addr').value.trim();
+  const method = document.getElementById('sdk-contract-method').value.trim();
+  const paramsStr = document.getElementById('sdk-contract-params').value.trim();
+
+  let params = [];
+  try {
+    params = JSON.parse(paramsStr);
+  } catch (err) {
+    setStatus('st-sdk-contract', 'error', 'Invalid params JSON structure');
+    return;
+  }
+
+  setStatus('st-sdk-contract', 'loading', 'Spawning approval for state-modifying contract call...');
+  log(`Calling sdk.contractCall(contract=${contract}, method=${method})...`);
+  try {
+    const result = await sdk.contractCall(contract, method, params);
+    setStatus('st-sdk-contract', 'success', 'Contract Call executed', result);
+    log(`[SDK] contractCall result: ${JSON.stringify(result)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-contract', 'error', e.message, e);
+    log(`[SDK] contractCall failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkContractView() {
+  if (!sdk) return;
+  const contract = document.getElementById('sdk-contract-addr').value.trim();
+  const method = document.getElementById('sdk-contract-method').value.trim();
+  const paramsStr = document.getElementById('sdk-contract-params').value.trim();
+
+  let params = [];
+  try {
+    params = JSON.parse(paramsStr);
+  } catch (err) {
+    setStatus('st-sdk-contract', 'error', 'Invalid params JSON structure');
+    return;
+  }
+
+  setStatus('st-sdk-contract', 'loading', 'Calling contract view...');
+  log(`Calling sdk.contractView(contract=${contract}, method=${method})...`);
+  try {
+    const result = await sdk.contractView(contract, method, params);
+    setStatus('st-sdk-contract', 'success', 'Contract view result retrieved', result);
+    log(`[SDK] contractView response: ${JSON.stringify(result)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-contract', 'error', e.message, e);
+    log(`[SDK] contractView failed: ${e.message}`, 'error');
+  }
+}
+
+async function sdkGetPending() {
+  if (!sdk) return;
+  setStatus('st-sdk-pending', 'loading', 'Fetching unconfirmed pending transactions...');
+  log('Calling sdk.getPendingTransactions()...');
+  try {
+    const pending = await sdk.getPendingTransactions();
+    setStatus('st-sdk-pending', 'success', `Found pending transactions`, pending);
+    log(`[SDK] Pending mempool dump: ${JSON.stringify(pending)}`, 'success');
+  } catch (e) {
+    setStatus('st-sdk-pending', 'error', e.message, e);
+    log(`[SDK] Get pending transactions failed: ${e.message}`, 'error');
+  }
+}
+
+// Pre-fill balance address when account is set
+document.getElementById('bal-addr').addEventListener('focus', function() {
+  if (!this.value && account) this.value = account;
+});
+
+// Pre-fill SDK balance address when account is set
+document.getElementById('sdk-bal-address').addEventListener('focus', function() {
+  if (!this.value && account) this.value = account;
+});
+
+// ─── Additional EVM Networks ──────────────────────────────────────────────────
+
+async function doSwitchChain(chainHex, statusId) {
+  const p = checkProvider(); if (!p) return;
+  setStatus(statusId, 'loading', `Switching to ${chainHex}…`);
+  log(`wallet_switchEthereumChain → ${chainHex}`);
+  try {
+    await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainHex }] });
+    chainId = chainHex;
+    setStatus(statusId, 'success', `Switched to chain ${parseInt(chainHex, 16)} (${chainHex})`);
+    log(`Switched to ${chainHex}`, 'success');
+    updateWalletBar();
+  } catch (e) {
+    if (e.code === 4902) {
+      setStatus(statusId, 'warning', 'Chain not found (4902) — add it first');
+    } else {
+      setStatus(statusId, 'error', e.message, e);
+    }
+    log(`switchChain failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddBase() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-add-base', 'loading', 'Adding Base…');
+  log('wallet_addEthereumChain → Base (0x2105)');
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0x2105',
+        chainName: 'Base',
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: ['https://mainnet.base.org'],
+        blockExplorerUrls: ['https://basescan.org']
+      }]
+    });
+    setStatus('st-add-base', 'success', 'Base added');
+    log('Base added', 'success');
+  } catch (e) {
+    setStatus('st-add-base', 'error', e.message, e);
+    log(`addBase failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddArbitrum() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-add-arbitrum', 'loading', 'Adding Arbitrum One…');
+  log('wallet_addEthereumChain → Arbitrum One (0xa4b1)');
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0xa4b1',
+        chainName: 'Arbitrum One',
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+        blockExplorerUrls: ['https://arbiscan.io']
+      }]
+    });
+    setStatus('st-add-arbitrum', 'success', 'Arbitrum One added');
+    log('Arbitrum One added', 'success');
+  } catch (e) {
+    setStatus('st-add-arbitrum', 'error', e.message, e);
+    log(`addArbitrum failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddOptimism() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-add-optimism', 'loading', 'Adding Optimism…');
+  log('wallet_addEthereumChain → Optimism (0xa)');
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0xa',
+        chainName: 'Optimism',
+        nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+        rpcUrls: ['https://mainnet.optimism.io'],
+        blockExplorerUrls: ['https://optimistic.etherscan.io']
+      }]
+    });
+    setStatus('st-add-optimism', 'success', 'Optimism added');
+    log('Optimism added', 'success');
+  } catch (e) {
+    setStatus('st-add-optimism', 'error', e.message, e);
+    log(`addOptimism failed: ${e.message}`, 'error');
+  }
+}
+
+async function doAddAvalanche() {
+  const p = checkProvider(); if (!p) return;
+  setStatus('st-add-avalanche', 'loading', 'Adding Avalanche C-Chain…');
+  log('wallet_addEthereumChain → Avalanche C-Chain (0xa86a)');
+  try {
+    await p.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0xa86a',
+        chainName: 'Avalanche C-Chain',
+        nativeCurrency: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
+        rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
+        blockExplorerUrls: ['https://snowtrace.io']
+      }]
+    });
+    setStatus('st-add-avalanche', 'success', 'Avalanche C-Chain added');
+    log('Avalanche C-Chain added', 'success');
+  } catch (e) {
+    setStatus('st-add-avalanche', 'error', e.message, e);
+    log(`addAvalanche failed: ${e.message}`, 'error');
+  }
+}
+
+// ─── Solana ───────────────────────────────────────────────────────────────────
+
+function getSolana() {
+  if (!window.solana) {
+    log('window.solana not found. Make sure Qiubit Wallet is installed.', 'error');
+    return null;
+  }
+  return window.solana;
+}
+
+async function solConnect() {
+  const sol = getSolana(); if (!sol) return;
+  setStatus('st-sol-connect', 'loading', 'Waiting for Solana approval…');
+  log('solana.connect()');
+  try {
+    const res = await sol.connect();
+    const pk = res.publicKey?.toString() || sol.publicKey?.toString() || JSON.stringify(res);
+    setStatus('st-sol-connect', 'success', `Connected: ${pk}`, { publicKey: pk });
+    log(`Solana connected: ${pk}`, 'success');
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-sol-connect', 'error', e.message, e);
+    log(`solana.connect failed: ${e.message}`, 'error');
+  }
+}
+
+async function solDisconnect() {
+  const sol = getSolana(); if (!sol) return;
+  setStatus('st-sol-connect', 'loading', 'Disconnecting…');
+  log('solana.disconnect()');
+  try {
+    await sol.disconnect();
+    setStatus('st-sol-connect', 'success', 'Disconnected from Solana');
+    log('Solana disconnected', 'warn');
+  } catch (e) {
+    setStatus('st-sol-connect', 'error', e.message, e);
+    log(`solana.disconnect failed: ${e.message}`, 'error');
+  }
+}
+
+function solGetAccount() {
+  const sol = getSolana(); if (!sol) return;
+  const pk = sol.publicKey?.toString() || null;
+  if (pk) {
+    setStatus('st-sol-account', 'success', `Public Key: ${pk}`, { publicKey: pk, isConnected: sol.isConnected });
+    log(`Solana account: ${pk}`, 'success');
+  } else {
+    setStatus('st-sol-account', 'warning', 'Not connected — call Connect first');
+    log('Solana: no publicKey (not connected)', 'warn');
+  }
+}
+
+async function solSignMessage() {
+  const sol = getSolana(); if (!sol) return;
+  if (!sol.isConnected) { setStatus('st-sol-sign', 'warning', 'Connect Solana wallet first'); return; }
+  const msg = document.getElementById('sol-msg').value;
+  const encoded = new TextEncoder().encode(msg);
+  setStatus('st-sol-sign', 'loading', 'Waiting for Solana signature…');
+  log(`solana.signMessage("${msg}")`);
+  try {
+    const res = await sol.signMessage(encoded, 'utf8');
+    const sigB64 = res.signature
+      ? btoa(String.fromCharCode(...res.signature))
+      : JSON.stringify(res);
+    setStatus('st-sol-sign', 'success', 'Signed!', { signature: sigB64 });
+    log(`Solana signature: ${sigB64.slice(0, 30)}…`, 'success');
+  } catch (e) {
+    setStatus('st-sol-sign', 'error', e.message, e);
+    log(`solana.signMessage failed: ${e.message}`, 'error');
+  }
+}
+
+async function solSignTransaction() {
+  const sol = getSolana(); if (!sol) return;
+  if (!sol.isConnected) { setStatus('st-sol-tx', 'warning', 'Connect Solana wallet first'); return; }
+  const txB64 = document.getElementById('sol-tx').value.trim();
+  setStatus('st-sol-tx', 'loading', 'Waiting for Solana transaction signature…');
+  log('solana.signTransaction(serializedTx)');
+  try {
+    const res = await sol.signTransaction(txB64);
+    setStatus('st-sol-tx', 'success', 'Transaction signed!', res);
+    log('Solana transaction signed', 'success');
+  } catch (e) {
+    setStatus('st-sol-tx', 'error', e.message, e);
+    log(`solana.signTransaction failed: ${e.message}`, 'error');
+  }
+}
+
+async function solSendTransaction() {
+  const sol = getSolana(); if (!sol) return;
+  if (!sol.isConnected) { setStatus('st-sol-send', 'warning', 'Connect Solana wallet first'); return; }
+  const txB64 = document.getElementById('sol-send-tx').value.trim();
+  setStatus('st-sol-send', 'loading', 'Sending Solana transaction…');
+  log('solana.sendTransaction(serializedTx)');
+  try {
+    const sig = await sol.sendTransaction(txB64, {});
+    setStatus('st-sol-send', 'success', 'Transaction sent!', { signature: sig });
+    log(`Solana tx signature: ${sig}`, 'success');
+  } catch (e) {
+    setStatus('st-sol-send', 'error', e.message, e);
+    log(`solana.sendTransaction failed: ${e.message}`, 'error');
+  }
+}
+
+// ─── Sui ──────────────────────────────────────────────────────────────────────
+
+function getSui() {
+  if (!window.sui) {
+    log('window.sui not found. Make sure Qiubit Wallet is installed.', 'error');
+    return null;
+  }
+  return window.sui;
+}
+
+async function suiConnect() {
+  const sui = getSui(); if (!sui) return;
+  setStatus('st-sui-connect', 'loading', 'Waiting for Sui approval…');
+  log('sui.connect()');
+  try {
+    const res = await sui.connect();
+    const addr = res.address || sui.address || JSON.stringify(res);
+    setStatus('st-sui-connect', 'success', `Connected: ${addr}`, { address: addr });
+    log(`Sui connected: ${addr}`, 'success');
+    updateWalletBar();
+  } catch (e) {
+    setStatus('st-sui-connect', 'error', e.message, e);
+    log(`sui.connect failed: ${e.message}`, 'error');
+  }
+}
+
+async function suiDisconnect() {
+  const sui = getSui(); if (!sui) return;
+  setStatus('st-sui-connect', 'loading', 'Disconnecting…');
+  log('sui.disconnect()');
+  try {
+    await sui.disconnect();
+    setStatus('st-sui-connect', 'success', 'Disconnected from Sui');
+    log('Sui disconnected', 'warn');
+  } catch (e) {
+    setStatus('st-sui-connect', 'error', e.message, e);
+    log(`sui.disconnect failed: ${e.message}`, 'error');
+  }
+}
+
+async function suiGetAccounts() {
+  const sui = getSui(); if (!sui) return;
+  setStatus('st-sui-accounts', 'loading', 'Fetching Sui accounts…');
+  log('sui.getAccounts()');
+  try {
+    const accounts = await sui.getAccounts();
+    setStatus('st-sui-accounts', 'success', `${accounts.length} account(s)`, accounts);
+    log(`Sui accounts: ${JSON.stringify(accounts)}`, 'success');
+  } catch (e) {
+    setStatus('st-sui-accounts', 'error', e.message, e);
+    log(`sui.getAccounts failed: ${e.message}`, 'error');
+  }
+}
+
+async function suiSignMessage() {
+  const sui = getSui(); if (!sui) return;
+  if (!sui.isConnected) { setStatus('st-sui-sign', 'warning', 'Connect Sui wallet first'); return; }
+  const msg = document.getElementById('sui-msg').value;
+  const encoded = new TextEncoder().encode(msg);
+  setStatus('st-sui-sign', 'loading', 'Waiting for Sui signature…');
+  log(`sui.signMessage("${msg}")`);
+  try {
+    const res = await sui.signMessage({ message: encoded });
+    setStatus('st-sui-sign', 'success', 'Signed!', res);
+    log('Sui message signed', 'success');
+  } catch (e) {
+    setStatus('st-sui-sign', 'error', e.message, e);
+    log(`sui.signMessage failed: ${e.message}`, 'error');
+  }
+}
+
+async function suiSignTransaction() {
+  const sui = getSui(); if (!sui) return;
+  if (!sui.isConnected) { setStatus('st-sui-tx', 'warning', 'Connect Sui wallet first'); return; }
+  const txB64 = document.getElementById('sui-tx').value.trim();
+  setStatus('st-sui-tx', 'loading', 'Waiting for Sui transaction signature…');
+  log('sui.signTransaction(txBlock)');
+  try {
+    const res = await sui.signTransaction(txB64);
+    setStatus('st-sui-tx', 'success', 'Transaction signed!', res);
+    log('Sui transaction signed', 'success');
+  } catch (e) {
+    setStatus('st-sui-tx', 'error', e.message, e);
+    log(`sui.signTransaction failed: ${e.message}`, 'error');
+  }
+}
+
+async function suiSignAndExecute() {
+  const sui = getSui(); if (!sui) return;
+  if (!sui.isConnected) { setStatus('st-sui-exec', 'warning', 'Connect Sui wallet first'); return; }
+  const txB64 = document.getElementById('sui-exec-tx').value.trim();
+  setStatus('st-sui-exec', 'loading', 'Signing and executing Sui transaction…');
+  log('sui.signAndExecuteTransaction(txBlock)');
+  try {
+    const res = await sui.signAndExecuteTransaction(txB64, {});
+    const digest = res.digest || JSON.stringify(res);
+    setStatus('st-sui-exec', 'success', `Transaction executed!`, { digest });
+    log(`Sui tx digest: ${digest}`, 'success');
+  } catch (e) {
+    setStatus('st-sui-exec', 'error', e.message, e);
+    log(`sui.signAndExecuteTransaction failed: ${e.message}`, 'error');
+  }
+}
+</script>
+</body>
+</html>

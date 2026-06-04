@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect Test — Octra Wallet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .nav a { color: #00D4FF; font-size: 12px; text-decoration: none; padding: 4px 10px; border: 1px solid #1e293b; border-radius: 6px; }
+  .nav a:hover { background: #1e293b; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; margin: 4px 4px 4px 0; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #00D4FF; color: #000; }
+  .btn-outline { background: transparent; color: #00D4FF; border: 1px solid #00D4FF; }
+  .btn-danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
+  .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #64748b; }
+  .info-val { color: #e2e8f0; font-family: monospace; font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-ok { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .badge-warn { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .badge-err { background: rgba(248,113,113,0.15); color: #f87171; }
+  .log { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; max-height: 220px; overflow-y: auto; margin-top: 12px; }
+  .log-line { padding: 2px 0; line-height: 1.6; }
+  .log-line.ok { color: #4ade80; }
+  .log-line.err { color: #f87171; }
+  .log-line.info { color: #94a3b8; }
+  .log-line.event { color: #a78bfa; }
+  .eip6963-list { margin-top: 8px; }
+  .provider-item { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .provider-icon { width: 28px; height: 28px; border-radius: 50%; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .provider-name { font-weight: 600; color: #e2e8f0; }
+  .provider-rdns { color: #64748b; font-family: monospace; font-size: 10px; }
+  .full-col { grid-column: 1 / -1; }
+  .status-bar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .status-item { background: #111827; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+  .status-item-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+  .status-item-val { font-size: 13px; font-weight: 600; font-family: monospace; color: #e2e8f0; }
+</style>
+</head>
+<body>
+
+<h1>Connect & Provider Test</h1>
+<p class="subtitle">Test wallet connection, EIP-6963 discovery, and provider state — <strong>Octra Wallet</strong></p>
+
+<nav class="nav">
+  <a href="index.html">← All Tests</a>
+  <a href="sign.html">Sign</a>
+  <a href="transaction.html">Transaction</a>
+  <a href="network.html">Network</a>
+  <a href="contract.html">Contract</a>
+</nav>
+
+<div class="status-bar" id="statusBar">
+  <div class="status-item"><span class="status-item-label">Provider</span><span class="status-item-val" id="sb-provider">—</span></div>
+  <div class="status-item"><span class="status-item-label">Account</span><span class="status-item-val" id="sb-account">—</span></div>
+  <div class="status-item"><span class="status-item-label">Chain ID</span><span class="status-item-val" id="sb-chain">—</span></div>
+  <div class="status-item"><span class="status-item-label">Connected</span><span class="status-item-val" id="sb-connected">—</span></div>
+</div>
+
+<div class="grid">
+
+  <!-- Detection -->
+  <div class="card">
+    <h2>Provider Detection</h2>
+    <div id="detectionInfo">
+      <div class="info-row"><span class="info-label">window.ethereum</span><span class="info-val" id="det-ethereum">checking…</span></div>
+      <div class="info-row"><span class="info-label">window.octra</span><span class="info-val" id="det-octra">checking…</span></div>
+      <div class="info-row"><span class="info-label">isMetaMask</span><span class="info-val" id="det-metamask">—</span></div>
+      <div class="info-row"><span class="info-label">isOctraWallet</span><span class="info-val" id="det-octraWallet">—</span></div>
+      <div class="info-row"><span class="info-label">chainId (cached)</span><span class="info-val" id="det-chainId">—</span></div>
+      <div class="info-row"><span class="info-label">selectedAddress</span><span class="info-val" id="det-address">—</span></div>
+    </div>
+    <div style="margin-top: 12px;">
+      <button class="btn btn-outline" onclick="runDetection()">Re-check</button>
+    </div>
+  </div>
+
+  <!-- EIP-6963 -->
+  <div class="card">
+    <h2>EIP-6963 Discovery</h2>
+    <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Wallets that announce via eip6963:announceProvider</p>
+    <div id="eip6963List" class="eip6963-list"><p style="font-size:12px;color:#64748b;">Listening…</p></div>
+    <button class="btn btn-outline" onclick="requestEip6963()" style="margin-top:10px;">Request Providers</button>
+  </div>
+
+  <!-- Connect / Accounts -->
+  <div class="card">
+    <h2>Connect & Accounts</h2>
+    <button class="btn btn-primary" onclick="connect()">eth_requestAccounts</button>
+    <button class="btn btn-outline" onclick="getAccounts()">eth_accounts</button>
+    <button class="btn btn-outline" onclick="getPermissions()">wallet_getPermissions</button>
+    <button class="btn btn-outline" onclick="revokePermissions()">wallet_revokePermissions</button>
+    <div class="log" id="connectLog"><div class="log-line info">Click a button to test…</div></div>
+  </div>
+
+  <!-- Chain Info -->
+  <div class="card">
+    <h2>Chain Info</h2>
+    <button class="btn btn-outline" onclick="getChainId()">eth_chainId</button>
+    <button class="btn btn-outline" onclick="getNetVersion()">net_version</button>
+    <button class="btn btn-outline" onclick="getBlockNumber()">eth_blockNumber</button>
+    <div class="log" id="chainLog"><div class="log-line info">Click a button to test…</div></div>
+  </div>
+
+  <!-- Live Events -->
+  <div class="card full-col">
+    <h2>Live Wallet Events</h2>
+    <p style="font-size:12px;color:#64748b;margin-bottom:10px;">accountsChanged, chainChanged, connect, disconnect are logged here in real-time.</p>
+    <div class="log" id="eventLog"><div class="log-line info">Waiting for wallet events…</div></div>
+    <button class="btn btn-danger" onclick="clearLog('eventLog')" style="margin-top:8px;">Clear</button>
+  </div>
+
+</div>
+
+<script>
+const eip6963Providers = new Map();
+
+function ts() { return new Date().toTimeString().slice(0,8); }
+
+function log(id, msg, cls = 'info') {
+  const el = document.getElementById(id);
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = `[${ts()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog(id) { document.getElementById(id).innerHTML = ''; }
+
+function updateStatusBar() {
+  const eth = window.ethereum;
+  document.getElementById('sb-provider').textContent = eth ? (eth.isOctraWallet ? 'Octra' : eth.isMetaMask ? 'MetaMask' : 'Unknown') : 'None';
+  document.getElementById('sb-account').textContent = eth?.selectedAddress ? eth.selectedAddress.slice(0,10)+'…' : '—';
+  document.getElementById('sb-chain').textContent = eth?.chainId ?? '—';
+  document.getElementById('sb-connected').textContent = eth?.selectedAddress ? 'Yes' : 'No';
+}
+
+function runDetection() {
+  const eth = window.ethereum;
+  const oct = window.octra;
+  document.getElementById('det-ethereum').innerHTML = eth
+    ? `<span class="badge badge-ok">present</span>` : `<span class="badge badge-err">missing</span>`;
+  document.getElementById('det-octra').innerHTML = oct
+    ? `<span class="badge badge-ok">present</span>` : `<span class="badge badge-warn">missing</span>`;
+  document.getElementById('det-metamask').textContent = eth ? String(eth.isMetaMask) : '—';
+  document.getElementById('det-octraWallet').textContent = eth ? String(eth.isOctraWallet) : '—';
+  document.getElementById('det-chainId').textContent = eth?.chainId ?? '—';
+  document.getElementById('det-address').textContent = eth?.selectedAddress ?? '—';
+  updateStatusBar();
+}
+
+function requestEip6963() {
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+  log('connectLog', 'Dispatched eip6963:requestProvider', 'info');
+}
+
+window.addEventListener('eip6963:announceProvider', (event) => {
+  const { info, provider } = event.detail;
+  eip6963Providers.set(info.uuid, { info, provider });
+  renderEip6963();
+});
+
+function renderEip6963() {
+  const el = document.getElementById('eip6963List');
+  if (eip6963Providers.size === 0) {
+    el.innerHTML = '<p style="font-size:12px;color:#64748b;">No providers announced yet.</p>';
+    return;
+  }
+  el.innerHTML = '';
+  eip6963Providers.forEach(({ info }) => {
+    const div = document.createElement('div');
+    div.className = 'provider-item';
+    div.innerHTML = `
+      <div class="provider-icon">${info.icon ? `<img src="${info.icon}" width="20" height="20" style="border-radius:50%">` : '🔑'}</div>
+      <div>
+        <div class="provider-name">${info.name}</div>
+        <div class="provider-rdns">${info.rdns}</div>
+      </div>
+      <span class="badge badge-ok" style="margin-left:auto;">announced</span>
+    `;
+    el.appendChild(div);
+  });
+}
+
+async function connect() {
+  if (!window.ethereum) { log('connectLog', 'window.ethereum not found', 'err'); return; }
+  log('connectLog', 'Requesting eth_requestAccounts…', 'info');
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    log('connectLog', `Connected: ${accounts[0]}`, 'ok');
+    updateStatusBar();
+    runDetection();
+  } catch (e) {
+    log('connectLog', `Error ${e.code}: ${e.message}`, 'err');
+  }
+}
+
+async function getAccounts() {
+  if (!window.ethereum) { log('connectLog', 'window.ethereum not found', 'err'); return; }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    log('connectLog', `eth_accounts: [${accounts.join(', ')}]`, 'ok');
+  } catch (e) {
+    log('connectLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getPermissions() {
+  if (!window.ethereum) { log('connectLog', 'window.ethereum not found', 'err'); return; }
+  try {
+    const perms = await window.ethereum.request({ method: 'wallet_getPermissions' });
+    log('connectLog', `Permissions: ${JSON.stringify(perms)}`, 'ok');
+  } catch (e) {
+    log('connectLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function revokePermissions() {
+  if (!window.ethereum) { log('connectLog', 'window.ethereum not found', 'err'); return; }
+  try {
+    await window.ethereum.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] });
+    log('connectLog', 'Permissions revoked', 'ok');
+    updateStatusBar();
+  } catch (e) {
+    log('connectLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getChainId() {
+  if (!window.ethereum) { log('chainLog', 'window.ethereum not found', 'err'); return; }
+  try {
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    log('chainLog', `eth_chainId: ${chainId} (decimal: ${parseInt(chainId, 16)})`, 'ok');
+  } catch (e) {
+    log('chainLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getNetVersion() {
+  if (!window.ethereum) { log('chainLog', 'window.ethereum not found', 'err'); return; }
+  try {
+    const v = await window.ethereum.request({ method: 'net_version' });
+    log('chainLog', `net_version: ${v}`, 'ok');
+  } catch (e) {
+    log('chainLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function getBlockNumber() {
+  if (!window.ethereum) { log('chainLog', 'window.ethereum not found', 'err'); return; }
+  try {
+    const bn = await window.ethereum.request({ method: 'eth_blockNumber' });
+    log('chainLog', `eth_blockNumber: ${bn} (${parseInt(bn, 16)})`, 'ok');
+  } catch (e) {
+    log('chainLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+// Event listeners
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', (accounts) => {
+    log('eventLog', `accountsChanged: [${accounts.join(', ')}]`, 'event');
+    updateStatusBar();
+    runDetection();
+  });
+  window.ethereum.on('chainChanged', (chainId) => {
+    log('eventLog', `chainChanged: ${chainId} (${parseInt(chainId, 16)})`, 'event');
+    updateStatusBar();
+  });
+  window.ethereum.on('connect', (info) => {
+    log('eventLog', `connect: chainId=${info.chainId}`, 'event');
+    updateStatusBar();
+  });
+  window.ethereum.on('disconnect', (err) => {
+    log('eventLog', `disconnect: code=${err.code} ${err.message}`, 'event');
+    updateStatusBar();
+  });
+}
+
+// Init
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    runDetection();
+    requestEip6963();
+  }, 300);
+});
+</script>
+</body>
+</html>

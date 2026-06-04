@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Test — Octra Wallet</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .nav a { color: #00D4FF; font-size: 12px; text-decoration: none; padding: 4px 10px; border: 1px solid #1e293b; border-radius: 6px; }
+  .nav a:hover { background: #1e293b; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 14px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+  .card p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+  .btn { display: inline-block; padding: 9px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; margin: 4px 4px 4px 0; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: #00D4FF; color: #000; }
+  .btn-outline { background: transparent; color: #00D4FF; border: 1px solid #00D4FF; }
+  .btn-eth { background: rgba(98,126,234,0.15); color: #627EEA; border: 1px solid #627EEA; }
+  .btn-sep { background: rgba(139,92,246,0.15); color: #8B5CF6; border: 1px solid #8B5CF6; }
+  .btn-poly { background: rgba(130,71,229,0.15); color: #8247E5; border: 1px solid #8247E5; }
+  .btn-bsc { background: rgba(240,185,11,0.15); color: #F0B90B; border: 1px solid #F0B90B; }
+  .btn-arb { background: rgba(40,160,240,0.15); color: #28A0F0; border: 1px solid #28A0F0; }
+  .btn-danger { background: transparent; color: #f87171; border: 1px solid #f87171; }
+  .field-row { margin-bottom: 10px; }
+  .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
+  input[type=text] {
+    width: 100%; background: #0d1117; border: 1px solid #1e293b; border-radius: 8px;
+    color: #e2e8f0; font-family: monospace; font-size: 12px; padding: 8px 10px;
+  }
+  .log { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; max-height: 180px; overflow-y: auto; margin-top: 12px; }
+  .log-line { padding: 2px 0; line-height: 1.6; }
+  .log-line.ok { color: #4ade80; }
+  .log-line.err { color: #f87171; }
+  .log-line.info { color: #94a3b8; }
+  .log-line.event { color: #a78bfa; }
+  .full-col { grid-column: 1 / -1; }
+  .chain-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 4px; border: 1px solid transparent; cursor: pointer; }
+  .current-chain { background: #0d1117; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 13px; color: #e2e8f0; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Network Test</h1>
+<p class="subtitle">wallet_switchEthereumChain · wallet_addEthereumChain (EIP-3085) — add & switch networks</p>
+
+<nav class="nav">
+  <a href="index.html">← All Tests</a>
+  <a href="connect.html">Connect</a>
+  <a href="sign.html">Sign</a>
+  <a href="transaction.html">Transaction</a>
+  <a href="contract.html">Contract</a>
+</nav>
+
+<div class="grid">
+
+  <!-- Current Chain -->
+  <div class="card">
+    <h2>Current Chain</h2>
+    <div class="current-chain" id="currentChain">—</div>
+    <button class="btn btn-outline" onclick="fetchChainId()">Refresh</button>
+    <div class="log" id="chainInfoLog"><div class="log-line info">Click Refresh to check current chain…</div></div>
+  </div>
+
+  <!-- Switch Built-in -->
+  <div class="card">
+    <h2>Switch Built-in Networks</h2>
+    <p>wallet_switchEthereumChain — switches to networks already known to the wallet.</p>
+    <button class="btn btn-eth" onclick="switchTo('0x1', 'Ethereum Mainnet')">Ethereum Mainnet</button>
+    <button class="btn btn-sep" onclick="switchTo('0xaa36a7', 'Sepolia')">Sepolia Testnet</button>
+    <button class="btn btn-outline" onclick="switchTo('0x2', 'Octra')">Octra</button>
+    <div class="log" id="switchLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Add Polygon -->
+  <div class="card">
+    <h2>Add Polygon (EIP-3085)</h2>
+    <p>Requests the wallet to add Polygon Mainnet (chainId 137). If already added, silently switches.</p>
+    <button class="btn btn-poly" onclick="addPolygon()">Add / Switch Polygon</button>
+    <div class="log" id="addPolyLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Add BSC -->
+  <div class="card">
+    <h2>Add BNB Smart Chain</h2>
+    <p>Requests the wallet to add Binance Smart Chain (chainId 56).</p>
+    <button class="btn btn-bsc" onclick="addBsc()">Add / Switch BSC</button>
+    <div class="log" id="addBscLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Add Arbitrum -->
+  <div class="card">
+    <h2>Add Arbitrum One</h2>
+    <p>Requests the wallet to add Arbitrum One (chainId 42161).</p>
+    <button class="btn btn-arb" onclick="addArbitrum()">Add / Switch Arbitrum</button>
+    <div class="log" id="addArbLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Custom Network -->
+  <div class="card">
+    <h2>Add Custom Network</h2>
+    <p>Fill in your own EIP-3085 network parameters and add it to the wallet.</p>
+    <div class="field-row">
+      <label class="label">Chain ID (hex, e.g. 0x89)</label>
+      <input type="text" id="customChainId" value="0x13881">
+    </div>
+    <div class="field-row">
+      <label class="label">Chain Name</label>
+      <input type="text" id="customChainName" value="Mumbai Testnet">
+    </div>
+    <div class="field-row">
+      <label class="label">RPC URL</label>
+      <input type="text" id="customRpc" value="https://rpc-mumbai.maticvigil.com">
+    </div>
+    <div class="field-row">
+      <label class="label">Currency Symbol</label>
+      <input type="text" id="customSymbol" value="MATIC">
+    </div>
+    <div class="field-row">
+      <label class="label">Explorer URL (optional)</label>
+      <input type="text" id="customExplorer" value="https://mumbai.polygonscan.com">
+    </div>
+    <button class="btn btn-primary" onclick="addCustomNetwork()">Add Custom Network</button>
+    <div class="log" id="customNetLog"><div class="log-line info">Result will appear here…</div></div>
+  </div>
+
+  <!-- Chain Events -->
+  <div class="card full-col">
+    <h2>Live Chain Events</h2>
+    <p style="font-size:12px;color:#64748b;">chainChanged events are logged here in real-time as you switch networks.</p>
+    <div class="log" id="chainEventLog"><div class="log-line info">Waiting for chainChanged events…</div></div>
+    <button class="btn btn-danger" onclick="document.getElementById('chainEventLog').innerHTML=''" style="margin-top:8px;">Clear</button>
+  </div>
+
+</div>
+
+<script>
+const CHAIN_NAMES = {
+  '0x1': 'Ethereum Mainnet',
+  '0x5': 'Goerli Testnet',
+  '0xaa36a7': 'Sepolia Testnet',
+  '0x89': 'Polygon',
+  '0x38': 'BNB Smart Chain',
+  '0xa4b1': 'Arbitrum One',
+  '0xa': 'Optimism',
+  '0x2': 'Octra',
+  '0x13881': 'Mumbai Testnet',
+};
+
+function ts() { return new Date().toTimeString().slice(0,8); }
+
+function log(id, msg, cls = 'info') {
+  const el = document.getElementById(id);
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  line.textContent = `[${ts()}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function updateCurrentChain(chainId) {
+  const name = CHAIN_NAMES[chainId.toLowerCase()] || 'Unknown';
+  const decimal = parseInt(chainId, 16);
+  document.getElementById('currentChain').textContent = `${name} — ${chainId} (${decimal})`;
+}
+
+async function fetchChainId() {
+  try {
+    if (!window.ethereum) { log('chainInfoLog', 'window.ethereum not found', 'err'); return; }
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    updateCurrentChain(chainId);
+    log('chainInfoLog', `eth_chainId: ${chainId} = ${parseInt(chainId, 16)}`, 'ok');
+  } catch (e) {
+    log('chainInfoLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function switchTo(chainId, name) {
+  try {
+    if (!window.ethereum) { log('switchLog', 'window.ethereum not found', 'err'); return; }
+    log('switchLog', `Switching to ${name} (${chainId})…`, 'info');
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId }],
+    });
+    log('switchLog', `Switched to ${name}`, 'ok');
+    fetchChainId();
+  } catch (e) {
+    if (e.code === 4902) {
+      log('switchLog', `Chain not added yet (4902) — use Add Network`, 'err');
+    } else {
+      log('switchLog', `Error ${e.code}: ${e.message}`, 'err');
+    }
+  }
+}
+
+async function addNetwork(params, logId, name) {
+  try {
+    if (!window.ethereum) { log(logId, 'window.ethereum not found', 'err'); return; }
+    log(logId, `Requesting wallet_addEthereumChain for ${name}…`, 'info');
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [params],
+    });
+    log(logId, `${name} added/switched successfully`, 'ok');
+    fetchChainId();
+  } catch (e) {
+    if (e.code === 4001) {
+      log(logId, 'User rejected the request', 'err');
+    } else {
+      log(logId, `Error ${e.code}: ${e.message}`, 'err');
+    }
+  }
+}
+
+function addPolygon() {
+  addNetwork({
+    chainId: '0x89',
+    chainName: 'Polygon Mainnet',
+    nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+    rpcUrls: ['https://polygon-rpc.com'],
+    blockExplorerUrls: ['https://polygonscan.com'],
+  }, 'addPolyLog', 'Polygon');
+}
+
+function addBsc() {
+  addNetwork({
+    chainId: '0x38',
+    chainName: 'BNB Smart Chain',
+    nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+    rpcUrls: ['https://bsc-dataseed.binance.org'],
+    blockExplorerUrls: ['https://bscscan.com'],
+  }, 'addBscLog', 'BSC');
+}
+
+function addArbitrum() {
+  addNetwork({
+    chainId: '0xa4b1',
+    chainName: 'Arbitrum One',
+    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+    rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+    blockExplorerUrls: ['https://arbiscan.io'],
+  }, 'addArbLog', 'Arbitrum One');
+}
+
+function addCustomNetwork() {
+  const chainId = document.getElementById('customChainId').value.trim();
+  const chainName = document.getElementById('customChainName').value.trim();
+  const rpcUrl = document.getElementById('customRpc').value.trim();
+  const symbol = document.getElementById('customSymbol').value.trim();
+  const explorer = document.getElementById('customExplorer').value.trim();
+
+  if (!chainId || !chainName || !rpcUrl || !symbol) {
+    log('customNetLog', 'Fill in all required fields', 'err');
+    return;
+  }
+
+  addNetwork({
+    chainId,
+    chainName,
+    nativeCurrency: { name: symbol, symbol, decimals: 18 },
+    rpcUrls: [rpcUrl],
+    blockExplorerUrls: explorer ? [explorer] : [],
+  }, 'customNetLog', chainName);
+}
+
+// Listen for chain events
+if (window.ethereum) {
+  window.ethereum.on('chainChanged', (chainId) => {
+    const name = CHAIN_NAMES[chainId.toLowerCase()] || 'Unknown';
+    log('chainEventLog', `chainChanged → ${chainId} (${name}, decimal: ${parseInt(chainId, 16)})`, 'event');
+    updateCurrentChain(chainId);
+  });
+}
+
+// Init
+window.addEventListener('load', () => {
+  setTimeout(fetchChainId, 400);
+});
+</script>
+</body>
+</html>
