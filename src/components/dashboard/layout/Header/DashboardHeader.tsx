@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import './DashboardHeader.css';
 import { WalletHeader, WalletSelector } from '../../../shared/WalletSelector';
 import { ReceiveIcon, RefreshIcon, SettingsIcon } from '../../../shared/Icons';
-import { Wallet } from '../../../../types';
+import { Wallet, Token } from '../../../../types';
 import { loadSnapshot } from '../../../../utils/walletSnapshot';
 
 interface DashboardHeaderProps {
@@ -11,6 +11,7 @@ interface DashboardHeaderProps {
     balance: number;
     activeWalletIndex?: number;
     isRefreshing: boolean;
+    activeWalletTokens?: Token[];
     onSwitchWallet: (index: number) => void;
     onAddWallet: () => void;
     onRenameWallet: (index: number, currentName: string) => void;
@@ -18,6 +19,7 @@ interface DashboardHeaderProps {
     onOpenSettings: () => void;
     onShowAddresses: () => void;
     onOpenAccount: () => void;
+    networkSetting?: string;
 }
 
 export function DashboardHeader({
@@ -26,13 +28,15 @@ export function DashboardHeader({
     balance,
     activeWalletIndex,
     isRefreshing,
+    activeWalletTokens,
     onSwitchWallet,
     onAddWallet,
     onRenameWallet,
     onRefresh,
     onOpenSettings,
     onShowAddresses,
-    onOpenAccount
+    onOpenAccount,
+    networkSetting
 }: DashboardHeaderProps) {
     const [showWalletSwitcher, setShowWalletSwitcher] = useState(false);
     const switcherRef = useRef<HTMLDivElement>(null);
@@ -78,6 +82,7 @@ export function DashboardHeader({
                                 balance: i === activeWalletIndex ? balance : (loadSnapshot(w.address)?.balance ?? w.lastKnownBalance ?? 0)
                             }))}
                             activeAddress={wallet?.address}
+                            activeWalletTokens={activeWalletTokens}
                             onSelect={handleSelectWallet}
                             onAddWallet={() => {
                                 setShowWalletSwitcher(false);
@@ -88,6 +93,7 @@ export function DashboardHeader({
                                 onRenameWallet(idx, wallets[idx]?.name || '');
                             }}
                             onClose={() => setShowWalletSwitcher(false)}
+                            networkSetting={networkSetting}
                         />
                     </div>
                 )}

@@ -34,6 +34,7 @@ import { TokenDetailView } from './TokenDetail';
 // Feature components
 import { NFTGallery } from './NFT';
 import { Token, Wallet } from '../../types';
+import { NETWORK_REGISTRY } from '../../constants/networks/registry';
 
 export function Dashboard({ showToast }: { showToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void }) {
     // Context
@@ -119,11 +120,22 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
         }
     }, [view]); // intentionally exclude refreshTransactions to avoid retrigger storms
 
-    // Unified Copy Handler
+    // Network-aware Copy Handler — EVM address for EVM chains, Solana address for Solana, Octra address otherwise
     const handleCopyAddress = () => {
-        if (wallet?.address) {
-            copy(wallet.address);
+        if (!wallet?.address) return;
+        const networkSetting = settings?.network || 'all';
+        const netConfig = NETWORK_REGISTRY[networkSetting];
+        let address = wallet.address;
+        if (netConfig?.addressType === 'evm' && derivedEvmAddress) {
+            address = derivedEvmAddress;
+        } else if (netConfig?.addressType === 'solana' && wallet.solanaAddress) {
+            address = wallet.solanaAddress;
+        } else if (netConfig?.addressType === 'sui' && wallet.suiAddress) {
+            address = wallet.suiAddress;
+        } else if (netConfig?.addressType === 'bitcoin' && wallet.bitcoinAddress) {
+            address = wallet.bitcoinAddress;
         }
+        copy(address);
     };
 
     const handleBack = () => {
@@ -232,13 +244,15 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
                     balance={balance}
                     activeWalletIndex={activeWalletIndex}
                     isRefreshing={isRefreshing}
+                    activeWalletTokens={tokens}
                     onSwitchWallet={setActiveWallet}
                     onAddWallet={() => setShowAddWallet(true)}
                     onRenameWallet={handleOpenRename}
-                    onRefresh={() => (refreshBalance as any)('both', { force: true })}
+                    onRefresh={() => refreshBalance('both', { force: true })}
                     onOpenSettings={() => setView('settings')}
                     onShowAddresses={() => setShowAddressDrawer(true)}
                     onOpenAccount={() => setViewLocal('account' as any)}
+                    networkSetting={settings?.network || 'all'}
                 />
             )}
 
@@ -268,6 +282,9 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
                 isOpen={showAddressDrawer}
                 octraAddress={wallet.address}
                 evmAddress={derivedEvmAddress}
+                solanaAddress={wallet.solanaAddress}
+                suiAddress={wallet.suiAddress}
+                bitcoinAddress={wallet.bitcoinAddress}
                 onClose={() => setShowAddressDrawer(false)}
                 showToast={showToast}
             />
@@ -282,7 +299,7 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
 
             {/* Account page rendered inline below */}
 
-            <div className="wallet-content no-scrollbar relative">
+            <div className={`wallet-content no-scrollbar relative ${hideChrome ? 'chrome-hidden' : ''}`}>
                 <ErrorBoundary key={view}>
                 {view === 'home' && (
                     <HomeView
@@ -297,6 +314,7 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
                         isBalanceHidden={isBalanceHidden}
                         onToggleBalance={() => setIsBalanceHidden(!isBalanceHidden)}
                         onRefresh={refreshBalance}
+                        networkSetting={settings?.network || 'all'}
                     />
                 )}
 
@@ -305,7 +323,7 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
                         wallet={wallet}
                         balance={balance}
                         nonce={nonce}
-                        settings={settings || { network: 'mainnet', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
+                        settings={settings || { network: 'all', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
                         onLock={lock}
                         allTokens={tokens}
                         onRefresh={refreshBalance}
@@ -324,6 +342,7 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
                         onRefresh={refreshBalance}
                         isRefreshing={isRefreshing}
                         onBack={() => setViewLocal('home')}
+                        settings={settings || { network: 'all', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
                     />
                 )}
 
@@ -332,12 +351,13 @@ export function Dashboard({ showToast }: { showToast: (message: string, type?: '
                         transactions={transactions}
                         address={wallet.address}
                         evmAddress={derivedEvmAddress}
-                        settings={settings || { network: 'mainnet', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
+                        settings={settings || { network: 'all', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
                         onBack={handleBack}
                         isLoading={isRefreshing}
                         onLoadMore={loadMoreTransactions}
                         hasMore={hasMoreTransactions}
                         isLoadingMore={isLoadingMore}
+                        tokens={tokens}
                     />
                 )}
 

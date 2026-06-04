@@ -1,6 +1,6 @@
-import { formatAmount, truncateAddress } from '../../../../utils/crypto';
+import { formatHistoryAmount, truncateAddress } from '../../../../utils/crypto';
 import { formatDate } from '../../../../utils/date';
-import { ArrowUpRightIcon, ArrowDownLeftIcon, ShieldIcon, UnshieldIcon, PrivateTransferIcon, ClaimIcon } from '../../../../components/shared/Icons';
+import { ArrowUpRightIcon, ArrowDownLeftIcon, ShieldIcon, UnshieldIcon, PrivateTransferIcon, ClaimIcon, SwapIcon } from '../../../../components/shared/Icons';
 import './TransactionItem.css';
 
 import { Transaction } from '../../../../types';
@@ -43,6 +43,11 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
             iconClass = 'claim';
             title = 'Claimed';
             break;
+        case 'swap':
+            Icon = SwapIcon;
+            iconClass = 'swap';
+            title = 'Swapped';
+            break;
         case 'in':
             title = 'Received';
             break;
@@ -78,9 +83,14 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
             </div>
             <div className="tx-item-side">
                 <div className={`tx-item-amount ${iconClass}`}>
-                    {isIncoming ? '+' : '-'}{formatAmount(tx.amount)} {tx.token || 'OCT'}
+                    {tx.type === 'swap' && tx.fromTokenSymbol && tx.toTokenSymbol ? (
+                        <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                            -{formatHistoryAmount(Number(tx.fromAmount || tx.amount))} {tx.fromTokenSymbol} → +{formatHistoryAmount(Number(tx.toAmount))} {tx.toTokenSymbol}
+                        </span>
+                    ) : (
+                        `${isIncoming ? '+' : '-'}${formatHistoryAmount(Number(tx.amount))} ${tx.token || 'OCT'}`
+                    )}
                 </div>
-                <span className="tx-item-time">
                 <span className="tx-item-time">
                     {formatDate(tx.timestamp, {
                         hour: '2-digit',
@@ -88,7 +98,6 @@ export function TransactionItem({ tx, onClick }: TransactionItemProps) {
                         day: 'numeric',
                         month: 'short'
                     })}
-                </span>
                 </span>
             </div>
         </div>

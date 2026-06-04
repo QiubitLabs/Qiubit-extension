@@ -7,26 +7,54 @@ import {
     EditIcon,
     QiubitLogo
 } from '../Icons';
-import { formatAmount } from '../../../utils/crypto';
-import { Wallet } from '../../../types';
+import { Wallet, Token } from '../../../types';
+import { loadSnapshot } from '../../../utils/walletSnapshot';
+import { getCachedPrices, formatUsd } from '../../../services/network/PriceService';
+import { filterTokensByNetwork } from '../../../constants/networks/registry';
 import './WalletSelector.css';
 import './NetworkSwitcher.css';
+
+function computeWalletUsd(address: string, activeAddress?: string, activeTokens?: Token[], networkSetting: string = 'all'): number {
+    const priceMap = getCachedPrices();
+    
+    if (activeAddress && address.toLowerCase() === activeAddress.toLowerCase() && activeTokens && activeTokens.length > 0) {
+        const filtered = filterTokensByNetwork(activeTokens, networkSetting, true);
+        return filtered.reduce((sum, t) => {
+            const bal = typeof t.balance === 'string' ? parseFloat(t.balance) : (t.balance || 0);
+            const price = t.isTestnet ? 0 : (priceMap.get(t.symbol)?.price ?? priceMap.get(t.symbol.toUpperCase())?.price ?? 0);
+            return sum + (isNaN(bal) ? 0 : bal * price);
+        }, 0);
+    }
+    
+    const snap = loadSnapshot(address);
+    if (!snap?.tokens?.length) return 0;
+    const filtered = filterTokensByNetwork(snap.tokens, networkSetting, true);
+    return filtered.reduce((sum, t) => {
+        const bal = typeof t.balance === 'string' ? parseFloat(t.balance) : (t.balance || 0);
+        const price = t.isTestnet ? 0 : (priceMap.get(t.symbol)?.price ?? priceMap.get(t.symbol.toUpperCase())?.price ?? 0);
+        return sum + (isNaN(bal) ? 0 : bal * price);
+    }, 0);
+}
 
 interface WalletSelectorProps {
     wallets: any[];
     activeAddress: string;
+    activeWalletTokens?: Token[];
     onSelect: (index: number) => void;
     onAddWallet: () => void;
     onEditWallet?: (index: number) => void;
     onClose?: () => void;
+    networkSetting?: string;
 }
 
 export function WalletSelector({
     wallets,
     activeAddress,
+    activeWalletTokens,
     onSelect,
     onAddWallet,
-    onEditWallet
+    onEditWallet,
+    networkSetting = 'all'
 }: WalletSelectorProps) {
     const [copied, setCopied] = useState<number | null>(null);
 
@@ -82,7 +110,10 @@ export function WalletSelector({
                                     {isActive && <div className="wallet-check-indicator"><CheckIcon size={14} /></div>}
                                 </div>
                                 <div className="wallet-balance">
-                                    {wallet.balance !== undefined ? formatAmount(wallet.balance) : '0.000'} OCT
+                                    {(() => {
+                                        const usd = computeWalletUsd(wallet.address, activeAddress, activeWalletTokens, networkSetting);
+                                        return usd > 0 ? formatUsd(usd) : '$0.00';
+                                    })()}
                                 </div>
                             </div>
 
@@ -121,9 +152,7 @@ interface WalletHeaderProps {
 }
 
 export function WalletHeader({ wallet, onOpenSelector, onOpenAccount }: WalletHeaderProps) {
-    const displayAddress = wallet.address
-        ? `${wallet.address.slice(0, 5)}..${wallet.address.slice(-4)}`
-        : '...';
+    const displayName = wallet.name || 'Wallet';
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -146,7 +175,7 @@ export function WalletHeader({ wallet, onOpenSelector, onOpenAccount }: WalletHe
                 onClick={onOpenSelector}
                 title="Switch wallet"
             >
-                <span className="header-wallet-name">{displayAddress}</span>
+                <span className="header-wallet-name">{displayName}</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ opacity: 0.5, flexShrink: 0 }}>
                     <path d="M6 9l6 6 6-6" />
                 </svg>

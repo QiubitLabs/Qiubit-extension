@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet } from '../../../../types';
-import { EditIcon, KeyIcon, EyeIcon, EyeOffIcon, CopyIcon, CheckIcon } from '../../../shared/Icons';
+import { EditIcon, KeyIcon, EyeIcon, EyeOffIcon, CopyIcon, CheckIcon, ChevronDownIcon } from '../../../shared/Icons';
 import { verifyPasswordSecure } from '../../../../utils/storage';
 import './AccountModal.css';
 
@@ -12,32 +13,183 @@ interface AccountModalProps {
 }
 
 type Screen = 'menu' | 'export-pw' | 'export-key';
-type Network = 'octra' | 'evm';
-
-function getPrivateKey(wallet: Wallet, network: Network): string {
-    if (network === 'octra') {
-        return wallet.privateKeyB64;
-    }
-    // EVM: same 32-byte seed in hex with 0x prefix
-    const hex = wallet.privateKeyHex.startsWith('0x')
-        ? wallet.privateKeyHex
-        : '0x' + wallet.privateKeyHex;
-    return hex;
-}
 
 function hasEvmKey(wallet: Wallet): boolean {
     return !!(wallet.privateKeyHex && wallet.evmAddress);
 }
 
+interface PrivateKeySectionProps {
+    label: string;
+    privateKey: string;
+    logoUrl: string;
+    formatLabel: string;
+}
+
+function PrivateKeySection({ label, privateKey, logoUrl, formatLabel }: PrivateKeySectionProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [revealed, setRevealed] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setRevealed(false);
+        }
+    }, [isOpen]);
+
+    const handleCopy = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await navigator.clipboard.writeText(privateKey);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch { /* ignore */ }
+    };
+
+    const censoredKey = '•'.repeat(Math.min(privateKey.length, 36));
+
+    return (
+        <div className="address-section-collapsible" style={{ marginBottom: '12px' }}>
+            {/* Header / Network Bar */}
+            <div 
+                className={`network-header-bar ${isOpen ? 'active' : ''}`}
+                onClick={() => setIsOpen(prev => !prev)}
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: isOpen ? '12px 12px 0 0' : '12px',
+                    padding: '14px 16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out',
+                    borderBottom: isOpen ? 'none' : '1px solid var(--border-default)'
+                }}
+            >
+                <div className="network-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img 
+                        src={logoUrl} 
+                        alt={label} 
+                        style={{ width: '20px', height: '20px', borderRadius: '50%' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span className="network-name-text" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {label}
+                    </span>
+                </div>
+                <ChevronDownIcon 
+                    size={16} 
+                    style={{
+                        transform: isOpen ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        color: 'var(--text-tertiary)'
+                    }}
+                />
+            </div>
+
+            {/* Dropdown private key block */}
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                    >
+                        <div 
+                            className="address-dropdown-inner"
+                            style={{
+                                padding: '14px 16px',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-default)',
+                                borderTop: 'none',
+                                borderRadius: '0 0 12px 12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                alignItems: 'stretch'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 11, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '3px 8px', color: 'var(--text-tertiary)' }}>
+                                    {formatLabel}
+                                </span>
+                            </div>
+
+                            <div 
+                                style={{ 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px'
+                                }}
+                            >
+                                <div 
+                                    style={{ 
+                                        flex: 1, 
+                                        cursor: 'pointer', 
+                                        background: 'var(--bg-card)', 
+                                        padding: '10px 12px', 
+                                        borderRadius: '8px', 
+                                        border: '1px solid var(--border-subtle)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        minHeight: '44px',
+                                        wordBreak: 'break-all',
+                                        userSelect: revealed ? 'all' : 'none'
+                                    }}
+                                    onClick={() => setRevealed(prev => !prev)}
+                                    title={revealed ? "Click to hide private key" : "Click to reveal private key"}
+                                >
+                                    <span 
+                                        className="font-mono"
+                                        style={{
+                                            fontSize: '0.8125rem',
+                                            color: revealed ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                            lineHeight: '1.4',
+                                            flex: 1,
+                                            letterSpacing: revealed ? 'normal' : '2px'
+                                        }}
+                                    >
+                                        {revealed ? privateKey : censoredKey}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                                    <button 
+                                        className="action-btn-mini" 
+                                        onClick={handleCopy}
+                                        title="Copy Private Key"
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'var(--text-tertiary)',
+                                            padding: '8px',
+                                            borderRadius: '6px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {copied ? <CheckIcon size={14} style={{ color: 'var(--color-success, #10b981)' }} /> : <CopyIcon size={14} />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
 export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: AccountModalProps) {
     const [screen, setScreen] = useState<Screen>('menu');
-    const [network, setNetwork] = useState<Network>('octra');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [pwError, setPwError] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
-    const [revealed, setRevealed] = useState(false);
-    const [copied, setCopied] = useState(false);
     const overlayRef = useRef<HTMLDivElement>(null);
 
     // Close on overlay click
@@ -49,7 +201,6 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
     useEffect(() => {
         return () => {
             setPassword('');
-            setRevealed(false);
         };
     }, []);
 
@@ -61,7 +212,6 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
             const ok = await verifyPasswordSecure(password);
             if (ok) {
                 setScreen('export-key');
-                setRevealed(false);
             } else {
                 setPwError('Incorrect password');
             }
@@ -70,14 +220,6 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
         } finally {
             setIsVerifying(false);
         }
-    };
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(getPrivateKey(wallet, network));
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch { /* ignore */ }
     };
 
     const displayAddress = wallet.address
@@ -89,7 +231,7 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
             <div className="account-sheet" onClick={e => e.stopPropagation()}>
                 <div className="account-handle" />
 
-                {/* Wallet identity header — always visible */}
+                {/* Wallet identity header -- always visible */}
                 <div className="account-header">
                     <div className="account-avatar">
                         <img src="/iconsub.svg" alt="Wallet" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -102,7 +244,7 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
                     </div>
                 </div>
 
-                {/* ── SCREEN: Menu ── */}
+                {/* -- SCREEN: Menu -- */}
                 {screen === 'menu' && (
                     <div className="account-menu">
                         <button
@@ -129,7 +271,7 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
                     </div>
                 )}
 
-                {/* ── SCREEN: Password ── */}
+                {/* -- SCREEN: Password -- */}
                 {screen === 'export-pw' && (
                     <div className="account-export-body">
                         <button className="account-export-back" onClick={() => { setScreen('menu'); setPwError(''); setPassword(''); }}>
@@ -138,24 +280,6 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
                             </svg>
                             Back
                         </button>
-
-                        {/* Network selector */}
-                        <div className="account-network-tabs">
-                            <button
-                                className={`account-network-tab ${network === 'octra' ? 'active' : ''}`}
-                                onClick={() => setNetwork('octra')}
-                            >
-                                Octra (OCT)
-                            </button>
-                            {hasEvmKey(wallet) && (
-                                <button
-                                    className={`account-network-tab ${network === 'evm' ? 'active' : ''}`}
-                                    onClick={() => setNetwork('evm')}
-                                >
-                                    Ethereum (EVM)
-                                </button>
-                            )}
-                        </div>
 
                         <div className="account-warning">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: 1 }}>
@@ -198,46 +322,84 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
                     </div>
                 )}
 
-                {/* ── SCREEN: Key revealed ── */}
+                {/* -- SCREEN: Key revealed -- */}
                 {screen === 'export-key' && (
-                    <div className="account-export-body">
-                        <button className="account-export-back" onClick={() => { setScreen('export-pw'); setRevealed(false); }}>
+                    <div className="account-export-body" style={{ maxHeight: '420px', overflowY: 'auto', paddingBottom: '16px' }}>
+                        <button className="account-export-back" onClick={() => { setScreen('export-pw'); }}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M15 18l-6-6 6-6" />
                             </svg>
                             Back
                         </button>
 
-                        <div style={{ marginBottom: 12, display: 'flex', gap: 6 }}>
-                            <span style={{ fontSize: 12, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '3px 8px', color: 'var(--text-tertiary)' }}>
-                                {network === 'octra' ? 'Octra · Base64' : 'Ethereum · Hex'}
-                            </span>
-                            {network === 'evm' && !wallet.mnemonic && (
-                                <span style={{ fontSize: 12, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 6, padding: '3px 8px', color: 'var(--accent-primary)' }}>
-                                    Same seed as Octra
-                                </span>
-                            )}
-                            {network === 'evm' && wallet.mnemonic && (
-                                <span style={{ fontSize: 12, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '3px 8px', color: '#f59e0b' }}>
-                                    From mnemonic seed
-                                </span>
-                            )}
-                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {/* Octra Network */}
+                            <PrivateKeySection 
+                                label="Octra Network"
+                                privateKey={wallet.privateKeyB64}
+                                logoUrl="/qiubit-icon.svg"
+                                formatLabel="Octra - Base64"
+                            />
 
-                        <div className="account-key-box" onClick={() => setRevealed(true)}>
-                            <p className={`account-key-text ${revealed ? 'revealed' : ''}`}>
-                                {getPrivateKey(wallet, network)}
-                            </p>
-                        </div>
+                            {/* EVM compatible chains */}
+                            {hasEvmKey(wallet) && (
+                                <>
+                                    <PrivateKeySection 
+                                        label="Ethereum / EVM"
+                                        privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                        logoUrl="/eth-icon.svg"
+                                        formatLabel="Ethereum - Hex"
+                                    />
+                                    <PrivateKeySection 
+                                        label="Binance Smart Chain"
+                                        privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                        logoUrl="https://static.debank.com/image/chain/logo_url/bsc/bc73fa84b7fc5337905e527dadcbc854.png"
+                                        formatLabel="BSC - Hex"
+                                    />
+                                    <PrivateKeySection 
+                                        label="Monad Network"
+                                        privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                        logoUrl="https://icons.llamao.fi/icons/chains/rsz_monad.jpg"
+                                        formatLabel="Monad - Hex"
+                                    />
+                                    <PrivateKeySection 
+                                        label="Hyperliquid EVM"
+                                        privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                        logoUrl="https://icons.llamao.fi/icons/chains/rsz_hyperliquid.jpg"
+                                        formatLabel="Hyperliquid - Hex"
+                                    />
+                                </>
+                            )}
 
-                        <div className="account-key-actions">
-                            <button className="account-key-btn" onClick={() => setRevealed(r => !r)}>
-                                {revealed ? <EyeOffIcon size={15} /> : <EyeIcon size={15} />}
-                            </button>
-                            <button className="account-key-btn copy-btn" onClick={handleCopy}>
-                                {copied ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
-                                {copied ? 'Copied!' : 'Copy Key'}
-                            </button>
+                            {/* Solana */}
+                            {wallet.solanaPrivateKeyHex && (
+                                <PrivateKeySection 
+                                    label="Solana Network"
+                                    privateKey={wallet.solanaPrivateKeyHex.startsWith('0x') ? wallet.solanaPrivateKeyHex : '0x' + wallet.solanaPrivateKeyHex}
+                                    logoUrl="https://icons.llamao.fi/icons/chains/rsz_solana.jpg"
+                                    formatLabel="Solana - Hex (Ed25519)"
+                                />
+                            )}
+
+                            {/* Sui */}
+                            {wallet.suiPrivateKeyHex && (
+                                <PrivateKeySection 
+                                    label="Sui Network"
+                                    privateKey={wallet.suiPrivateKeyHex.startsWith('0x') ? wallet.suiPrivateKeyHex : '0x' + wallet.suiPrivateKeyHex}
+                                    logoUrl="https://icons.llamao.fi/icons/chains/rsz_sui.jpg"
+                                    formatLabel="Sui - Hex (Ed25519)"
+                                />
+                            )}
+
+                            {/* Bitcoin */}
+                            {wallet.bitcoinPrivateKeyHex && (
+                                <PrivateKeySection 
+                                    label="Bitcoin Network"
+                                    privateKey={wallet.bitcoinPrivateKeyHex.startsWith('0x') ? wallet.bitcoinPrivateKeyHex : '0x' + wallet.bitcoinPrivateKeyHex}
+                                    logoUrl="https://icons.llamao.fi/icons/chains/rsz_bitcoin.jpg"
+                                    formatLabel="Bitcoin - Hex (secp256k1)"
+                                />
+                            )}
                         </div>
                     </div>
                 )}
@@ -245,3 +407,4 @@ export function AccountModal({ wallet, activeWalletIndex, onClose, onRename }: A
         </div>
     );
 }
+

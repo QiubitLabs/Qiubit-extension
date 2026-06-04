@@ -4,7 +4,7 @@
  */
 
 import { keyringService } from '../services/core/KeyringService';
-import { getRpcClient } from '../services/network/RpcService';
+import { nonceManager } from '../services/core/NonceManager';
 import { canonicalJson, signMessage } from './crypto/transaction';
 
 // Transaction structure matching webcli
@@ -74,13 +74,9 @@ export async function buildContractCallTransaction(
     return tx;
 }
 
-/**
- * Get next nonce for address (considering pending transactions)
- */
 async function getNextNonce(address: string): Promise<number> {
     try {
-        const rpc = getRpcClient();
-        return await rpc.getNonceForSend(address);
+        return await nonceManager.getNext(address);
     } catch {
         return 0;
     }

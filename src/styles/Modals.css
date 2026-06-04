@@ -110,3 +110,27 @@
     text-align: center;
     margin-bottom: var(--space-xl);
 }
+
+/* --- Transaction Confirm & Status Fullscreen Overlay --- */
+.confirm-tx-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary); /* matches wallet background, not pitch black */
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-xl);
+    overflow-y: auto;
+}
+
+/* Solid non-transparent overlay helper to block any background leak */
+.solid-overlay {
+    background: #0D0D0D !important;
+    background-color: #0D0D0D !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1 !important;
+}

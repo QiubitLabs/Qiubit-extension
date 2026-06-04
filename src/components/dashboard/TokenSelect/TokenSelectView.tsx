@@ -60,7 +60,7 @@ export function TokenSelectView({ tokens, onSelect, onBack }: TokenSelectViewPro
                     </div>
                 ) : (
                     filteredTokens.map((token) => {
-                        const priceData = priceMap.get(token.symbol);
+                        const priceData = token.isTestnet ? null : priceMap.get(token.symbol);
                         const price = priceData?.price ?? 0;
                         const bal = typeof token.balance === 'string' ? parseFloat(token.balance) : token.balance;
                         const usdValue = price * bal;
@@ -76,6 +76,8 @@ export function TokenSelectView({ tokens, onSelect, onBack }: TokenSelectViewPro
                                         symbol={token.symbol}
                                         logoUrl={token.logoUrl}
                                         size={32}
+                                        contractAddress={token.contractAddress}
+                                        chainId={token.chainId}
                                     />
                                 </div>
                                 <div className="token-select-info">

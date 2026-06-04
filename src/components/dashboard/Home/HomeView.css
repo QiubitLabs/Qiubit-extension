@@ -196,21 +196,22 @@
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    /* Ensure list scrolls if needed, though main scroll is on wallet-content */
+    margin-left: calc(-1 * var(--space-xl));
+    margin-right: calc(-1 * var(--space-xl));
 }
 
 .token-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px; /* Looser row gaps */
 }
 
 .token-list-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-sm);
-    padding: 0 var(--space-md);
+    margin-bottom: var(--space-md);
+    padding: 0 var(--space-xl);
 }
 
 /* ===== Quick Features Grid (Migrated) ===== */
@@ -337,4 +338,44 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
+}
+
+/* ===== Low-value Assets Accordion ===== */
+.low-value-assets-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.low-value-assets-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-xl);
+    background: transparent;
+    border: none;
+    width: 100%;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all var(--transition-fast);
+    margin-top: var(--space-xs);
+    user-select: none;
+}
+
+.low-value-assets-header:hover {
+    color: var(--text-secondary);
+}
+
+.low-value-assets-header .arrow-icon {
+    transition: transform var(--transition-fast);
+}
+
+.low-value-tokens-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: var(--space-xs);
 }

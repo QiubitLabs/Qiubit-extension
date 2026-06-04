@@ -65,6 +65,12 @@
     border-color: var(--warning);
 }
 
+.tx-item-icon.swap {
+    color: var(--accent-primary);
+    background: var(--bg-secondary);
+    border-color: var(--border-subtle);
+}
+
 .tx-item-info {
     display: flex;
     flex-direction: column;
@@ -110,6 +116,10 @@
 .tx-item-amount.unshield,
 .tx-item-amount.claim {
     color: var(--success);
+}
+
+.tx-item-amount.swap {
+    color: var(--text-primary);
 }
 
 .tx-item-time {

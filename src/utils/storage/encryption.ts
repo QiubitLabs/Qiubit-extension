@@ -222,18 +222,17 @@ export async function decryptDataSecure(encryptedData: any, password: string): P
         // Handle v4 format (object with salt)
         if (typeof encryptedData === 'object' && encryptedData.version === 4) {
             // Extract salt from vault
-            const saltBytes = Uint8Array.from(atob(encryptedData.salt), c => c.charCodeAt(0));
+            salt = Uint8Array.from(atob(encryptedData.salt), c => c.charCodeAt(0));
 
             // Verify HMAC (v4 checks payload, data, and salt)
             const hmacPayload = `${encryptedData.data}:${encryptedData.salt}:${encryptedData.version}`;
             const isValid = await verifyHMAC(hmacPayload, encryptedData.hmac, password);
             if (!isValid) {
-                console.warn('[StorageSecure] HMAC verification failed (v4), attempting emergency recovery...');
-                // Don't throw immediately - try to decrypt anyway
+                throw new Error('Data integrity check failed: HMAC verification failed (v4)');
             }
 
             // Derive key with provided salt
-            key = await deriveKey(password, saltBytes);
+            key = await deriveKey(password, salt);
 
             const combined = Uint8Array.from(atob(encryptedData.data), c => c.charCodeAt(0));
             const iv = combined.slice(0, 12);
@@ -247,11 +246,6 @@ export async function decryptDataSecure(encryptedData: any, password: string): P
 
             const decoder = new TextDecoder();
             const decodedResult = decoder.decode(decrypted);
-
-            // If we got here and HMAC was invalid, log warning but allow recovery
-            if (!isValid) {
-                console.warn('[StorageSecure] [WARN] Wallet recovered despite HMAC mismatch - consider re-saving');
-            }
 
             try {
                 return JSON.parse(decodedResult);
@@ -272,7 +266,7 @@ export async function decryptDataSecure(encryptedData: any, password: string): P
 
             const isValid = await verifyHMAC(combinedBase64, hmac, password);
             if (!isValid) {
-                console.warn('[StorageSecure] HMAC verification failed (v3), attempting emergency recovery...');
+                throw new Error('Data integrity check failed: HMAC verification failed (v3)');
             }
 
             // Use legacy fixed salt for v3
@@ -290,10 +284,6 @@ export async function decryptDataSecure(encryptedData: any, password: string): P
 
             const decoder = new TextDecoder();
             const result = JSON.parse(decoder.decode(decrypted));
-
-            if (!isValid) {
-                console.warn('[StorageSecure] [WARN] Wallet recovered despite HMAC mismatch (v3) - consider re-saving');
-            }
 
             return result;
         }

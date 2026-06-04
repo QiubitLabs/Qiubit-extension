@@ -13,6 +13,7 @@ interface UseWalletImportProps {
     saveActiveSession: (pwd: string) => Promise<void>;
     addWalletInternal: (wallet: Wallet, pwd: string) => Promise<void>;
     refreshTransactions: (opts?: { force?: boolean }) => Promise<void>;
+    refreshBalance: (mode?: 'public' | 'private' | 'both', opts?: { force?: boolean }) => Promise<void>;
 }
 
 export function useWalletImport({
@@ -23,7 +24,8 @@ export function useWalletImport({
     showToast,
     saveActiveSession,
     addWalletInternal,
-    refreshTransactions
+    refreshTransactions,
+    refreshBalance
 }: UseWalletImportProps) {
 
     const handleImportWallet = useCallback(async (importedWallet: Wallet, newPassword: string) => {
@@ -65,14 +67,18 @@ export function useWalletImport({
                 privacyService.setPrivateKey(importedWallet.privateKeyB64, passToUse);
             }
 
-            setTimeout(() => refreshTransactions(), 100);
+            // Force-refresh all tokens immediately so all chains appear right away
+            setTimeout(() => {
+                refreshBalance('both', { force: true });
+                refreshTransactions({ force: true });
+            }, 200);
 
             setView('dashboard');
         } catch (err: any) {
             console.error('Failed to import wallet:', err);
             showToast(err.message || 'Failed to import wallet', 'error');
         }
-    }, [password, addWalletInternal, saveActiveSession, showToast, setView, setPassword, setIsUnlocked, refreshTransactions]);
+    }, [password, addWalletInternal, saveActiveSession, showToast, setView, setPassword, setIsUnlocked, refreshTransactions, refreshBalance]);
 
     // Handle Adding Wallet from Dashboard Modal
     const handleAddWalletFromModal = useCallback(async (data: { type: string, privateKey?: string, mnemonic?: string }) => {

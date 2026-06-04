@@ -1,0 +1,70 @@
+.octra-bridge-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 16px;
+}
+
+.octra-bridge-direction-row {
+    display: flex;
+    gap: 8px;
+}
+
+.octra-bridge-dir-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.08));
+    background: transparent;
+    color: var(--widget-text-secondary, rgba(255,255,255,0.5));
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.octra-bridge-dir-btn:hover {
+    border-color: rgba(255,255,255,0.15);
+    color: var(--widget-text-primary, #fff);
+}
+
+.octra-bridge-dir-btn.active {
+    border-color: var(--widget-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.08);
+    color: var(--widget-primary, #6366f1);
+}
+
+.unclaimed-proofs-section {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--widget-border, rgba(255,255,255,0.08));
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.unclaimed-proofs-title {
+    font-size: 12px;
+    color: var(--widget-text-secondary, rgba(255,255,255,0.5));
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.unclaimed-proof-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--widget-text-primary, #fff);
+    padding: 6px 0;
+    border-top: 1px solid var(--widget-border, rgba(255,255,255,0.06));
+}
+
+.unclaimed-proof-item:first-of-type {
+    border-top: none;
+}

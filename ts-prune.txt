@@ -1,0 +1,334 @@
+src/constants/evmNetworks.ts:38 - getEvmNativeTokenForNetwork
+src/constants/evmNetworks.ts:42 - getEvmNetworkConfig
+src/constants/evmNetworks.ts:8 - EvmTokenConfig (used in module)
+src/constants/evmNetworks.ts:10 - EvmNetworkConfig (used in module)
+src/constants/index.ts:7 - STORAGE_KEYS
+src/constants/index.ts:23 - BRIDGE_CONFIG
+src/constants/index.ts:34 - NETWORKS (used in module)
+src/constants/index.ts:52 - getExplorerUrl
+src/constants/index.ts:59 - SECURITY
+src/constants/index.ts:66 - APP_VERSION
+src/constants/index.ts:67 - STORAGE_VERSION
+src/types/index.ts:1 - Wallet
+src/types/index.ts:16 - Transaction
+src/types/index.ts:38 - Settings
+src/types/index.ts:44 - Token
+src/utils/activityLogger.ts:108 - getRecentActivities (used in module)
+src/utils/activityLogger.ts:145 - getActivityStats (used in module)
+src/utils/activityLogger.ts:178 - cleanupOldLogs (used in module)
+src/utils/activityLogger.ts:215 - exportLogs (used in module)
+src/utils/activityLogger.ts:252 - clearAllLogs (used in module)
+src/utils/activityLogger.ts:273 - logWalletUnlock (used in module)
+src/utils/activityLogger.ts:280 - logWalletLock (used in module)
+src/utils/activityLogger.ts:287 - logTransactionInit (used in module)
+src/utils/activityLogger.ts:298 - logTransactionSuccess (used in module)
+src/utils/activityLogger.ts:305 - logTransactionFailed (used in module)
+src/utils/activityLogger.ts:315 - logRPCCall (used in module)
+src/utils/activityLogger.ts:325 - logRPCError (used in module)
+src/utils/activityLogger.ts:21 - LOG_LEVELS (used in module)
+src/utils/activityLogger.ts:28 - LogLevelString (used in module)
+src/utils/activityLogger.ts:332 - default
+src/utils/balanceCache.ts:185 - default
+src/utils/date.ts:59 - formatRelativeTime
+src/utils/errorMessages.ts:101 - formatError
+src/utils/errorMessages.ts:6 - ERROR_MESSAGES (used in module)
+src/utils/errorMessages.ts:89 - FormattedError (used in module)
+src/utils/evmBalanceCache.ts:130 - default
+src/utils/evmProvider.ts:31 - getEvmRpcUrlForChain (used in module)
+src/utils/evmProvider.ts:40 - getEvmProviderForNetwork (used in module)
+src/utils/evmProvider.ts:44 - getEvmProviderForChain
+src/utils/evmProvider.ts:52 - withEvmFallbackForChain (used in module)
+src/utils/evmProvider.ts:82 - GasTier (used in module)
+src/utils/indexedDB.ts:27 - initDB (used in module)
+src/utils/indexedDB.ts:99 - getData (used in module)
+src/utils/indexedDB.ts:145 - deleteData (used in module)
+src/utils/indexedDB.ts:200 - getRecentTransactions (used in module)
+src/utils/indexedDB.ts:212 - saveAsset (used in module)
+src/utils/indexedDB.ts:219 - getAssetsByAddress (used in module)
+src/utils/indexedDB.ts:228 - saveBalance (used in module)
+src/utils/indexedDB.ts:239 - getBalance (used in module)
+src/utils/indexedDB.ts:248 - migrateTransactionsFromLocalStorage (used in module)
+src/utils/indexedDB.ts:283 - default
+src/utils/logger.ts:167 - logDebug
+src/utils/pvacWasm.ts:41 - pvacKeygen
+src/utils/pvacWasm.ts:49 - pvacEncrypt (used in module)
+src/utils/pvacWasm.ts:61 - pvacDecrypt
+src/utils/pvacWasm.ts:74 - pvacAdd
+src/utils/pvacWasm.ts:87 - pvacSub (used in module)
+src/utils/pvacWasm.ts:97 - pvacMakeZeroProof
+src/utils/pvacWasm.ts:107 - pvacVerifyZero
+src/utils/pvacWasm.ts:117 - pvacMakeRangeProof (used in module)
+src/utils/pvacWasm.ts:128 - pvacVerifyRange
+src/utils/pvacWasm.ts:146 - pvacBuildTransfer
+src/utils/pvacWasm.ts:29 - PvacKeyPair (used in module)
+src/utils/transactionBuilder.ts:11 - OctraTransaction (used in module)
+src/utils/validation.ts:30 - isValidPrivateKey
+src/utils/validation.ts:38 - isValidMnemonic
+src/utils/validation.ts:47 - isValidAmount
+src/utils/validation.ts:6 - ADDRESS_REGEX (used in module)
+src/utils/validation.ts:7 - EVM_ADDRESS_REGEX (used in module)
+src/utils/validation.ts:8 - PRIVATE_KEY_REGEX (used in module)
+src/utils/validation.ts:9 - MNEMONIC_LENGTHS (used in module)
+src/utils/validation.ts:52 - PasswordStrength (used in module)
+src/utils/walletSnapshot.ts:57 - clearSnapshot
+src/utils/walletSnapshot.ts:62 - snapshotAge
+src/utils/walletSnapshot.ts:13 - WalletSnapshot (used in module)
+src/background/handlers/octra.ts:148 - ensureNonce (used in module)
+src/components/dapp/DappApproval.tsx:122 - DappApproval (used in module)
+src/components/dashboard/index.ts:1 - Dashboard
+src/components/lockscreen/index.ts:1 - LockScreen
+src/components/lockscreen/index.ts:1 - SetupPassword
+src/components/lockscreen/LockScreen.tsx:584 - default
+src/components/settings/index.ts:1 - SettingsScreen
+src/components/shared/index.ts:7 - ErrorBoundary
+src/components/shared/index.ts:9 - TokenIcon
+src/components/shared/index.ts:10 - WalletSelector
+src/components/shared/index.ts:10 - WalletHeader
+src/components/shared/index.ts:11 - ConfirmModal
+src/components/shared/index.ts:12 - LoadingScreen
+src/components/shared/index.ts:13 - Toast
+src/components/welcome/index.ts:1 - WelcomeScreen
+src/components/welcome/index.ts:1 - CreateWalletScreen
+src/components/welcome/index.ts:1 - ImportWalletScreen
+src/components/welcome/WelcomeScreen.tsx:857 - default
+src/constants/networks/ethereum.ts:3 - ETHEREUM_NETWORK
+src/constants/networks/registry.ts:276 - getNetworkConfig
+src/constants/networks/registry.ts:301 - getNetworkDisplayName
+src/constants/networks/registry.ts:322 - isTestnetNetwork
+src/constants/networks/sepolia.ts:3 - SEPOLIA_NETWORK
+src/constants/networks/types.ts:6 - EvmTokenConfig (used in module)
+src/services/core/KeyringService.ts:892 - KeyringService (used in module)
+src/services/core/SessionService.ts:566 - SessionServiceImpl (used in module)
+src/services/features/CustomTokenService.ts:64 - removeCustomToken
+src/services/features/DappService.ts:136 - dappService
+src/services/features/OCS01TokenService.ts:42 - OCS01Contract (used in module)
+src/services/features/OCS01TokenService.ts:134 - OCS01Manager (used in module)
+src/services/features/OCS01TokenService.ts:316 - STORAGE_KEY (used in module)
+src/services/features/PrivacyService.ts:26 - PrivacyBalanceResult (used in module)
+src/services/features/PrivacyService.ts:601 - PrivacyService (used in module)
+src/services/features/PrivacyService.ts:601 - encryptBalance (used in module)
+src/services/network/AbiService.ts:77 - clearAbiCache
+src/services/network/AbiService.ts:82 - evictAbi
+src/services/network/EthHistoryService.ts:100 - isEndpointEmpty
+src/services/network/EthHistoryService.ts:107 - markEndpointEmpty
+src/services/network/EthHistoryService.ts:111 - clearEndpointEmpty
+src/services/network/EthHistoryService.ts:115 - nativeTag
+src/services/network/EthHistoryService.ts:119 - erc20Tag
+src/services/network/EthHistoryService.ts:412 - getEthTransactions (used in module)
+src/services/network/EthHistoryService.ts:479 - getErc20Transactions (used in module)
+src/services/network/EthHistoryService.ts:545 - getSepoliaTransactions
+src/services/network/EthHistoryService.ts:553 - ethTxToTransaction
+src/services/network/EthHistoryService.ts:396 - EthTransaction (used in module)
+src/services/network/EthHistoryService.ts:581 - fetchAlchemyHistory
+src/services/network/NetworkResolver.ts:49 - getRpcUrlForNetwork
+src/services/network/PriceService.ts:762 - formatChange (used in module)
+src/services/network/PriceService.ts:774 - hasPriceData (used in module)
+src/services/network/PriceService.ts:814 - calculateUsdValue (used in module)
+src/services/network/PriceService.ts:822 - default
+src/services/network/TokenDiscoveryService.ts:243 - discoverTokens (used in module)
+src/services/network/TokenDiscoveryService.ts:43 - DiscoveredToken (used in module)
+src/services/network/TxDecoder.ts:13 - DecodedTx (used in module)
+src/services/network/TxDecoder.ts:122 - getBytes (used in module)
+src/services/network/UserNetworkService.ts:78 - addUserNetwork
+src/services/network/UserNetworkService.ts:106 - getUserNetworkByChainId
+src/services/network/UserNetworkService.ts:111 - syncUserNetworksToLocalStorage
+src/utils/crypto/index.ts:13 - base58Encode
+src/utils/crypto/index.ts:36 - base58Decode
+src/utils/crypto/index.ts:65 - bufferToHex
+src/utils/crypto/index.ts:72 - hexToBuffer
+src/utils/crypto/index.ts:79 - bufferToBase64
+src/utils/crypto/index.ts:86 - base64ToBuffer
+src/utils/crypto/index.ts:93 - sha256
+src/utils/crypto/index.ts:104 - createOctraAddress
+src/utils/crypto/index.ts:119 - verifyAddressFormat
+src/utils/crypto/index.ts:134 - truncateAddress
+src/utils/crypto/index.ts:144 - formatAmount
+src/utils/crypto/index.ts:186 - formatHistoryAmount
+src/utils/crypto/index.ts:8 - BASE58_ALPHABET
+src/utils/crypto/index.ts:113 - createQiubitAddress
+src/utils/crypto/index.ts:7 - generateSessionKey
+src/utils/crypto/index.ts:15 - encryptSession
+src/utils/crypto/index.ts:49 - decryptSession
+src/utils/crypto/index.ts:94 - generateWallet
+src/utils/crypto/index.ts:158 - importFromMnemonic
+src/utils/crypto/index.ts:220 - importFromPrivateKey
+src/utils/crypto/index.ts:328 - deriveHdAccount
+src/utils/crypto/index.ts:418 - validateMnemonic
+src/utils/crypto/index.ts:426 - looksLikeMnemonic
+src/utils/crypto/index.ts:15 - deriveEvmAddressFromMnemonic
+src/utils/crypto/index.ts:16 - deriveEvmKeyFromMnemonic
+src/utils/crypto/index.ts:20 - hmacSha512
+src/utils/crypto/index.ts:21 - deriveHdSeed
+src/utils/crypto/index.ts:22 - mnemonicToSeed
+src/utils/crypto/index.ts:26 - deriveSolanaKeysFromMnemonic
+src/utils/crypto/index.ts:27 - deriveSolanaKeysFromMasterSeed
+src/utils/crypto/index.ts:31 - deriveSuiKeysFromMnemonic
+src/utils/crypto/index.ts:32 - deriveSuiKeysFromMasterSeed
+src/utils/crypto/index.ts:36 - deriveBitcoinKeysFromMnemonic
+src/utils/crypto/index.ts:63 - WalletKeys
+src/utils/crypto/index.ts:65 - canonicalJson
+src/utils/crypto/index.ts:88 - signMessage
+src/utils/crypto/index.ts:103 - verifySignature
+src/utils/crypto/index.ts:130 - parseAmountToRaw
+src/utils/crypto/index.ts:180 - createTransaction
+src/utils/crypto/index.ts:249 - computeTxHash
+src/utils/crypto/index.ts:259 - signBalanceRequest
+src/utils/crypto/index.ts:268 - signRegisterPubkeyRequest
+src/utils/crypto/index.ts:5 - TransactionPayload
+src/utils/storage/encryption.ts:2 - VaultData (used in module)
+src/utils/storage/index.ts:10 - setWalletPasswordSecure
+src/utils/storage/index.ts:20 - saveWalletsSecure
+src/utils/storage/index.ts:36 - loadWalletsSecure
+src/utils/storage/index.ts:99 - verifyPasswordSecure
+src/utils/storage/index.ts:118 - hasWalletsSecure
+src/utils/storage/index.ts:131 - hasPasswordSecure
+src/utils/storage/index.ts:140 - changePasswordSecure
+src/utils/storage/index.ts:160 - exportWalletSecure
+src/utils/storage/index.ts:184 - getActiveWalletIndex
+src/utils/storage/index.ts:191 - setActiveWalletIndex
+src/utils/storage/index.ts:199 - addWalletSecure
+src/utils/storage/index.ts:228 - updateWalletNameSecure
+src/utils/storage/index.ts:252 - clearAllDataSecure
+src/utils/storage/index.ts:17 - loadEvmTxHistory
+src/utils/storage/index.ts:30 - saveEvmTxHistory
+src/utils/storage/index.ts:54 - migrateEvmHistory
+src/utils/storage/index.ts:71 - getTxHistorySecure
+src/utils/storage/index.ts:88 - loadTxHistoryAsync
+src/utils/storage/index.ts:112 - saveTxHistorySecure
+src/utils/storage/index.ts:13 - loadPrivacyLogsSecure
+src/utils/storage/index.ts:36 - savePrivacyTransactionSecure
+src/utils/storage/index.ts:68 - getPrivacyTransactionSecure
+src/utils/storage/index.ts:76 - getAllPrivacyTransactionsSecure
+src/utils/storage/index.ts:8 - saveBalanceCacheSecure
+src/utils/storage/index.ts:26 - getBalanceCacheSecure
+src/utils/storage/index.ts:47 - saveTokenCacheSecure
+src/utils/storage/index.ts:64 - getTokenCacheSecure
+src/utils/storage/index.ts:85 - saveCustomTokensSecure
+src/utils/storage/index.ts:101 - loadCustomTokensSecure
+src/utils/storage/index.ts:122 - savePrivacyBalanceCacheSecure
+src/utils/storage/index.ts:139 - getPrivacyBalanceCacheSecure
+src/utils/storage/index.ts:160 - clearPrivacyBalanceCacheSecure
+src/utils/storage/index.ts:170 - savePublicCache
+src/utils/storage/index.ts:182 - getPublicCache
+src/utils/storage/index.ts:12 - saveSettingsPlain
+src/utils/storage/index.ts:23 - loadSettingsPlain
+src/utils/storage/index.ts:39 - saveSettingsSecure
+src/utils/storage/index.ts:55 - loadSettingsSecure
+src/utils/storage/index.ts:9 - StorageArea
+src/utils/storage/index.ts:127 - storage
+src/components/dashboard/AddWalletModal/AddWalletModal.tsx:176 - default
+src/components/dashboard/AddWalletModal/index.ts:1 - AddWalletModal
+src/components/dashboard/History/index.ts:1 - HistoryView
+src/components/dashboard/Home/AddCustomTokenModal.tsx:13 - AddCustomTokenModal
+src/components/dashboard/Home/index.ts:1 - HomeView
+src/components/dashboard/NFT/index.ts:1 - NFTGallery
+src/components/dashboard/NFT/index.ts:12 - getCachedNFTs
+src/components/dashboard/NFT/index.ts:31 - cacheNFTs
+src/components/dashboard/NFT/index.ts:42 - fetchNFTs
+src/components/dashboard/NFT/index.ts:62 - parseNFTMetadata
+src/components/dashboard/NFT/index.ts:75 - transferNFT
+src/components/dashboard/NFT/NFTGallery.tsx:14 - NFTAttribute (used in module)
+src/components/dashboard/NFT/NFTGallery.tsx:19 - NFT (used in module)
+src/components/dashboard/NFT/NFTGallery.tsx:30 - NFTGalleryProps (used in module)
+src/components/dashboard/NFT/NFTGallery.tsx:206 - default
+src/components/dashboard/OCS01/index.ts:25 - OCS01TokenList
+src/components/dashboard/OCS01/index.ts:130 - OCS01ContractExplorer
+src/components/dashboard/OCS01/index.ts:6 - OCS01Token
+src/components/dashboard/OCS01/index.ts:15 - OCS01TokenListProps
+src/components/dashboard/OCS01/index.ts:103 - OCS01ContractExplorerProps
+src/components/dashboard/Privacy/index.ts:1 - PrivacyView
+src/components/dashboard/Privacy/PrivacyModals.tsx:29 - ShieldModal
+src/components/dashboard/Privacy/PrivacyModals.tsx:192 - PrivateTransferModal
+src/components/dashboard/Privacy/PrivacyModals.tsx:419 - ClaimTransfersModal
+src/components/dashboard/Send/index.ts:1 - SendView
+src/components/dashboard/Swap/BridgeConfirmModal.tsx:11 - BridgeConfirmModalProps (used in module)
+src/components/dashboard/Swap/SwapTab.tsx:141 - SwapTabProps (used in module)
+src/components/dashboard/Swap/swapUtils.ts:1 - OCT_DECIMALS (used in module)
+src/components/dashboard/Swap/TokenSelectorModal.tsx:21 - TokenSelectorModal
+src/components/dashboard/Swap/TokenSelectorModal.tsx:10 - TokenSelectorModalProps (used in module)
+src/components/dashboard/TokenDetail/index.ts:1 - TokenDetailView
+src/components/dashboard/TokenItem/index.ts:1 - TokenItem
+src/components/dashboard/TokenSelect/index.ts:1 - TokenSelectView
+src/components/dashboard/Transactions/index.ts:1 - TransactionItem
+src/components/dashboard/Transactions/index.ts:2 - TransactionDetailModal
+src/components/shared/ConfirmModal/ConfirmModal.tsx:60 - default
+src/components/shared/ConfirmModal/index.ts:1 - ConfirmModal
+src/components/shared/ErrorBoundary/index.ts:1 - ErrorBoundary
+src/components/shared/Icons/index.tsx:6 - IconProps (used in module)
+src/components/shared/Icons/index.tsx:12 - AnimatedLockIconProps (used in module)
+src/components/shared/Icons/index.tsx:17 - QiubitLogo
+src/components/shared/Icons/index.tsx:29 - QiubitLogoSVG
+src/components/shared/Icons/index.tsx:41 - QiubitTokenLogo
+src/components/shared/Icons/index.tsx:47 - SendIcon
+src/components/shared/Icons/index.tsx:53 - ReceiveIcon
+src/components/shared/Icons/index.tsx:59 - ScanIcon
+src/components/shared/Icons/index.tsx:69 - HistoryIcon
+src/components/shared/Icons/index.tsx:76 - SearchIcon
+src/components/shared/Icons/index.tsx:83 - WalletIcon
+src/components/shared/Icons/index.tsx:91 - SettingsIcon
+src/components/shared/Icons/index.tsx:98 - CopyIcon
+src/components/shared/Icons/index.tsx:105 - CheckIcon
+src/components/shared/Icons/index.tsx:111 - CloseIcon
+src/components/shared/Icons/index.tsx:117 - ChevronRightIcon
+src/components/shared/Icons/index.tsx:123 - ChevronLeftIcon
+src/components/shared/Icons/index.tsx:129 - PlusIcon
+src/components/shared/Icons/index.tsx:135 - ImportIcon
+src/components/shared/Icons/index.tsx:142 - ExportIcon
+src/components/shared/Icons/index.tsx:149 - RefreshIcon
+src/components/shared/Icons/index.tsx:157 - KeyIcon
+src/components/shared/Icons/index.tsx:165 - LockIcon
+src/components/shared/Icons/index.tsx:173 - AnimatedLockIcon
+src/components/shared/Icons/index.tsx:255 - EyeIcon
+src/components/shared/Icons/index.tsx:262 - EyeOffIcon
+src/components/shared/Icons/index.tsx:271 - ArrowUpRightIcon
+src/components/shared/Icons/index.tsx:277 - ArrowDownLeftIcon
+src/components/shared/Icons/index.tsx:283 - QrCodeIcon
+src/components/shared/Icons/index.tsx:295 - LogoutIcon
+src/components/shared/Icons/index.tsx:303 - GlobeIcon
+src/components/shared/Icons/index.tsx:312 - GenericTokenIcon
+src/components/shared/Icons/index.tsx:321 - BuyIcon
+src/components/shared/Icons/index.tsx:330 - SwapIcon
+src/components/shared/Icons/index.tsx:340 - ChevronDownIcon
+src/components/shared/Icons/index.tsx:347 - StakingIcon
+src/components/shared/Icons/index.tsx:356 - EditIcon
+src/components/shared/Icons/index.tsx:364 - PrivacyIcon
+src/components/shared/Icons/index.tsx:373 - ShieldIcon
+src/components/shared/Icons/index.tsx:382 - UnshieldIcon
+src/components/shared/Icons/index.tsx:391 - PrivateTransferIcon
+src/components/shared/Icons/index.tsx:404 - ClaimIcon
+src/components/shared/Icons/index.tsx:412 - PublicIcon
+src/components/shared/Icons/index.tsx:421 - BridgeIcon
+src/components/shared/Icons/index.tsx:429 - EarnIcon
+src/components/shared/Icons/index.tsx:437 - ContractIcon
+src/components/shared/Icons/index.tsx:448 - GasIcon
+src/components/shared/Icons/index.tsx:457 - SignatureIcon
+src/components/shared/Icons/index.tsx:466 - AlertIcon
+src/components/shared/Icons/index.tsx:475 - WarningIcon
+src/components/shared/Icons/index.tsx:484 - InfoIcon
+src/components/shared/Icons/index.tsx:493 - ImageIcon
+src/components/shared/Icons/index.tsx:501 - TrashIcon
+src/components/shared/Icons/index.tsx:510 - CheckCircleIcon
+src/components/shared/Icons/index.tsx:517 - XCircleIcon
+src/components/shared/Icons/index.tsx:525 - LinkIcon
+src/components/shared/LoadingScreen/index.ts:1 - LoadingScreen
+src/components/shared/NetworkFeeSheet/NetworkFeeSheet.tsx:6 - FeeSpeed (used in module)
+src/components/shared/NetworkFeeSheet/NetworkFeeSheet.tsx:8 - EvmGasOpts (used in module)
+src/components/shared/NetworkFeeSheet/NetworkFeeSheet.tsx:15 - FeeEstimates (used in module)
+src/components/shared/Toast/index.ts:1 - default
+src/components/shared/Toast/index.ts:12 - Toast
+src/components/shared/Toast/index.ts:5 - ToastProps
+src/components/shared/TokenIcon/index.ts:1 - default
+src/components/shared/TokenIcon/index.ts:58 - TokenIcon
+src/components/shared/TokenIcon/index.ts:276 - getTokenInfo
+src/components/shared/TokenIcon/index.ts:283 - formatTokenAmount
+src/components/shared/TokenIcon/index.ts:42 - TokenIconProps
+src/components/shared/WalletSelector/index.ts:1 - WalletSelector
+src/components/shared/WalletSelector/index.ts:1 - WalletHeader
+src/components/shared/WalletSelector/WalletSelector.tsx:182 - default
+src/components/welcome/StepHeader/StepHeader.tsx:92 - default
+src/components/dashboard/modals/AccountModal/AccountModal.tsx:187 - AccountModal
+src/components/dashboard/Privacy/Contract/ContractView.tsx:13 - ContractView
+src/components/dashboard/Privacy/Stealth/StealthView.tsx:20 - StealthView
+src/components/shared/Icons/tokens/BnbIcon.tsx:3 - BnbIcon
+src/components/shared/Icons/tokens/EthereumIcon.tsx:3 - EthereumIcon
+src/components/shared/Icons/tokens/SolanaIcon.tsx:3 - SolanaIcon

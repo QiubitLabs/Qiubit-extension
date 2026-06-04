@@ -16,7 +16,6 @@ export function TokenItem({ token, onClick, hideBalance }: TokenItemProps) {
     const change = token.change24h ?? 0;
     const changeColor = change > 0 ? '#00C853' : change < 0 ? '#FF5252' : 'var(--text-tertiary)';
 
-    // Format: "$0.0521 (3.2%)" or just "$0.0521" if no change data
     const priceStr = price > 0 ? formatPrice(price) : null;
     const changeStr = change !== 0 ? `${change > 0 ? '+' : ''}${change.toFixed(2)}%` : null;
     const priceChangeText = priceStr
@@ -30,6 +29,8 @@ export function TokenItem({ token, onClick, hideBalance }: TokenItemProps) {
                     symbol={token.symbol}
                     logoUrl={token.logoUrl}
                     size={28}
+                    contractAddress={token.contractAddress}
+                    chainId={token.chainId}
                 />
             </div>
 
@@ -37,14 +38,18 @@ export function TokenItem({ token, onClick, hideBalance }: TokenItemProps) {
             <div className="token-item-info">
                 <div className="token-item-symbol">{token.symbol}</div>
                 <div className="token-item-balance-text">
-                    {hideBalance ? '****' : formatAmount(token.balance)}
+                    {hideBalance ? '****' : formatAmount(token.balance, token.decimals !== undefined ? Math.min(token.decimals, 6) : 6)}
                 </div>
             </div>
 
             {/* Right: Market Data */}
             <div className="token-item-market">
-                <div className="token-item-value-fiat">{hideBalance ? '****' : formatUsd(usdValue)}</div>
-                <div className="token-item-price" style={{ color: changeColor, fontSize: 11 }}>{priceChangeText}</div>
+                <div className="token-item-value-fiat">
+                    {hideBalance ? '****' : token.isTestnet ? '—' : formatUsd(usdValue)}
+                </div>
+                <div className="token-item-price" style={{ color: changeColor, fontSize: 11 }}>
+                    {token.isTestnet ? 'testnet' : priceChangeText}
+                </div>
             </div>
         </div>
     );

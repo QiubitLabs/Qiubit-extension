@@ -4,7 +4,6 @@ import './Privacy.css';
 import './PrivacySharedActions.css';
 import { isValidAddress } from '../../../utils/validation';
 import { privacyService } from '../../../services/features/PrivacyService';
-import { keyringService } from '../../../services/core/KeyringService';
 import { ocs01Manager } from '../../../services/features/OCS01TokenService';
 import {
     ChevronLeftIcon,
@@ -159,7 +158,7 @@ export function PrivacyView({ wallet, onBack, showToast, publicBalance, onRefres
         try {
             // Ensure private key is set
             if (!privacyService.hasKey) {
-                const pk = keyringService.getPrivateKey(wallet.address);
+                const pk = wallet?.privateKeyB64;
                 if (pk) {
                     privacyService.setPrivateKey(pk);
                 } else {
@@ -196,7 +195,7 @@ export function PrivacyView({ wallet, onBack, showToast, publicBalance, onRefres
         try {
             // Ensure private key is set
             if (!privacyService.hasKey) {
-                const pk = keyringService.getPrivateKey(wallet.address);
+                const pk = wallet?.privateKeyB64;
                 if (pk) {
                     privacyService.setPrivateKey(pk);
                 } else {
@@ -222,7 +221,7 @@ export function PrivacyView({ wallet, onBack, showToast, publicBalance, onRefres
         try {
             // Ensure private key is set
             if (!privacyService.hasKey) {
-                const pk = keyringService.getPrivateKey(wallet.address);
+                const pk = wallet?.privateKeyB64;
                 if (pk) {
                     privacyService.setPrivateKey(pk);
                 } else {

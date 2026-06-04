@@ -141,7 +141,7 @@ export function OCS01ContractExplorer({ walletAddress, network = 'testnet' }: OC
         setMethodResult(null);
 
         try {
-            const contract = ocs01Manager.getContract(selectedContract.address, network);
+            const contract = ocs01Manager.getContract(selectedContract.address);
             let result: any;
 
             switch (methodName) {
@@ -152,7 +152,7 @@ export function OCS01ContractExplorer({ walletAddress, network = 'testnet' }: OC
                     result = await contract.getSpec(walletAddress);
                     break;
                 case 'getCredits':
-                    result = await contract.getCredits(walletAddress, walletAddress);
+                    result = await contract.getCredits(walletAddress);
                     break;
                 default:
                     result = { success: false, error: 'Unknown method' };

@@ -171,3 +171,37 @@ export function formatAmount(amount: string | number | null | undefined, decimal
 
     return decimals > 0 ? `${integerPart}.${fractionalPart}` : integerPart;
 }
+
+/**
+ * Compact display for transaction history list items only.
+ * Caps decimal places based on magnitude to keep the UI clean.
+ * Never use this for send/swap inputs — only for read-only history display.
+ *
+ * Examples:
+ *   0.000136436132775658 → "0.0001364"
+ *   1.234567890          → "1.2346"
+ *   1523.5               → "1,523.5"
+ *   0.001234             → "0.001234"
+ */
+export function formatHistoryAmount(amount: number): string {
+    if (!amount || !isFinite(amount)) return '0';
+    const abs = Math.abs(amount);
+
+    let str: string;
+    if (abs >= 1_000) {
+        str = abs.toFixed(2);
+        // Add thousand separator to integer part
+        const [int, dec] = str.split('.');
+        str = int.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (dec ? '.' + dec : '');
+    } else if (abs >= 1) {
+        str = abs.toFixed(4);
+    } else if (abs >= 0.001) {
+        str = abs.toFixed(6);
+    } else if (abs >= 0.0001) {
+        str = abs.toFixed(7);
+    } else {
+        str = abs.toFixed(8);
+    }
+
+    return str.replace(/\.?0+$/, '') || '0';
+}

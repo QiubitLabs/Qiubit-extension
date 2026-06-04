@@ -84,11 +84,12 @@ class EvmBalanceCache {
     /**
      * Stale-while-revalidate: return cached value if any, run fetcher in background to refresh.
      * If no cached value at all, await the fetcher.
+     * Pass force = true to bypass cache checks and guarantee fresh values from fetcher.
      */
-    async swr(key: string, fetcher: () => Promise<string>): Promise<string> {
+    async swr(key: string, fetcher: () => Promise<string>, force = false): Promise<string> {
         this.hydrate();
-        const fresh = this.getFresh(key);
-        const stale = this.getStale(key);
+        const fresh = force ? null : this.getFresh(key);
+        const stale = force ? null : this.getStale(key);
 
         // Fresh hit — no fetch needed
         if (fresh !== null) return fresh;

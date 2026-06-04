@@ -2,6 +2,67 @@ import { STORAGE_KEYS } from '../../constants';
 // @ts-ignore
 import { saveTransaction, getTransactionsByAddress } from '../indexedDB';
 import { storage } from './adapter';
+import type { Transaction } from '../../types';
+
+// ─── Per-chain EVM history cache ─────────────────────────────────────────────
+// Key format: evm_hist_v1:${networkId}:${evmAddr}
+// Stores up to 200 txs per chain, sorted newest-first.
+const EVM_HIST_MAX = 200;
+
+function evmHistKey(networkId: string, evmAddr: string): string {
+    return `evm_hist_v1:${networkId}:${evmAddr.toLowerCase()}`;
+}
+
+/** Load cached EVM transactions for a specific chain. Returns [] on miss. */
+export async function loadEvmTxHistory(networkId: string, evmAddr: string): Promise<Transaction[]> {
+    try {
+        const key = evmHistKey(networkId, evmAddr);
+        const result = await storage.get(key);
+        const raw = result[key];
+        if (!raw) return [];
+        return JSON.parse(raw) as Transaction[];
+    } catch {
+        return [];
+    }
+}
+
+/** Persist EVM transactions for a chain. Merges with existing, deduplicates by hash. */
+export async function saveEvmTxHistory(networkId: string, evmAddr: string, newTxs: Transaction[]): Promise<void> {
+    if (!newTxs.length) return;
+    try {
+        const key = evmHistKey(networkId, evmAddr);
+        const existing = await loadEvmTxHistory(networkId, evmAddr);
+        const txMap = new Map<string, Transaction>();
+        existing.forEach(tx => tx.hash && txMap.set(tx.hash, tx));
+        newTxs.forEach(tx => tx.hash && txMap.set(tx.hash, tx));
+        const merged = Array.from(txMap.values())
+            .sort((a, b) => {
+                const aT = typeof a.timestamp === 'string' ? parseInt(a.timestamp) : (a.timestamp as number);
+                const bT = typeof b.timestamp === 'string' ? parseInt(b.timestamp) : (b.timestamp as number);
+                return bT - aT;
+            })
+            .slice(0, EVM_HIST_MAX);
+        await storage.set({ [key]: JSON.stringify(merged) });
+    } catch { /* ignore */ }
+}
+
+/**
+ * Migrate old EVM history storage keys to the new per-chain format.
+ * The old code did not cache EVM history, so there is nothing to migrate.
+ * This function exists as a no-op scaffold for safe future migrations.
+ */
+export async function migrateEvmHistory(): Promise<void> {
+    // Old keys used no EVM caching — nothing to move.
+    // If old keys with pattern 'evm_hist_v0:*' ever existed, clean them up here.
+    try {
+        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+            chrome.storage.local.get(null, (all) => {
+                const staleKeys = Object.keys(all || {}).filter(k => k.startsWith('evm_hist_v0:'));
+                if (staleKeys.length > 0) chrome.storage.local.remove(staleKeys);
+            });
+        }
+    } catch { /* ignore */ }
+}
 
 /**
  * Get Transaction History (Async)

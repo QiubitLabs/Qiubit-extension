@@ -1,9 +1,12 @@
-import { ChevronLeftIcon, ChevronRightIcon, GlobeIcon, KeyIcon, LogoutIcon, ExportIcon, LockIcon, AlertIcon, CheckIcon, CopyIcon } from '../../shared/Icons';
+import { ChevronLeftIcon, ChevronRightIcon, GlobeIcon, KeyIcon, LogoutIcon, ExportIcon, LockIcon, AlertIcon, CheckIcon, CopyIcon, LinkIcon } from '../../shared/Icons';
 import { truncateAddress } from '../../../utils/crypto';
 import { keyringService } from '../../../services/core/KeyringService';
 import { Wallet, Settings } from '../../../types';
+import { getNetworkLabel } from '../../../constants/networks/registry';
 import { useState } from 'react';
 import './SettingsMenu.css';
+import { AUTO_LOCK_DURATIONS, type AutoLockDuration, SessionService } from '../../../services/core/SessionService';
+import packageInfo from '../../../../package.json';
 
 interface SettingsMenuProps {
     wallet: Wallet;
@@ -63,7 +66,7 @@ export function SettingsMenu({ wallet, settings, onViewChange, onBack, onExportK
                                 <img src="/icon.svg" alt="Wallet Icon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
                             <div className="flex-1">
-                                <p className="font-semibold mb-xs">{wallet.name || 'Octra Wallet'}</p>
+                                <p className="font-semibold mb-xs">{wallet.name || 'Qiubit Wallet'}</p>
                                 <p className="text-mono text-sm text-secondary">{truncateAddress(wallet.address, 10, 8)}</p>
                             </div>
                             <button
@@ -86,14 +89,42 @@ export function SettingsMenu({ wallet, settings, onViewChange, onBack, onExportK
                             <div className="settings-item-content">
                                 <div className="settings-item-label">Network</div>
                                 <div className="settings-item-value">
-                                    {settings.network === 'mainnet' ? 'Mainnet' : 'Testnet'}
+                                    {getNetworkLabel(settings.network || 'all')}
                                 </div>
                             </div>
                         </div>
                         <ChevronRightIcon size={18} className="text-tertiary" />
                     </div>
 
+                    <div className="settings-item" onClick={() => onViewChange('connected-sites')}>
+                        <div className="flex items-center gap-md">
+                            <LinkIcon size={20} />
+                            <div className="settings-item-content">
+                                <div className="settings-item-label">Connected Sites</div>
+                                <div className="settings-item-value">Manage dApp connections</div>
+                            </div>
+                        </div>
+                        <ChevronRightIcon size={18} className="text-tertiary" />
+                    </div>
 
+                    <div className="settings-item" onClick={() => onViewChange('auto-lock')}>
+                        <div className="flex items-center gap-md">
+                            <LockIcon size={20} />
+                            <div className="settings-item-content">
+                                <div className="settings-item-label">Auto-Lock Timer</div>
+                                <div className="settings-item-value">
+                                    {(() => {
+                                        const ms = SessionService.getAutoLockDuration();
+                                        const match = (Object.entries(AUTO_LOCK_DURATIONS) as [AutoLockDuration, number][])
+                                            .find(([, v]) => v === ms);
+                                        if (!match) return '5 minutes';
+                                        return match[0].replace('min', ' minutes');
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                        <ChevronRightIcon size={18} className="text-tertiary" />
+                    </div>
 
                 </div>
 
@@ -184,8 +215,27 @@ export function SettingsMenu({ wallet, settings, onViewChange, onBack, onExportK
                 </div>
 
                 <div className="text-center py-xl">
-                    <p className="text-xs text-tertiary">Octra Wallet v1.1.1</p>
-                    <p className="text-xs text-tertiary mt-xs">{settings.network === 'mainnet' ? 'Mainnet' : 'Testnet'} - Client-side only</p>
+                    <a 
+                        href="https://qiubitwallet.com/privacy-terms" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ 
+                            fontSize: '11px', 
+                            color: 'var(--text-tertiary)', 
+                            textDecoration: 'none', 
+                            display: 'inline-block',
+                            marginBottom: '8px',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-primary)'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                    >
+                        Privacy Policy & Terms
+                    </a>
+                    <p className="text-xs text-tertiary">Qiubit Wallet v{packageInfo.version}</p>
+                    <p className="text-xs text-tertiary mt-xs">
+                        {getNetworkLabel(settings.network || 'all')} - Client-side only
+                    </p>
                 </div>
             </div>
         </>

@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
+import sri from 'vite-plugin-sri'
 import { resolve } from 'path'
 
 export default defineConfig(({ mode }) => {
@@ -10,6 +11,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      // SRI: inject integrity= hashes on all <script> and <link> tags in index.html
+      // This prevents a compromised CDN or build artifact from loading tampered scripts.
+      sri(),
       viteStaticCopy({
         targets: [
           { src: 'manifest.json', dest: '.' },
@@ -26,14 +30,16 @@ export default defineConfig(({ mode }) => {
       minify: isProduction ? 'terser' : false,
       terserOptions: {
         compress: {
-          drop_console: false, // Start false, then specify what to drop
-          pure_funcs: ['console.log', 'console.info', 'console.debug'], // Drop these specific functions
+          // Drop all console output in production to prevent key material
+          // leaking through error logs or stack traces in DevTools.
+          drop_console: true,
+          drop_debugger: true,
         },
       },
       rollupOptions: {
         input: {
           popup: resolve(__dirname, 'index.html'),
-          background: resolve(__dirname, 'src/background/background.js'),
+          background: resolve(__dirname, 'src/background/index.ts'),
           contentScript: resolve(__dirname, 'src/inject/contentScript.js'),
           inpage: resolve(__dirname, 'src/inject/inpage.js')
         },

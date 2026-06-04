@@ -18,6 +18,7 @@ interface UseWalletOnboardingProps {
     saveActiveSession: (pwd: string) => Promise<void>;
     addWalletInternal: (wallet: Wallet, pwd: string) => Promise<void>;
     refreshTransactions: (opts?: { force?: boolean }) => Promise<void>;
+    refreshBalance: (mode?: 'public' | 'private' | 'both', opts?: { force?: boolean }) => Promise<void>;
     rpcClient: any;
 }
 
@@ -42,7 +43,8 @@ export function useWalletOnboarding(props: UseWalletOnboardingProps) {
         setView,
         setPendingWallet: props.setPendingWallet,
         showToast: props.showToast,
-        saveActiveSession
+        saveActiveSession,
+        refreshBalance: props.refreshBalance
     });
 
     const { handleImportWallet, handleAddWalletFromModal } = useWalletImport({
@@ -53,7 +55,8 @@ export function useWalletOnboarding(props: UseWalletOnboardingProps) {
         showToast: props.showToast,
         saveActiveSession,
         addWalletInternal: props.addWalletInternal,
-        refreshTransactions: props.refreshTransactions
+        refreshTransactions: props.refreshTransactions,
+        refreshBalance: props.refreshBalance
     });
 
     return {

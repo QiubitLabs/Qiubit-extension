@@ -57,11 +57,9 @@
 .header-icon-btn:hover {
     background: transparent !important;
     color: var(--text-primary);
-    transform: scale(1.1);
 }
 
 .header-icon-btn:active {
-    transform: scale(0.95);
     background: transparent !important;
     color: var(--text-secondary);
 }

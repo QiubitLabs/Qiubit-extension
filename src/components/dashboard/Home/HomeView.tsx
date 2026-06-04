@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { PlusIcon } from '../../shared/Icons';
+import { PlusIcon, ChevronRightIcon } from '../../shared/Icons';
 import './HomeView.css';
 import { TokenItem } from '../TokenItem';
-import { getMultipleTokenPrices, getCachedPrices, formatUsd } from '../../../services/network/PriceService';
-import { AddCustomTokenModal } from './AddCustomTokenModal';
+import { getMultipleTokenPrices, getMultiplePricesByContractsMultiChain, getCachedPrices, formatUsd } from '../../../services/network/PriceService';
+import { AddTokenModal } from './AddTokenModal';
+import './AddTokenModal.css';
 import { Wallet, Token } from '../../../types';
+import { filterTokensByNetwork, NETWORK_REGISTRY } from '../../../constants/networks/registry';
 
 interface HomeViewProps {
     wallet: Wallet;
@@ -19,6 +21,7 @@ interface HomeViewProps {
     allTokens: Token[];
     isLoadingTokens: boolean;
     onRefresh: () => void;
+    networkSetting?: string;
 }
 
 export function HomeView({
@@ -30,9 +33,11 @@ export function HomeView({
     allTokens,
     isLoadingTokens,
     onRefresh,
+    networkSetting = 'all',
 }: HomeViewProps) {
     const [activeTab, setActiveTab] = useState('crypto');
     const [showAddTokenModal, setShowAddTokenModal] = useState(false);
+    const [isLowValueExpanded, setIsLowValueExpanded] = useState(false);
 
 
     // Removed: fetchEncryptedBalance useEffect
@@ -49,12 +54,33 @@ export function HomeView({
 
     // Refresh prices when token list changes — PriceService has its own 5min TTL cache
     // so re-calling is cheap (returns cached if fresh). No standalone interval needed.
+    // Skip testnet tokens (no real prices on testnets).
     useEffect(() => {
         let cancelled = false;
         const fetchPrices = async () => {
-            const symbols = Array.from(new Set(allTokens.map(t => t.symbol)));
+            const nonTestnetTokens = allTokens.filter(t => !t.isTestnet);
+            const symbols = Array.from(new Set(nonTestnetTokens.map(t => t.symbol)));
             if (symbols.length === 0) return;
             const prices = await getMultipleTokenPrices(symbols);
+
+            // For any ERC20 token on any supported chain that still has no price,
+            // auto-fetch by contract address — no TOKEN_ID_MAP entry needed.
+            const noPriceContractTokens = nonTestnetTokens.filter(t =>
+                t.contractAddress &&
+                t.contractAddress !== '0x0000000000000000000000000000000000000000' &&
+                !prices.has(t.symbol)
+            );
+            if (noPriceContractTokens.length > 0) {
+                const contractPrices = await getMultiplePricesByContractsMultiChain(
+                    noPriceContractTokens.map(t => ({
+                        symbol: t.symbol,
+                        contractAddress: t.contractAddress!,
+                        chainId: t.chainId ?? 1,
+                    }))
+                );
+                contractPrices.forEach((v, k) => prices.set(k, v));
+            }
+
             if (cancelled) return;
             setPriceMap(prices);
         };
@@ -62,38 +88,52 @@ export function HomeView({
         return () => { cancelled = true; };
     }, [allTokens]);
 
-    // Compute total USD whenever balances or prices change
-    useEffect(() => {
-        const total = allTokens.reduce((sum, token) => {
-            const sym = token.symbol === 'wOCT' ? 'OCT' : token.symbol;
-            const price = priceMap.get(sym)?.price || priceMap.get(sym.toUpperCase())?.price || 0;
-            const bal = typeof token.balance === 'string' ? parseFloat(token.balance) : token.balance;
-            return sum + (bal * price);
-        }, 0);
-        setTotalUsdValue(total);
-    }, [allTokens, priceMap]);
-
-    const displayUsdValue = useMemo(() => formatUsd(totalUsdValue), [totalUsdValue]);
-
-    // Portfolio 24h change (USD + %)
-    const { portfolioChangeUsd, portfolioChangePct } = useMemo(() => {
-        let changeUsd = 0;
-        for (const token of allTokens) {
-            const sym = token.symbol === 'wOCT' ? 'OCT' : token.symbol;
-            const entry = priceMap.get(sym) ?? priceMap.get(sym.toUpperCase());
-            if (!entry || !entry.change24h) continue;
-            const bal = typeof token.balance === 'string' ? parseFloat(token.balance) : (token.balance || 0);
-            changeUsd += bal * entry.price * (entry.change24h / 100);
-        }
-        const prevUsd = totalUsdValue - changeUsd;
-        const pct = prevUsd > 0 ? (changeUsd / prevUsd) * 100 : 0;
-        return { portfolioChangeUsd: changeUsd, portfolioChangePct: pct };
-    }, [allTokens, priceMap, totalUsdValue]);
-
-    // Asset list shows Public Balance only for Home View
+    // Asset list shows Public Balance only for Home View (Declared first to avoid TDZ reference errors)
     const tokens = useMemo(() => {
-        // Construct Native Token immediately from props
-        const nativeToken = {
+        const netConfig = NETWORK_REGISTRY[networkSetting];
+        const isEvm = netConfig?.isEVM === true;
+        const isSolana = netConfig?.id === 'solana';
+        const isSui = netConfig?.id === 'sui';
+        const isBitcoin = netConfig?.id === 'bitcoin';
+
+        // Construct Dynamic Native Token immediately from props/registry
+        const nativeToken: Token = isEvm && netConfig.nativeToken ? {
+            symbol: netConfig.nativeToken.symbol,
+            name: netConfig.nativeToken.name,
+            balance: allTokens?.find(t => t.symbol === netConfig.nativeToken!.symbol && t.isEVM && t.chainId === netConfig.chainId)?.balance || '0.0000',
+            isNative: false,
+            isEVM: true,
+            chainId: netConfig.chainId!,
+            isTestnet: netConfig.isTestnet,
+            logoUrl: netConfig.nativeToken.logoUrl,
+            decimals: netConfig.nativeToken.decimals
+        } : isSolana && netConfig?.nativeToken ? {
+            symbol: netConfig.nativeToken.symbol,
+            name: netConfig.nativeToken.name,
+            balance: allTokens?.find(t => t.symbol === netConfig.nativeToken!.symbol && t.isSolana && t.chainId === netConfig.chainId)?.balance || '0.0000',
+            isNative: false,
+            isSolana: true,
+            chainId: netConfig.chainId!,
+            isTestnet: netConfig.isTestnet,
+            logoUrl: netConfig.nativeToken.logoUrl,
+            decimals: netConfig.nativeToken.decimals
+        } : isSui && netConfig?.nativeToken ? {
+            symbol: netConfig.nativeToken.symbol,
+            name: netConfig.nativeToken.name,
+            balance: allTokens?.find(t => t.symbol === netConfig.nativeToken!.symbol && t.isSui && t.chainId === netConfig.chainId)?.balance || '0.0000',
+            isNative: false,
+            isSui: true,
+            logoUrl: netConfig.nativeToken.logoUrl,
+            decimals: netConfig.nativeToken.decimals
+        } : isBitcoin && netConfig?.nativeToken ? {
+            symbol: netConfig.nativeToken.symbol,
+            name: netConfig.nativeToken.name,
+            balance: allTokens?.find(t => t.symbol === netConfig.nativeToken!.symbol && t.isBitcoin && t.chainId === netConfig.chainId)?.balance || '0.0000',
+            isNative: false,
+            isBitcoin: true,
+            logoUrl: netConfig.nativeToken.logoUrl,
+            decimals: netConfig.nativeToken.decimals
+        } : {
             symbol: 'OCT',
             name: 'Octra',
             balance: displayBalance,
@@ -101,31 +141,137 @@ export function HomeView({
             logoType: 'native'
         };
 
-        // If no tokens loaded yet, show at least the native token
+        // If no tokens loaded yet, show at least the native token of the active network
         if (!allTokens || allTokens.length === 0) {
             return [nativeToken];
         }
 
-        // If tokens exist, map them but ensure Native balance is synced
-        const mappedTokens = allTokens.map((token: Token) => {
-            if (token.isNative) {
-                return { ...token, balance: displayBalance };
+        // Map tokens ensuring native balance is always fresh
+        const mappedTokens = allTokens.map((token: Token) =>
+            token.isNative ? { ...token, balance: displayBalance } : token
+        );
+
+        if (networkSetting === 'all') {
+            const hasNative = mappedTokens.some((t: Token) => t.isNative);
+            const octNativeToken: Token = {
+                symbol: 'OCT',
+                name: 'Octra',
+                balance: displayBalance,
+                isNative: true,
+                logoType: 'native'
+            };
+            return hasNative ? mappedTokens : [octNativeToken, ...mappedTokens];
+        }
+
+        const filtered = filterTokensByNetwork(mappedTokens, networkSetting) as Token[];
+
+        // Prepend the native EVM or Solana token if it's not present in the filtered list
+        if (isEvm && netConfig?.nativeToken) {
+            const hasEvmNative = filtered.some(t => t.symbol === netConfig.nativeToken!.symbol && !t.contractAddress);
+            if (!hasEvmNative) {
+                return [nativeToken, ...filtered];
             }
-            // Ensure non-native tokens (including EVM tokens) keep their balance
-            return token;
-        });
+        } else if (isSolana && netConfig?.nativeToken) {
+            const hasSolNative = filtered.some(t => t.symbol === netConfig.nativeToken!.symbol && t.isSolana);
+            if (!hasSolNative) {
+                return [nativeToken, ...filtered];
+            }
+        } else if (isSui && netConfig?.nativeToken) {
+            const hasSuiNative = filtered.some(t => t.symbol === netConfig.nativeToken!.symbol && t.isSui);
+            if (!hasSuiNative) {
+                return [nativeToken, ...filtered];
+            }
+        } else if (isBitcoin && netConfig?.nativeToken) {
+            const hasBtcNative = filtered.some(t => t.symbol === netConfig.nativeToken!.symbol && t.isBitcoin);
+            if (!hasBtcNative) {
+                return [nativeToken, ...filtered];
+            }
+        }
 
-        // Guard: If backend somehow didn't return native token, prepend it
-        const hasNative = mappedTokens.some((t: Token) => t.isNative);
-        return hasNative ? mappedTokens : [nativeToken, ...mappedTokens];
-    }, [allTokens, displayBalance]);
+        return filtered;
+    }, [allTokens, displayBalance, networkSetting]);
 
-    const tokensWithPrices = useMemo(() => {
-        return tokens.map(t => {
-            const entry = priceMap.get(t.symbol) ?? priceMap.get(t.symbol.toUpperCase());
-            return { ...t, price: entry?.price || 0, change24h: entry?.change24h ?? 0 };
+    // Compute total USD whenever balances or prices change — filtered by network
+    // Testnet tokens have no real prices, so they always contribute $0.
+    useEffect(() => {
+        const filtered = filterTokensByNetwork(tokens, networkSetting, true);
+        const total = filtered.reduce((sum, token) => {
+            const entry = token.isTestnet ? null : (priceMap.get(token.symbol) ?? priceMap.get(token.symbol.toUpperCase()));
+            const price = entry?.price ?? 0;
+            const bal = typeof token.balance === 'string' ? parseFloat(token.balance) : (token.balance || 0);
+            return sum + (bal * price);
+        }, 0);
+        setTotalUsdValue(total);
+    }, [tokens, priceMap, networkSetting]);
+
+    const displayUsdValue = useMemo(() => formatUsd(totalUsdValue), [totalUsdValue]);
+
+    // Portfolio 24h change (USD + %) — filtered by network
+    const { portfolioChangeUsd, portfolioChangePct } = useMemo(() => {
+        const filtered = filterTokensByNetwork(tokens, networkSetting, true);
+        let changeUsd = 0;
+        for (const token of filtered) {
+            const entry = token.isTestnet ? null : (priceMap.get(token.symbol) ?? priceMap.get(token.symbol.toUpperCase()));
+            if (!entry || !entry.change24h) continue;
+            const bal = typeof token.balance === 'string' ? parseFloat(token.balance) : (token.balance || 0);
+            changeUsd += bal * entry.price * (entry.change24h / 100);
+        }
+        const prevUsd = totalUsdValue - changeUsd;
+        const pct = prevUsd > 0 ? (changeUsd / prevUsd) * 100 : 0;
+        return { portfolioChangeUsd: changeUsd, portfolioChangePct: pct };
+    }, [tokens, priceMap, totalUsdValue, networkSetting]);
+
+    const sortedTokensWithPrices = useMemo(() => {
+        const mapped = tokens
+            .map(t => {
+                const entry = t.isTestnet ? null : (priceMap.get(t.symbol) ?? priceMap.get(t.symbol.toUpperCase()));
+                return { ...t, price: entry?.price || 0, change24h: entry?.change24h ?? 0 };
+            })
+            .filter(t => {
+                if (t.isNative) return true;
+                const upperSymbol = t.symbol.toUpperCase();
+                const balanceNum = typeof t.balance === 'string' ? parseFloat(t.balance) : (t.balance || 0);
+                if (balanceNum > 0) return true;
+                
+                const popularSymbols = [
+                    'ETH', 'WOCT', 'USDC', 'USDT', 'DAI', 'WBTC', 
+                    'LINK', 'UNI', 'PEPE', 'SHIB', 'MATIC', 'POL', 
+                    'BNB', 'GRT', 'AAVE', 'MKR', 'LDO', 'MON', 'HYPE',
+                    'SOL', 'SUI', 'BTC'
+                ];
+                return popularSymbols.includes(upperSymbol);
+            });
+
+        return mapped.sort((a, b) => {
+            const balA = typeof a.balance === 'string' ? parseFloat(a.balance) : (a.balance || 0);
+            const balB = typeof b.balance === 'string' ? parseFloat(b.balance) : (b.balance || 0);
+            const usdA = a.price * balA;
+            const usdB = b.price * balB;
+            return usdB - usdA;
         });
     }, [tokens, priceMap]);
+
+    const { mainTokens, lowValueTokens } = useMemo(() => {
+        const netConfig = NETWORK_REGISTRY[networkSetting];
+        const isEvm = netConfig?.isEVM === true;
+        const nativeSymbol = isEvm && netConfig?.nativeToken ? netConfig.nativeToken.symbol : 'OCT';
+
+        const main: (Token & { price: number; change24h: number })[] = [];
+        const low: (Token & { price: number; change24h: number })[] = [];
+
+        sortedTokensWithPrices.forEach(t => {
+            const isNativeToken = t.isNative || !t.contractAddress || t.symbol === 'OCT' || t.symbol === 'ETH' || t.symbol === nativeSymbol;
+            const hasPrice = t.price && t.price > 0;
+
+            if (isNativeToken || hasPrice) {
+                main.push(t);
+            } else {
+                low.push(t);
+            }
+        });
+
+        return { mainTokens: main, lowValueTokens: low };
+    }, [sortedTokensWithPrices, networkSetting]);
 
     return (
         <>
@@ -181,7 +327,7 @@ export function HomeView({
             <div className="tab-content">
                 {activeTab === 'crypto' && (
                     <div className="token-list-container">
-                        <div className="token-list-header px-md flex justify-between items-center mb-sm">
+                        <div className="token-list-header flex justify-between items-center mb-sm">
                             <span className="text-xs text-tertiary font-medium uppercase tracking-wider">Assets</span>
                             <button
                                 className="icon-btn-ghost text-accent"
@@ -192,36 +338,55 @@ export function HomeView({
                                 <PlusIcon size={18} />
                             </button>
                         </div>
-                        <div className="token-list px-md">
-                            {/* 1. NATIVE TOKEN - ALWAYS INSTANT & SEPARATE */}
-                            <TokenItem
-                                key="OCT-NATIVE"
-                                token={{
-                                    symbol: 'OCT',
-                                    name: 'Octra',
-                                    balance: displayBalance,
-                                    isNative: true,
-                                    logoType: 'native',
-                                    price: priceMap.get('OCT')?.price || 0,
-                                    change24h: priceMap.get('OCT')?.change24h ?? 0
-                                }}
-                                onClick={() => onTokenClick({ symbol: 'OCT', name: 'Octra', isNative: true, balance: displayBalance })}
-                                hideBalance={isBalanceHidden}
-                            />
-
-                            {/* 2. OTHER TOKENS (OCS01 / CUSTOM) */}
-                            {tokensWithPrices.filter((t: Token) => !t.isNative).map((token: Token & { price?: number }) => (
+                        <div className="token-list">
+                            {/* MAIN ASSETS (NATIVE OR WITH PRICES) */}
+                            {mainTokens.map((token: Token & { price?: number }) => (
                                 <TokenItem
-                                    key={token.contractAddress || token.symbol}
+                                    key={token.isNative ? "OCT-NATIVE" : (token.contractAddress ? `${token.chainId || '1'}-${token.contractAddress}` : `${token.chainId || 'oct'}-${token.symbol}`)}
                                     token={token}
                                     onClick={() => onTokenClick(token)}
                                     hideBalance={isBalanceHidden}
                                 />
                             ))}
-                            {/* 3. SKELETON FOR OTHER ASSETS ONLY - APPEARS BELOW NATIVE */}
-                            {isLoadingTokens && tokens.filter((t: Token) => !t.isNative).length === 0 && (
+
+                            {/* LOW VALUE ASSETS COLLAPSIBLE ACCORDION */}
+                            {lowValueTokens.length > 0 && (
+                                <div className="low-value-assets-section">
+                                    <button
+                                        type="button"
+                                        className={`low-value-assets-header ${isLowValueExpanded ? 'expanded' : ''}`}
+                                        onClick={() => setIsLowValueExpanded(!isLowValueExpanded)}
+                                    >
+                                        <span>Low-value assets ({lowValueTokens.length})</span>
+                                        <ChevronRightIcon 
+                                            size={16} 
+                                            className="arrow-icon"
+                                            style={{ 
+                                                transition: 'transform var(--transition-fast)',
+                                                transform: isLowValueExpanded ? 'rotate(90deg)' : 'rotate(0deg)'
+                                            }}
+                                        />
+                                    </button>
+                                    
+                                    {isLowValueExpanded && (
+                                        <div className="low-value-tokens-list">
+                                            {lowValueTokens.map((token: Token & { price?: number }) => (
+                                                <TokenItem
+                                                    key={token.isNative ? "OCT-NATIVE" : (token.contractAddress ? `${token.chainId || '1'}-${token.contractAddress}` : `${token.chainId || 'oct'}-${token.symbol}`)}
+                                                    token={token}
+                                                    onClick={() => onTokenClick(token)}
+                                                    hideBalance={isBalanceHidden}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* SKELETON LOADER FOR ASSETS IF LOADING AND NONE RENDERED YET */}
+                            {isLoadingTokens && sortedTokensWithPrices.length === 0 && (
                                 [1, 2].map((i) => (
-                                    <div key={`skel-${i}`} className="flex items-center gap-sm p-sm" style={{ opacity: 0.6 }}>
+                                    <div key={`skel-${i}`} className="flex items-center gap-sm" style={{ opacity: 0.6, padding: '14px var(--space-xl)' }}>
                                         <div className="skeleton" style={{ width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0 }} />
                                         <div className="flex-1 flex flex-col gap-xs">
                                             <div className="skeleton" style={{ width: '40px', height: '12px' }} />
@@ -258,12 +423,18 @@ export function HomeView({
             </div>
 
             {/* Add Token Modal */}
-            <AddCustomTokenModal
-                isOpen={showAddTokenModal}
-                onClose={() => setShowAddTokenModal(false)}
-                wallet={wallet}
-                onSuccess={onRefresh}
-            />
+            {showAddTokenModal && (() => {
+                const netMeta = NETWORK_REGISTRY[networkSetting];
+                const initialChainId = netMeta?.isEVM ? (netMeta.chainId ?? 1) : undefined;
+                return (
+                    <AddTokenModal
+                        walletAddress={wallet.address}
+                        initialChainId={initialChainId}
+                        onAdded={() => onRefresh()}
+                        onClose={() => setShowAddTokenModal(false)}
+                    />
+                );
+            })()}
         </>
     );
 }

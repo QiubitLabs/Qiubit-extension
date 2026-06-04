@@ -2,6 +2,7 @@
  * User-friendly error message utility
  * Maps technical errors to human-readable messages
  */
+import { getChainConfig } from '../config/chains';
 
 export const ERROR_MESSAGES: Record<string, string> = {
     // Network errors
@@ -62,13 +63,27 @@ function extractRpcError(msg: string): string {
 /**
  * Get user-friendly error message
  * @param {Error|string} error - The error object or message
+ * @param {string|number|null} networkIdOrChainId - Optional chain or network identifier for dynamic gas token symbols
  * @returns {string} User-friendly error message
  */
-export function getFriendlyErrorMessage(error: any): string {
+export function getFriendlyErrorMessage(error: any, networkIdOrChainId?: string | number | null): string {
     if (!error) return ERROR_MESSAGES.default;
 
     let errorMessage = typeof error === 'string' ? error : (error.message || error.toString());
     errorMessage = extractRpcError(errorMessage);
+
+    const errorMessageLower = errorMessage.toLowerCase();
+
+    // Check if it's an insufficient funds/balance error to dynamically inject the correct native token symbol
+    if (
+        errorMessageLower.includes('insufficient funds') ||
+        errorMessageLower.includes('insufficient balance') ||
+        errorMessageLower.includes('transfer amount exceeds balance')
+    ) {
+        const chain = getChainConfig(networkIdOrChainId ?? null);
+        const nativeSymbol = chain?.nativeSymbol ?? 'ETH';
+        return `Insufficient ${nativeSymbol} balance for gas fee. Please deposit some ${nativeSymbol}.`;
+    }
 
     // Check for exact match
     if (ERROR_MESSAGES[errorMessage]) {
@@ -77,7 +92,7 @@ export function getFriendlyErrorMessage(error: any): string {
 
     // Check for partial match
     for (const [key, value] of Object.entries(ERROR_MESSAGES)) {
-        if (errorMessage.toLowerCase().includes(key.toLowerCase())) {
+        if (errorMessageLower.includes(key.toLowerCase())) {
             return value;
         }
     }
@@ -96,10 +111,15 @@ export interface FormattedError {
  * Format error for display
  * @param {Error|string} error - The error
  * @param {boolean} showTechnical - Whether to show technical details (dev mode)
+ * @param {string|number|null} networkIdOrChainId - Optional chain/network identifier
  * @returns {object} Formatted error with message and optional details
  */
-export function formatError(error: any, showTechnical: boolean = false): FormattedError {
-    const friendlyMessage = getFriendlyErrorMessage(error);
+export function formatError(
+    error: any,
+    showTechnical: boolean = false,
+    networkIdOrChainId?: string | number | null
+): FormattedError {
+    const friendlyMessage = getFriendlyErrorMessage(error, networkIdOrChainId);
 
     if (!showTechnical) {
         return { message: friendlyMessage };

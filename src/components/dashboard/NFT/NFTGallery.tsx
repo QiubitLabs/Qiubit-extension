@@ -6,7 +6,7 @@ import {
     RefreshIcon,
     ImageIcon
 } from '../../shared/Icons';
-import { fetchNFTs, parseNFTMetadata } from './nftService';
+import { parseNFTMetadata } from './nftService';
 import { truncateAddress } from '../../../utils/crypto';
 import { Wallet } from '../../../types';
 import RPCClient from '../../../services/network/RpcService';
@@ -33,7 +33,7 @@ export interface NFTGalleryProps {
     onBack: () => void;
 }
 
-export function NFTGallery({ wallet, rpcClient, onBack }: NFTGalleryProps) {
+export function NFTGallery({ wallet, rpcClient: _rpcClient, onBack }: NFTGalleryProps) {
     const [nfts, setNfts] = useState<NFT[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
@@ -41,8 +41,8 @@ export function NFTGallery({ wallet, rpcClient, onBack }: NFTGalleryProps) {
     const loadNFTs = async () => {
         setLoading(true);
         try {
-            const fetched = await fetchNFTs(wallet.address, rpcClient);
-            setNfts(fetched);
+            // Bypass NFT fetching completely as requested
+            setNfts([]);
         } catch (error) {
             console.error('Failed to load NFTs:', error);
         } finally {

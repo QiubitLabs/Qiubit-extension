@@ -39,12 +39,19 @@ export async function loadWalletsSecure(password: string): Promise<Wallet[]> {
     try {
         // Try loading primary vault
         const result = await storage.get(STORAGE_KEYS.WALLETS);
-        encrypted = (result[STORAGE_KEYS.WALLETS] as string) || null;
+        const raw = result[STORAGE_KEYS.WALLETS];
 
-        if (!encrypted) return [];
+        if (!raw) return [];
 
-        // Parse vault (handles both v4 object and v3 string)
-        const vaultData = encrypted.startsWith('{') ? JSON.parse(encrypted) : encrypted;
+        // Handle both string (current saves) and object (legacy direct saves)
+        let vaultData: any;
+        if (typeof raw === 'string') {
+            encrypted = raw;
+            vaultData = raw.startsWith('{') ? JSON.parse(raw) : raw;
+        } else {
+            encrypted = '[object]';
+            vaultData = raw;
+        }
 
         // Decrypt primary vault
         const wallets = await decryptDataSecure(vaultData, password);
@@ -65,14 +72,21 @@ export async function loadWalletsSecure(password: string): Promise<Wallet[]> {
         try {
             // Fallback to backup vault
             const result = await storage.get(STORAGE_KEYS.BACKUP_WALLETS);
-            encrypted = (result[STORAGE_KEYS.BACKUP_WALLETS] as string) || null;
+            const rawBackup = result[STORAGE_KEYS.BACKUP_WALLETS];
 
-            if (!encrypted) {
+            if (!rawBackup) {
                 throw new Error('No backup vault found');
             }
 
-            // Parse and decrypt backup
-            const vaultData = encrypted.startsWith('{') ? JSON.parse(encrypted) : encrypted;
+            // Handle both string (current saves) and object (legacy direct saves)
+            let vaultData: any;
+            if (typeof rawBackup === 'string') {
+                encrypted = rawBackup;
+                vaultData = rawBackup.startsWith('{') ? JSON.parse(rawBackup) : rawBackup;
+            } else {
+                encrypted = '[object]';
+                vaultData = rawBackup;
+            }
             const wallets = await decryptDataSecure(vaultData, password);
 
             if (!Array.isArray(wallets)) {

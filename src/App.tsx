@@ -3,7 +3,7 @@
  * A simple, elegant wallet for the Octra network
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 
 import { WelcomeScreen, CreateWalletScreen, ImportWalletScreen } from './components/welcome';
@@ -39,32 +39,57 @@ function AppContent() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // Check for dApp approval request in URL hash
+  // Approval id stored so onApprove/onReject can RESOLVE_APPROVAL back to background
+  const [approvalId, setApprovalId] = useState<string | null>(null);
+  // Pending approval held here until wallet is unlocked (view = 'dashboard')
+  const [pendingApproval, setPendingApproval] = useState<any | null>(null);
+
+  // Check for dApp approval request in URL hash — background passes ?id=<uuid>
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash && hash.startsWith('#/dapp/approve')) {
-      try {
-        const queryPart = hash.split('?')[1];
-        if (queryPart) {
-          const params = new URLSearchParams(queryPart);
-          const origin = params.get('origin');
-          const action = params.get('action');
-          const requestParams = params.get('params') ? JSON.parse(params.get('params') || '{}') : {};
+    if (!hash.startsWith('#/dapp/approve')) return;
+    const queryPart = hash.split('?')[1];
+    if (!queryPart) return;
+    const params = new URLSearchParams(queryPart);
+    const id = params.get('id');
+    if (!id) return;
 
-          if (origin && action) {
-            setDappRequest({
-              origin,
-              action,
-              params: requestParams,
-              icon: params.get('icon') || ''
-            });
-          }
-        }
-      } catch (e) {
-        console.error('Failed to parse dapp request', e);
-      }
-    }
+    // Fetch the pending approval record from background
+    chrome.runtime.sendMessage({ type: 'GET_PENDING_APPROVALS' }, (approvals: any[]) => {
+      if (!approvals) return;
+      const found = approvals.find((a: any) => a.id === id);
+      if (!found) return;
+      setApprovalId(id);
+      // Hold in pendingApproval; it moves to dappRequest once wallet is unlocked
+      setPendingApproval({
+        origin: found.origin,
+        action: found.type,
+        params: found.params,
+        icon: found.params?.favicon || '',
+      });
+    });
   }, []);
+
+  // Whether this popup was opened specifically for dApp approval
+  const isApprovalPopup = useRef(window.location.hash.startsWith('#/dapp/approve'));
+
+  // Show approval overlay once wallet is unlocked (view = 'dashboard')
+  // In an approval popup, also try to hydrate wallets if onSessionRestored failed
+  useEffect(() => {
+    if (!pendingApproval || walletContext.currentView !== 'dashboard') return;
+    setDappRequest(pendingApproval);
+    setPendingApproval(null);
+  }, [pendingApproval, walletContext.currentView]);
+
+  // Fallback: if approval popup shows but wallet state not hydrated, load wallets from session
+  useEffect(() => {
+    if (!dappRequest || !isApprovalPopup.current) return;
+    if (walletContext.wallets && walletContext.wallets.length > 0) return;
+    const decrypted = SessionService.getDecryptedWallets();
+    if (decrypted && decrypted.length > 0) {
+      walletContext.setWallets(decrypted as any);
+    }
+  }, [dappRequest]);
 
   // Auth Hook (Orchestration)
   const auth = useWalletAuth({
@@ -100,12 +125,32 @@ function AppContent() {
     saveActiveSession: session.saveActiveSession,
     addWalletInternal: walletContext.handleAddWallet,
     refreshTransactions: walletContext.refreshTransactions,
+    refreshBalance: walletContext.refreshBalance,
     rpcClient: getRpcClient()
   });
 
   // Initialize App
   useEffect(() => {
-    walletContext.initializeApp(session.restoreActiveSession, auth.handleUnlock);
+    // The approval popup only needs session restoration, not the full wallet
+    // initialization flow. Running handleUnlock here risks locking the background
+    // keyring if any initialization step (OCS01, privacy service, balance fetch)
+    // throws — because handleUnlock's error catch calls keyringService.lock() which
+    // propagates to the background SW and breaks the pending approval.
+    if (isApprovalPopup.current) {
+      walletContext.initializeApp(session.restoreActiveSession, async (restoredPwd: string) => {
+        // Lightweight sync: load React state from already-decrypted session data.
+        // No heavy service initialization, no risk of background keyring lock.
+        const decrypted = SessionService.getDecryptedWallets();
+        if (decrypted && decrypted.length > 0) {
+          walletContext.setWallets(decrypted as any);
+        }
+        session.setIsUnlocked(true);
+        session.setPassword(restoredPwd);
+        session.setSessionKey(SessionService.getSessionKey());
+      });
+    } else {
+      walletContext.initializeApp(session.restoreActiveSession, auth.handleUnlock);
+    }
   }, []);
 
   // Auto-lock: listen for wallet:auto-locked event and record activity
@@ -136,16 +181,44 @@ function AppContent() {
       {dappRequest && (
         <DappApprovalScreen
           request={dappRequest}
-          onReject={async () => setDappRequest(null)}
-          onApprove={async () => {
-            // Logic to handle approval would go here
+          onReject={async () => {
+            if (approvalId) {
+              chrome.runtime.sendMessage({
+                type: 'RESOLVE_APPROVAL',
+                data: { id: approvalId, decision: 'rejected', result: null },
+              });
+            }
             setDappRequest(null);
+            setApprovalId(null);
+            window.close();
+          }}
+          onApprove={async (req: any) => {
+            if (approvalId) {
+              chrome.runtime.sendMessage({
+                type: 'RESOLVE_APPROVAL',
+                data: {
+                  id: approvalId,
+                  decision: 'approved',
+                  result: req._evmResult ?? null,
+                  sessionKey: session.sessionKey,
+                  selectedOctraAddress: req._selectedOctraAddress ?? null,
+                  selectedEvmAddress: req._selectedEvmAddress ?? null,
+                },
+              });
+            }
+            setDappRequest(null);
+            setApprovalId(null);
+            window.close();
           }}
         />
       )}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
+      {/* Auth/onboarding views always render — needed for unlock flow before approval */}
       {view === 'loading' && <LoadingScreen />}
+
+      {/* Dashboard state restored but wallet not yet hydrated — show loader to prevent blank screen */}
+      {!dappRequest && view === 'dashboard' && !wallet && <LoadingScreen />}
 
       {view === 'welcome' && (
         <WelcomeScreen
@@ -181,11 +254,12 @@ function AppContent() {
         />
       )}
 
-      {view === 'dashboard' && wallet && (
+      {/* Dashboard/settings hidden when approval overlay is showing */}
+      {!dappRequest && view === 'dashboard' && wallet && (
         <Dashboard showToast={showToast} />
       )}
 
-      {view === 'settings' && wallet && (
+      {!dappRequest && view === 'settings' && wallet && (
         <SettingsScreen
           onPasswordChange={auth.handlePasswordChange}
         />

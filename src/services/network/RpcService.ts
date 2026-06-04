@@ -5,11 +5,13 @@
  * EXTENSION MODE: Direct RPC connection (no CORS restrictions)
  */
 
+import { getPrimaryRpc } from '../../config/rpcEndpoints';
+
 // Network RPC URLs
 export const RPC_URLS = {
     mainnet: import.meta.env.VITE_RPC_URL,
-    testnet: import.meta.env.VITE_TESTNET_RPC_URL || '', 
-    ethereum: 'https://cloudflare-eth.com', // Default ETH RPC
+    testnet: import.meta.env.VITE_TESTNET_RPC_URL || '',
+    ethereum: getPrimaryRpc(1),
 };
 
 export const BRIDGE_CONFIG = {
@@ -69,6 +71,21 @@ const rateLimitByHost = new Map<string, number>();
 
 function hostKey(url: string): string {
     try { return new URL(url).host; } catch { return url; }
+}
+
+function parseSafeNumber(val: any): number {
+    if (val === undefined || val === null) return 0;
+    const str = String(val).trim();
+    if (!str || str.toLowerCase() === 'nan') return 0;
+    
+    // Handle hex encoded values
+    if (str.startsWith('0x') || str.startsWith('0X')) {
+        const parsedHex = parseInt(str, 16);
+        return isNaN(parsedHex) ? 0 : parsedHex;
+    }
+    
+    const parsedFloat = parseFloat(str);
+    return isNaN(parsedFloat) ? 0 : parsedFloat;
 }
 
 class RPCClient {
@@ -343,10 +360,10 @@ class RPCClient {
 
             const data = res.ok && res.json ? res.json : null;
             const rawBalance = data?.balance ?? '0';
-            const balance = parseFloat(String(rawBalance || '0')) || 0;
+            const balance = parseSafeNumber(rawBalance);
             // octra_balance returns nonce in same response — no separate octra_nonce call needed
             const rawNonce = data?.pending_nonce ?? data?.nonce ?? 0;
-            const nonce = Number(rawNonce) || 0;
+            const nonce = parseSafeNumber(rawNonce);
 
             return { balance, nonce };
         } catch (e) {
@@ -507,12 +524,30 @@ class RPCClient {
      * Returns low, medium, high fee options
      */
     async getFeeEstimate(_amount: number = 1): Promise<FeeEstimate> {
-        return {
-            low: 0.001,
-            medium: 0.005,
-            high: 0.01,
-            baseFee: 0.005
-        };
+        try {
+            const poolStats = await this.getPoolStats();
+            let multiplier = 1;
+            if (poolStats && poolStats.total_transactions > 100) {
+                multiplier = 2;
+            } else if (poolStats && poolStats.total_transactions > 20) {
+                multiplier = 1.5;
+            }
+            
+            const baseFee = 0.01 * multiplier;
+            return {
+                low: baseFee * 0.75,
+                medium: baseFee,
+                high: baseFee * 1.5,
+                baseFee: baseFee
+            };
+        } catch {
+            return {
+                low: 0.0075,
+                medium: 0.01,
+                high: 0.015,
+                baseFee: 0.01
+            };
+        }
     }
 
     /**
@@ -540,14 +575,14 @@ class RPCClient {
             const result = await this.jsonRpcCall<any>('octra_balance', [address]);
             if (result.ok && result.json) {
                 const data = result.json;
-                const nonce = data.pending_nonce ?? data.nonce ?? 0;
-                const pendingNonce = data.pending_nonce ?? data.nonce ?? 0;
+                const nonce = parseSafeNumber(data.pending_nonce ?? data.nonce ?? 0);
+                const pendingNonce = parseSafeNumber(data.pending_nonce ?? data.nonce ?? 0);
                 let balanceRaw = '0';
                 if (data.balance_raw !== undefined) {
                     balanceRaw = String(data.balance_raw);
                 } else if (data.balance !== undefined) {
                     // Convert from display format to raw micro-units
-                    const bal = parseFloat(String(data.balance));
+                    const bal = parseSafeNumber(data.balance);
                     balanceRaw = String(Math.floor(bal * 1_000_000));
                 }
                 return { nonce, balanceRaw, pendingNonce };
@@ -780,7 +815,7 @@ class RPCClient {
      */
     async callContractView(contractAddress: string, method: string, params: any[], callerAddress: string): Promise<any> {
         try {
-            const result = await this.jsonRpcCall<any>('contract_call', [contractAddress, method, params, callerAddress], 15);
+            const result = await this.jsonRpcCall<any>('contract_call', [contractAddress, method, params, callerAddress], 15000);
             return result.ok ? result.json : null;
         } catch (err) {
             console.error('[RpcService] Contract view failed:', err);

@@ -1,0 +1,9 @@
+export const POLYGON_TOKENS = [
+    { symbol: 'POL',   name: 'Polygon Ecosystem Token', decimals: 18, contractAddress: '0x0000000000000000000000000000000000000000', logoUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg', chainId: 137 },
+    { symbol: 'WPOL',  name: 'Wrapped POL',             decimals: 18, contractAddress: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', logoUrl: 'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg', chainId: 137 },
+    { symbol: 'USDC',  name: 'USD Coin',                decimals: 6,  contractAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', logoUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png', chainId: 137 },
+    { symbol: 'USDT',  name: 'Tether USD',              decimals: 6,  contractAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', logoUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png', chainId: 137 },
+    { symbol: 'DAI',   name: 'Dai Stablecoin',          decimals: 18, contractAddress: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', logoUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png', chainId: 137 },
+    { symbol: 'WETH',  name: 'Wrapped Ether',           decimals: 18, contractAddress: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619', logoUrl: 'https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg', chainId: 137 },
+    { symbol: 'WBTC',  name: 'Wrapped BTC',             decimals: 8,  contractAddress: '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6', logoUrl: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png', chainId: 137 },
+];

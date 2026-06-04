@@ -44,7 +44,12 @@ export function AddCustomTokenModal({ isOpen, onClose, onSuccess, wallet }: AddC
         setLoading(true);
         try {
             // Add to manager (persists to localStorage)
-            await ocs01Manager.addUserContract(wallet.address, contractAddress.trim());
+            await ocs01Manager.addUserContract(wallet.address, {
+                address: contractAddress.trim(),
+                name: name.trim() || contractAddress.trim().slice(0, 12),
+                symbol: symbol.trim().toUpperCase(),
+                decimals: parseInt(decimals, 10) || 6,
+            });
 
             // Reset form
             setContractAddress('');

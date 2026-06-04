@@ -8,6 +8,69 @@
     padding: 12px 0 24px;
 }
 
+.tx-hero-badge-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.tx-action-overlay {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tx-action-overlay.incoming {
+    color: var(--success);
+    border-color: var(--success);
+    background: var(--bg-secondary);
+}
+
+.tx-action-overlay.outgoing {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    background: var(--bg-secondary);
+}
+
+.tx-action-overlay.shield {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: var(--bg-secondary);
+}
+
+.tx-action-overlay.unshield {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    background: var(--bg-secondary);
+}
+
+.tx-action-overlay.private {
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+    background: var(--bg-secondary);
+}
+
+.tx-action-overlay.claim {
+    color: var(--warning);
+    border-color: var(--warning);
+    background: var(--bg-secondary);
+}
+
+.tx-action-overlay.swap {
+    color: var(--accent-primary);
+    border-color: var(--border-subtle);
+    background: var(--bg-secondary);
+}
+
+
 .tx-large-icon {
     width: 56px;
     height: 56px;
@@ -69,6 +132,10 @@
 .tx-large-amount.unshield,
 .tx-large-amount.claim {
     color: var(--success);
+}
+
+.tx-large-amount.swap {
+    color: var(--text-primary);
 }
 
 .tx-status-badge {

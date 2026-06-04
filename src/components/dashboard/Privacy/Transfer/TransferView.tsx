@@ -53,7 +53,7 @@ export function TransferView({
                                 className="token-select-item"
                                 onClick={() => onTokenSelect(token)}
                             >
-                                <div className="token-icon-wrapper">
+                                <div className="privacy-token-icon-wrapper">
                                     {token.isNative ? <QiubitTokenLogo size={22} /> : <PrivateTransferIcon size={22} />}
                                 </div>
                                 <div className="token-info">

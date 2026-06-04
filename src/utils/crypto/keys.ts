@@ -6,8 +6,60 @@ import {
     hexToBuffer,
     bufferToBase64,
     base64ToBuffer,
-    createOctraAddress
+    createOctraAddress,
+    base58Encode,
+    base58Decode
 } from './format';
+
+// Re-export split derivation submodules for clean modularity
+export {
+    deriveEvmAddressFromMnemonic,
+    deriveEvmKeyFromMnemonic
+} from './derivation/evm';
+
+export {
+    hmacSha512,
+    deriveHdSeed,
+    mnemonicToSeed
+} from './derivation/octra';
+
+export {
+    deriveSolanaKeysFromMnemonic,
+    deriveSolanaKeysFromMasterSeed
+} from './derivation/solana';
+
+export {
+    deriveSuiKeysFromMnemonic,
+    deriveSuiKeysFromMasterSeed
+} from './derivation/sui';
+
+export {
+    deriveBitcoinKeysFromMnemonic
+} from './derivation/bitcoin';
+
+import {
+    deriveEvmKeyFromMnemonic
+} from './derivation/evm';
+
+import {
+    deriveHdSeed,
+    mnemonicToSeed
+} from './derivation/octra';
+
+import {
+    deriveSolanaKeysFromMnemonic,
+    deriveSolanaKeysFromMasterSeed
+} from './derivation/solana';
+
+import {
+    deriveSuiKeysFromMnemonic,
+    deriveSuiKeysFromMasterSeed
+} from './derivation/sui';
+
+import {
+    deriveBitcoinKeysFromMnemonic,
+    toBech32Address
+} from './derivation/bitcoin';
 
 export interface WalletKeys {
     mnemonic: string[] | null;
@@ -18,87 +70,17 @@ export interface WalletKeys {
     publicKeyB64: string;
     address: string;
     evmAddress?: string;
+    evmPrivateKeyHex?: string; // BIP44 m/44'/60'/0'/0/n — used for signing EVM txs
+    solanaAddress?: string;     // BIP44 m/44'/501'/index'/0' — used for Solana Address
+    solanaPrivateKeyHex?: string; // Derived Solana Private Key (Ed25519)
+    suiAddress?: string;
+    suiPrivateKeyHex?: string;
+    bitcoinAddress?: string;
+    bitcoinPrivateKeyHex?: string;
     entropyHex?: string;
     hdIndex?: number;
     hdVersion?: number;
     masterSeedB64?: string;
-}
-
-/**
- * HMAC-SHA512 using Web Crypto API
- * Matches CLI: hmac_sha512(key, key_len, data, data_len)
- */
-async function hmacSha512(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-    // Ensure pure ArrayBuffer for Web Crypto API
-    const keyBuffer = key.buffer.slice(key.byteOffset, key.byteOffset + key.byteLength) as ArrayBuffer;
-    const dataBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
-
-    const cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        keyBuffer,
-        { name: 'HMAC', hash: 'SHA-512' },
-        false,
-        ['sign']
-    );
-    const sig = await crypto.subtle.sign('HMAC', cryptoKey, dataBuffer);
-    return new Uint8Array(sig);
-}
-
-/**
- * Derive HD seed from master seed
- * Exact port of CLI derive_hd_seed() from crypto_utils.hpp
- * 
- * hd_version=1, index=0: first 32 bytes of master_seed directly
- * hd_version=2, index=0: HMAC-SHA512("Octra seed", master_seed)[0:32]
- * else: HMAC-SHA512("Octra seed", master_seed || index_le32)[0:32]
- */
-async function deriveHdSeed(masterSeed: Uint8Array, index: number = 0, hdVersion: number = 2): Promise<Uint8Array> {
-    if (hdVersion === 1 && index === 0) {
-        // Version 1, index 0: use first 32 bytes of master seed directly
-        return masterSeed.slice(0, 32);
-    } else if (hdVersion === 2 && index === 0) {
-        // Version 2, index 0: HMAC-SHA512("Octra seed", master_seed)[0:32]
-        const key = new TextEncoder().encode('Octra seed');
-        const mac = await hmacSha512(key, masterSeed);
-        return mac.slice(0, 32);
-    } else {
-        // Any other index: HMAC-SHA512("Octra seed", master_seed || index_le32)[0:32]
-        // Index is stored as 4 bytes little-endian
-        const data = new Uint8Array(masterSeed.length + 4);
-        data.set(masterSeed, 0);
-        data[masterSeed.length]     = (index)       & 0xFF;
-        data[masterSeed.length + 1] = (index >> 8)  & 0xFF;
-        data[masterSeed.length + 2] = (index >> 16) & 0xFF;
-        data[masterSeed.length + 3] = (index >> 24) & 0xFF;
-
-        const key = new TextEncoder().encode('Octra seed');
-        const mac = await hmacSha512(key, data);
-        return mac.slice(0, 32);
-    }
-}
-
-/**
- * Convert mnemonic to 64-byte seed
- * Matches CLI: PKCS5_PBKDF2_HMAC(mnemonic, "mnemonic", 2048, SHA512, 64)
- * bip39.mnemonicToSeed does exactly this
- */
-async function mnemonicToSeed(mnemonic: string): Promise<Uint8Array> {
-    const seedBuffer = await bip39.mnemonicToSeed(mnemonic);
-    return new Uint8Array(seedBuffer);
-}
-
-/**
- * Derive EVM address from mnemonic
- * Path: m/44'/60'/0'/0/index
- */
-export function deriveEvmAddressFromMnemonic(mnemonic: string, index: number = 0): string {
-    try {
-        const wallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, `m/44'/60'/0'/0/${index}`);
-        return wallet.address;
-    } catch (e) {
-        console.error('Failed to derive EVM address:', e);
-        return '';
-    }
 }
 
 /**
@@ -132,8 +114,17 @@ export async function generateWallet(): Promise<WalletKeys> {
     // Create address: "oct" + base58(sha256(pk)), padded to 44 chars
     const address = await createOctraAddress(publicKey);
 
-    // Derive EVM address
-    const evmAddress = deriveEvmAddressFromMnemonic(mnemonic, 0);
+    // Derive EVM key pair (BIP44 — needed for signing EVM txs)
+    const evmKey = deriveEvmKeyFromMnemonic(mnemonic, 0);
+
+    // Derive Solana key pair (BIP44 — needed for Solana)
+    const solanaKey = await deriveSolanaKeysFromMnemonic(mnemonic, 0);
+
+    // Derive Sui key pair (BIP44)
+    const suiKey = await deriveSuiKeysFromMnemonic(mnemonic, 0);
+
+    // Derive Bitcoin key pair (BIP84)
+    const bitcoinKey = await deriveBitcoinKeysFromMnemonic(mnemonic, 0);
 
     // Master seed as base64 (matches CLI w.master_seed_b64)
     const masterSeedB64 = bufferToBase64(seed);
@@ -146,7 +137,14 @@ export async function generateWallet(): Promise<WalletKeys> {
         privateKeyB64: bufferToBase64(privateKey),
         publicKeyB64: bufferToBase64(publicKey),
         address,
-        evmAddress,
+        evmAddress: evmKey?.address,
+        evmPrivateKeyHex: evmKey?.privateKeyHex,
+        solanaAddress: solanaKey.address,
+        solanaPrivateKeyHex: solanaKey.privateKeyHex,
+        suiAddress: suiKey.address,
+        suiPrivateKeyHex: suiKey.privateKeyHex,
+        bitcoinAddress: bitcoinKey.address,
+        bitcoinPrivateKeyHex: bitcoinKey.privateKeyHex,
         entropyHex,
         hdIndex: 0,
         hdVersion: 2,
@@ -180,8 +178,17 @@ export async function importFromMnemonic(mnemonicPhrase: string, hdIndex: number
     // Create address
     const address = await createOctraAddress(publicKey);
 
-    // Derive EVM address
-    const evmAddress = deriveEvmAddressFromMnemonic(mnemonic, hdIndex);
+    // Derive EVM key pair (BIP44 — needed for signing EVM txs)
+    const evmKey = deriveEvmKeyFromMnemonic(mnemonic, hdIndex);
+
+    // Derive Solana key pair (BIP44)
+    const solanaKey = await deriveSolanaKeysFromMnemonic(mnemonic, hdIndex);
+
+    // Derive Sui key pair (BIP44)
+    const suiKey = await deriveSuiKeysFromMnemonic(mnemonic, hdIndex);
+
+    // Derive Bitcoin key pair (BIP84)
+    const bitcoinKey = await deriveBitcoinKeysFromMnemonic(mnemonic, hdIndex);
 
     const masterSeedB64 = bufferToBase64(seed);
 
@@ -193,7 +200,14 @@ export async function importFromMnemonic(mnemonicPhrase: string, hdIndex: number
         privateKeyB64: bufferToBase64(privateKey),
         publicKeyB64: bufferToBase64(publicKey),
         address,
-        evmAddress,
+        evmAddress: evmKey?.address,
+        evmPrivateKeyHex: evmKey?.privateKeyHex,
+        solanaAddress: solanaKey.address,
+        solanaPrivateKeyHex: solanaKey.privateKeyHex,
+        suiAddress: suiKey.address,
+        suiPrivateKeyHex: suiKey.privateKeyHex,
+        bitcoinAddress: bitcoinKey.address,
+        bitcoinPrivateKeyHex: bitcoinKey.privateKeyHex,
         hdIndex,
         hdVersion,
         masterSeedB64
@@ -201,74 +215,143 @@ export async function importFromMnemonic(mnemonicPhrase: string, hdIndex: number
 }
 
 /**
- * Import wallet from private key (hex or base64)
- * Matches CLI load_wallet flow
+ * Auto-detect and normalize any private key format to a 32-byte Uint8Array.
+ * Tries (in order): Sui bech32, Bitcoin WIF, Solana base58 keypair, hex 64/128, base64.
+ */
+function normalizePrivateKeyInput(input: string): Uint8Array {
+    // Strip all whitespace (spaces, newlines, tabs) — common when pasting on mobile
+    let clean = input.replace(/\s+/g, '');
+
+    // Sui bech32: "suiprivkey1..." — decode and skip the 1-byte type flag
+    if (clean.toLowerCase().startsWith('suiprivkey1')) {
+        try {
+            const b32chars = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+            const data = clean.slice(11).toLowerCase();
+            const decoded: number[] = [];
+            for (const ch of data.slice(0, -6)) {
+                const v = b32chars.indexOf(ch);
+                if (v < 0) throw new Error('bad char');
+                decoded.push(v);
+            }
+            let acc = 0, bits = 0;
+            const bytes: number[] = [];
+            for (const val of decoded) {
+                acc = (acc << 5) | val;
+                bits += 5;
+                while (bits >= 8) { bits -= 8; bytes.push((acc >> bits) & 0xff); }
+            }
+            if (bytes.length >= 33) return new Uint8Array(bytes.slice(1, 33));
+        } catch (_) { /* fall through */ }
+    }
+
+    // Bitcoin WIF: starts with K or L (compressed) or 5 (uncompressed mainnet)
+    if (/^[5KL][1-9A-HJ-NP-Za-km-z]{50,52}$/.test(clean)) {
+        try {
+            const decoded = base58Decode(clean);
+            if (decoded.length >= 37) return new Uint8Array(decoded.slice(1, 33));
+        } catch (_) { /* fall through */ }
+    }
+
+    // Solana base58 keypair: 64-byte keypair encoded in base58 (~86-88 chars)
+    if (/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(clean)) {
+        try {
+            const decoded = base58Decode(clean);
+            if (decoded.length >= 32) return new Uint8Array(decoded.slice(0, 32));
+        } catch (_) { /* fall through */ }
+    }
+
+    // Strip 0x prefix (EVM style)
+    if (clean.startsWith('0x') || clean.startsWith('0X')) {
+        clean = clean.substring(2);
+    }
+
+    // Hex 64 chars = 32 bytes
+    if (/^[a-fA-F0-9]{64}$/.test(clean)) {
+        return new Uint8Array(hexToBuffer(clean));
+    }
+
+    // Hex 128 chars = 64-byte full secret key (seed + pubkey), take first 32
+    if (/^[a-fA-F0-9]{128}$/.test(clean)) {
+        return new Uint8Array(hexToBuffer(clean).slice(0, 32));
+    }
+
+    // Base64 fallback (Octra priv_b64 = 32 bytes, full keypair = 64 bytes)
+    try {
+        const decoded = base64ToBuffer(clean);
+        if (decoded.length >= 64) return new Uint8Array(decoded.slice(0, 32));
+        if (decoded.length === 32) return new Uint8Array(decoded);
+    } catch (_) { /* fall through */ }
+
+    throw new Error('Unrecognized private key format. Supported: Octra base64/hex, EVM 0x hex, Solana base58, Sui suiprivkey1..., Bitcoin WIF.');
+}
+
+/**
+ * Import wallet from any private key format (auto-detected).
+ * Supports: Octra base64/hex, EVM 0x hex, Solana base58 keypair, Sui bech32, Bitcoin WIF.
+ * The extracted 32-byte seed derives all chain addresses.
  */
 export async function importFromPrivateKey(input: string): Promise<WalletKeys> {
     if (!input) throw new Error('Private key is required');
 
-    let privateKey: Uint8Array;
-    let privateKeyB64: string;
-
-    let cleanInput = input.trim();
-    if (cleanInput.startsWith('0x')) {
-        cleanInput = cleanInput.substring(2);
-    }
-
-    // Detect format
-    if (/^[a-fA-F0-9]{64}$/.test(cleanInput)) {
-        // Hex format (32 bytes = 64 hex chars)
-        privateKey = new Uint8Array(hexToBuffer(cleanInput));
-        privateKeyB64 = bufferToBase64(privateKey);
-    } else if (/^[a-fA-F0-9]{128}$/.test(cleanInput)) {
-        // Full 64-byte secret key in hex (sk = seed + pk)
-        // CLI stores base64 of first 32 bytes as priv_b64
-        const full = new Uint8Array(hexToBuffer(cleanInput));
-        privateKey = full.slice(0, 32);
-        privateKeyB64 = bufferToBase64(privateKey);
-    } else {
-        // Assume Base64
-        try {
-            const decoded = base64ToBuffer(cleanInput);
-            if (decoded.length >= 64) {
-                // Full 64-byte secret key
-                privateKey = new Uint8Array(decoded.slice(0, 32));
-                privateKeyB64 = bufferToBase64(privateKey);
-            } else if (decoded.length === 32) {
-                privateKey = new Uint8Array(decoded);
-                privateKeyB64 = cleanInput;
-            } else {
-                throw new Error('Invalid key length');
-            }
-        } catch (e) {
-            throw new Error('Invalid private key format. Use 64-character hex or base64.');
-        }
-    }
+    const privateKey = normalizePrivateKeyInput(input);
 
     if (privateKey.length !== 32) {
-        throw new Error('Invalid private key length. Must be 32 bytes (64 hex characters).');
+        throw new Error('Invalid private key length. Must be 32 bytes.');
     }
 
-    // Create Ed25519 keypair
+    const privateKeyB64 = bufferToBase64(privateKey);
+
+    // Create Ed25519 keypair → Octra address
     const keyPair = nacl.sign.keyPair.fromSeed(privateKey);
     const publicKey = keyPair.publicKey;
-
-    // Create address
     const address = await createOctraAddress(publicKey);
 
-    // Derive EVM address from private key
-    // For EVM, we use the 32-byte seed directly as the private key
-    const evmWallet = new ethers.Wallet(bufferToHex(privateKey));
+    // EVM address from same seed bytes (secp256k1) — ethers v6 requires 0x prefix
+    const evmPrivKeyHex = bufferToHex(privateKey);
+    const evmWallet = new ethers.Wallet('0x' + evmPrivKeyHex);
     const evmAddress = evmWallet.address;
+
+    // Solana: same Ed25519 seed
+    const solPublicKey = nacl.sign.keyPair.fromSeed(privateKey).publicKey;
+    const solanaAddress = base58Encode(solPublicKey);
+    const solanaPrivateKeyHex = evmPrivKeyHex;
+
+    // Sui: blake2b(0x00 || pubkey)
+    const suiPublicKey = nacl.sign.keyPair.fromSeed(privateKey).publicKey;
+    const blake2b = (await import('@noble/hashes/blake2b')).blake2b;
+    const suiData = new Uint8Array(1 + 32);
+    suiData[0] = 0x00;
+    suiData.set(suiPublicKey, 1);
+    const suiHash = blake2b(suiData, { dkLen: 32 });
+    const suiAddress = '0x' + bufferToHex(suiHash);
+    const suiPrivateKeyHex = evmPrivKeyHex;
+
+    // Bitcoin: sha256 → ripemd160 of compressed secp256k1 pubkey → bech32
+    const ripemd160 = (await import('@noble/hashes/ripemd160')).ripemd160;
+    const sha256fn = (await import('@noble/hashes/sha256')).sha256;
+    // ethers v6 requires 0x prefix for computePublicKey
+    const compressedPubKey = ethers.SigningKey.computePublicKey('0x' + evmPrivKeyHex, true);
+    const pubKeyBytes = ethers.getBytes(compressedPubKey);
+    const sha = sha256fn(pubKeyBytes);
+    const rip = ripemd160(sha);
+    const bitcoinAddress = toBech32Address(rip);
+    const bitcoinPrivateKeyHex = evmPrivKeyHex;
 
     return {
         mnemonic: null,
-        privateKeyHex: bufferToHex(privateKey),
+        privateKeyHex: evmPrivKeyHex,
         publicKeyHex: bufferToHex(publicKey),
         privateKeyB64,
         publicKeyB64: bufferToBase64(publicKey),
         address,
-        evmAddress
+        evmAddress,
+        evmPrivateKeyHex: evmPrivKeyHex,
+        solanaAddress,
+        solanaPrivateKeyHex,
+        suiAddress,
+        suiPrivateKeyHex,
+        bitcoinAddress,
+        bitcoinPrivateKeyHex
     };
 }
 
@@ -298,6 +381,49 @@ export async function deriveHdAccount(masterSeedB64: string, index: number, hdVe
     } catch (e) {
         console.error('Failed to derive EVM address from seed:', e);
     }
+
+    // Derive Solana keys from master seed
+    let solanaAddress: string | undefined;
+    let solanaPrivateKeyHex: string | undefined;
+    try {
+        const solKeys = await deriveSolanaKeysFromMasterSeed(masterSeed, index);
+        solanaAddress = solKeys.address;
+        solanaPrivateKeyHex = solKeys.privateKeyHex;
+    } catch (e) {
+        console.error('Failed to derive Solana address from seed:', e);
+    }
+
+    // Derive Sui keys from master seed
+    let suiAddress: string | undefined;
+    let suiPrivateKeyHex: string | undefined;
+    try {
+        const suiKeys = await deriveSuiKeysFromMasterSeed(masterSeed, index);
+        suiAddress = suiKeys.address;
+        suiPrivateKeyHex = suiKeys.privateKeyHex;
+    } catch (e) {
+        console.error('Failed to derive Sui address from seed:', e);
+    }
+
+    // Derive Bitcoin keys from master seed
+    let bitcoinAddress: string | undefined;
+    let bitcoinPrivateKeyHex: string | undefined;
+    try {
+        const rootNode = ethers.HDNodeWallet.fromSeed(masterSeed);
+        const childNode = rootNode.derivePath(`m/84'/0'/0'/0/${index}`);
+        let privateKeyHex = childNode.privateKey;
+        if (privateKeyHex.startsWith('0x')) privateKeyHex = privateKeyHex.slice(2);
+        
+        const compressedPubKey = childNode.publicKey;
+        const pubKeyBytes = ethers.getBytes(compressedPubKey);
+        const ripemd160 = (await import('@noble/hashes/ripemd160')).ripemd160;
+        const sha256 = (await import('@noble/hashes/sha256')).sha256;
+        const sha = sha256(pubKeyBytes);
+        const rip = ripemd160(sha);
+        bitcoinAddress = toBech32Address(rip);
+        bitcoinPrivateKeyHex = childNode.privateKey;
+    } catch (e) {
+        console.error('Failed to derive Bitcoin address from seed:', e);
+    }
     
     return {
         mnemonic: null,
@@ -307,6 +433,12 @@ export async function deriveHdAccount(masterSeedB64: string, index: number, hdVe
         publicKeyB64: bufferToBase64(publicKey),
         address,
         evmAddress,
+        solanaAddress,
+        solanaPrivateKeyHex,
+        suiAddress,
+        suiPrivateKeyHex,
+        bitcoinAddress,
+        bitcoinPrivateKeyHex,
         hdIndex: index,
         hdVersion,
         masterSeedB64

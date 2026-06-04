@@ -46,7 +46,7 @@ export function ShieldView({
                                 className="token-select-item"
                                 onClick={() => onTokenSelect(token)}
                             >
-                                <div className="token-icon-wrapper">
+                                <div className="privacy-token-icon-wrapper">
                                     {token.logoUrl ? (
                                         <img src={token.logoUrl} alt={token.symbol} style={{ width: 26, height: 26, objectFit: 'contain' }} />
                                     ) : token.isNative ? (

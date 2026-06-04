@@ -31,14 +31,17 @@ export function RenameWalletModal({ isOpen, onClose, currentName, onSave, onDele
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label text-sm text-secondary mb-xs">Change wallet display name</label>
+                    <div className="flex justify-between items-center mb-xs">
+                        <label className="form-label text-sm text-secondary mb-0">Change wallet display name</label>
+                        <span className="text-xs text-tertiary">{name.length} / 16</span>
+                    </div>
                     <input
                         type="text"
                         className="input text-lg font-medium p-md bg-surface-subtle border-none"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Enter name"
-                        maxLength={20}
+                        maxLength={16}
                         autoFocus
                     />
                 </div>

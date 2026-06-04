@@ -5,6 +5,7 @@ import { useWalletData } from '../hooks/useWalletData';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
 import { useAppInitialization } from '../hooks/useAppInitialization';
 import { Wallet, Settings, Transaction, Token } from '../types';
+import { filterTokensByNetwork } from '../constants/networks/registry';
 
 interface WalletContextType {
     wallet: Wallet | null;
@@ -23,7 +24,7 @@ interface WalletContextType {
     // Actions & Setters
     setActiveWallet: (index: number) => Promise<void>;
     setActiveWalletIdx: (index: number) => void; // raw setter for auth flow
-    refreshBalance: (mode?: 'public' | 'private' | 'both') => Promise<void>;
+    refreshBalance: (mode?: 'public' | 'private' | 'both', opts?: { force?: boolean; auto?: boolean }) => Promise<void>;
     refreshTransactions: (opts?: { force?: boolean }) => Promise<void>;
     setView: (view: string) => void;
     fetchAllTokens: () => Promise<void>;
@@ -71,8 +72,14 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         extendSession: session.extendSession
     });
 
-    // Transaction History
-    const txHistory = useTransactionHistory(walletState.wallet, session.password, { network: 'mainnet' });
+    // Transaction History — must use the live network setting, not a hardcoded string
+    const txHistory = useTransactionHistory(walletState.wallet, session.password, { network: appInit.settings?.network || 'mainnet' });
+
+    // Network-filtered tokens (must be a top-level hook, NOT nested inside useMemo)
+    const filteredTokens = useMemo(() => {
+        const networkMode = appInit.settings?.network || 'all';
+        return filterTokensByNetwork(walletData.tokens, networkMode);
+    }, [walletData.tokens, appInit.settings?.network]);
 
     const value: WalletContextType = useMemo(() => ({
         wallet: walletState.wallet,
@@ -81,7 +88,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         pendingWallet: walletState.pendingWallet,
         balance: walletData.balance,
         nonce: walletData.nonce,
-        tokens: walletData.tokens,
+        tokens: filteredTokens,
         transactions: txHistory.transactions,
         // Combined loading state
         isSyncing: walletData.isRefreshing || walletData.isLoadingTokens || txHistory.isLoadingMore,
@@ -94,7 +101,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         refreshBalance: walletData.refreshAll,
         refreshTransactions: txHistory.refreshTransactions,
         setView: appInit.setView,
-        fetchAllTokens: async () => { /* No-op, managed internally now */ },
+        fetchAllTokens: () => walletData.refreshAll('both', { force: true }),
         setSettings: appInit.setSettingsState,
         initializeApp: appInit.initializeApp,
 
@@ -119,7 +126,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         walletState.setActiveWallet, walletState.setActiveWalletIdx, walletState.handleAddWallet, walletState.handleUpdateWalletName,
         walletState.deleteWallet, walletState.setWallets, walletState.setPendingWallet,
         
-        walletData.balance, walletData.nonce, walletData.tokens, walletData.isRefreshing, 
+        walletData.balance, walletData.nonce, filteredTokens, walletData.isRefreshing, 
         walletData.isLoadingTokens, walletData.refreshAll, walletData.setBalance, walletData.setNonce,
         
         txHistory.transactions, txHistory.isLoadingMore, txHistory.hasMoreTxs, 

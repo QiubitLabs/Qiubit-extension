@@ -138,7 +138,7 @@ export function AddWalletModal({ onClose, onAddWallet }: AddWalletModalProps) {
                     <div className="add-wallet-form">
                         <div className="form-group">
                             <label className="form-label">
-                                {mode === 'import' ? 'Private Key (Base64)' : 'Recovery Phrase (12 words)'}
+                                {mode === 'import' ? 'Private Key' : 'Recovery Phrase (12 words)'}
                             </label>
                             <textarea
                                 className="input input-mono"

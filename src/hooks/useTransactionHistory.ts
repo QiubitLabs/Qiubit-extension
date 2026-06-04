@@ -103,6 +103,54 @@ export function useTransactionHistory(
         const addr = wallet.address;
         const network = settings.network || 'mainnet';
 
+        if (network === 'solana') {
+            if (!wallet.solanaAddress) return;
+            try {
+                const { solanaRpc } = await import('../services/network/SolanaRpcService');
+                const txs = await solanaRpc.getTransactionHistory(wallet.solanaAddress, fetchLimit);
+                if (txs.length > 0) {
+                    setTotalOnChain(txs.length);
+                    totalOnChainRef.current = txs.length;
+                    await saveTxHistory(txs, network, addr);
+                }
+            } catch (e) {
+                console.error('Failed to fetch Solana history:', e);
+            }
+            return;
+        }
+
+        if (network === 'sui') {
+            if (!wallet.suiAddress) return;
+            try {
+                const { suiRpc } = await import('../services/network/SuiRpcService');
+                const txs = await suiRpc.getTransactionHistory(wallet.suiAddress, fetchLimit);
+                if (txs.length > 0) {
+                    setTotalOnChain(txs.length);
+                    totalOnChainRef.current = txs.length;
+                    await saveTxHistory(txs, network, addr);
+                }
+            } catch (e) {
+                console.error('Failed to fetch Sui history:', e);
+            }
+            return;
+        }
+
+        if (network === 'bitcoin') {
+            if (!wallet.bitcoinAddress) return;
+            try {
+                const { bitcoinRpc } = await import('../services/network/BitcoinRpcService');
+                const txs = await bitcoinRpc.getTransactionHistory(wallet.bitcoinAddress);
+                if (txs.length > 0) {
+                    setTotalOnChain(txs.length);
+                    totalOnChainRef.current = txs.length;
+                    await saveTxHistory(txs, network, addr);
+                }
+            } catch (e) {
+                console.error('Failed to fetch Bitcoin history:', e);
+            }
+            return;
+        }
+
         try {
             const [allPrivacyLogs, info] = await Promise.all([
                 getAllPrivacyTransactions(password || ''),
@@ -260,8 +308,11 @@ export function useTransactionHistory(
         }
     }, [isLoadingMore, fetchAndMerge, renderDisplay]);
 
-    // --- ON WALLET SWITCH: Reset state, load from storage instantly. No RPC. ---
+    // --- ON WALLET SWITCH: Reset state, load from storage instantly & poll every 3s to keep auto-updated. ---
     useEffect(() => {
+        // Clear immediately to prevent ghosting
+        setTransactions([]);
+
         if (!wallet?.address) return;
         setDisplayLimit(DISPLAY_PAGE);
         displayLimitRef.current = DISPLAY_PAGE;
@@ -271,18 +322,32 @@ export function useTransactionHistory(
         totalOnChainRef.current = 0;
         let cancelled = false;
         const network = settings.network || 'mainnet';
-        (async () => {
+
+        const updateFromStorage = async () => {
             try {
                 const stored = await loadTxHistoryAsync(network, wallet.address, 1000);
                 if (!cancelled) {
                     const sorted = stored.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
                     setStoredCount(stored.length);
                     storedCountRef.current = stored.length;
-                    setTransactions(sorted.slice(0, DISPLAY_PAGE));
+                    
+                    const slice = sorted.slice(0, displayLimitRef.current);
+                    setTransactions(prev => {
+                        if (JSON.stringify(prev) === JSON.stringify(slice)) return prev;
+                        return slice;
+                    });
                 }
             } catch { /* ignore */ }
-        })();
-        return () => { cancelled = true; };
+        };
+
+        updateFromStorage();
+
+        const interval = setInterval(updateFromStorage, 3000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
     }, [wallet?.address, settings.network]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return {

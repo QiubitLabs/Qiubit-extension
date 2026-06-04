@@ -15,7 +15,13 @@
 /* Wallet Content */
 .wallet-content {
     flex: 1;
+    min-height: 0; /* Enforces scrolling instead of parent height blowout */
     overflow-y: auto;
     padding: var(--space-xl);
     padding-bottom: calc(var(--nav-height) + var(--space-xl));
+}
+
+.wallet-content.chrome-hidden {
+    max-height: 100vh !important; /* Reclaims full viewport height, overriding global caps */
+    padding-bottom: var(--space-xl); /* Reclaim bottom nav padding when hidden */
 }

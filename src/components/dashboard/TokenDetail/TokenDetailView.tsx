@@ -3,118 +3,12 @@ import './TokenDetailView.css';
 import { formatAmount, truncateAddress } from '../../../utils/crypto';
 import { TokenIcon } from '../../shared/TokenIcon';
 import { SendIcon, ReceiveIcon, SwapIcon } from './TokenDetailIcons';
-import { TransactionDetailModal } from '../Transactions/TransactionDetailModal/TransactionDetailModal';
+import { TransactionDetailPage } from '../Transactions/TransactionDetailModal/TransactionDetailPage';
+import { resolveNetworkForToken } from '../../../services/network/NetworkResolver';
 import { Token } from '../../../types';
 import { Transaction } from '../../../types';
-
-const ETH_BRIDGE = '0xe7ed69b852fd2a1406080b26a37e8e04e7da4cae';
-const WOCT_ADDR = '0x4647e1fe715c9e23959022c2416c71867f5a6e80';
-
-interface EvmTx {
-    hash: string;
-    type: 'in' | 'out';
-    label: 'Received' | 'Sent' | 'Bridge In' | 'Bridge Out' | 'Swap';
-    address: string;
-    amount: string;
-    asset: string;
-    timestamp: number;
-}
-
-async function fetchEvmTransfers(evmAddress: string, token: Token): Promise<EvmTx[]> {
-    const rpcUrl = import.meta.env.VITE_ETH_RPC_URL;
-    if (!rpcUrl || !evmAddress) return [];
-
-    const fetchSide = async (direction: 'in' | 'out') => {
-        const params: any = {
-            toBlock: 'latest',
-            maxCount: '0x14',
-            withMetadata: true,
-            excludeZeroValue: true,
-        };
-
-        if (token.symbol === 'ETH') {
-            params.category = ['external'];
-        } else {
-            params.category = ['erc20'];
-            params.contractAddresses = [
-                token.contractAddress || WOCT_ADDR
-            ];
-        }
-
-        if (direction === 'in') {
-            params.toAddress = evmAddress;
-            params.fromBlock = '0x0';
-        } else {
-            params.fromAddress = evmAddress;
-            params.fromBlock = '0x0';
-        }
-
-        const res = await fetch(rpcUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                jsonrpc: '2.0', id: 1,
-                method: 'alchemy_getAssetTransfers',
-                params: [params]
-            })
-        });
-        if (!res.ok) return [];
-        const data = await res.json();
-        return (data?.result?.transfers || []) as any[];
-    };
-
-    const [incoming, outgoing] = await Promise.all([
-        fetchSide('in').catch(() => []),
-        fetchSide('out').catch(() => []),
-    ]);
-
-    const toEvmTx = (raw: any, direction: 'in' | 'out'): EvmTx => {
-        const from = (raw.from || '').toLowerCase();
-        const to = (raw.to || '').toLowerCase();
-        const isBridgeAddr = from === ETH_BRIDGE || to === ETH_BRIDGE;
-        const isLiFi = from.startsWith('0x1231deb6') || to.startsWith('0x1231deb6');
-
-        let label: EvmTx['label'];
-        if (isBridgeAddr) {
-            label = direction === 'in' ? 'Bridge In' : 'Bridge Out';
-        } else if (isLiFi) {
-            label = 'Swap';
-        } else {
-            label = direction === 'in' ? 'Received' : 'Sent';
-        }
-
-        const counterparty = direction === 'in' ? raw.from : raw.to;
-        const ts = raw.metadata?.blockTimestamp
-            ? new Date(raw.metadata.blockTimestamp).getTime()
-            : Date.now();
-
-        return {
-            hash: raw.hash,
-            type: direction,
-            label,
-            address: counterparty || '',
-            amount: raw.value != null ? String(raw.value) : '0',
-            asset: raw.asset || token.symbol,
-            timestamp: ts,
-        };
-    };
-
-    const all: EvmTx[] = [
-        ...incoming.map((r: any) => toEvmTx(r, 'in')),
-        ...outgoing.map((r: any) => toEvmTx(r, 'out')),
-    ];
-
-    // Deduplicate by hash (same tx can appear in both sides if self-send)
-    const seen = new Set<string>();
-    return all
-        .filter(tx => {
-            if (seen.has(tx.hash)) return false;
-            seen.add(tx.hash);
-            return true;
-        })
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, 20);
-}
+import { getTokenPrice, getMultiplePricesByContractsMultiChain, formatUsd } from '../../../services/network/PriceService';
+import { loadEvmTxHistory } from '../../../utils/storage';
 
 interface TokenDetailViewProps {
     token: Token;
@@ -127,21 +21,107 @@ interface TokenDetailViewProps {
 
 export function TokenDetailView({ token, evmAddress, onBack, onSend, onShowQR, transactions }: TokenDetailViewProps) {
     const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
-    const [evmTxs, setEvmTxs] = useState<EvmTx[]>([]);
+    const [evmTxs, setEvmTxs] = useState<Transaction[]>([]);
     const [isLoadingEvm, setIsLoadingEvm] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [priceData, setPriceData] = useState<{ price: number; change24h: number } | null>(null);
 
     useEffect(() => {
         if (!token.isEVM || !evmAddress) return;
         setIsLoadingEvm(true);
-        fetchEvmTransfers(evmAddress, token)
-            .then(setEvmTxs)
+        
+        const net = resolveNetworkForToken(token);
+        const networkId = net?.id;
+        if (!networkId) {
+            setIsLoadingEvm(false);
+            return;
+        }
+
+        const isNativeToken = !token.contractAddress || token.contractAddress === '0x0000000000000000000000000000000000000000';
+
+        // Load cached transaction history from local storage for this EVM network
+        loadEvmTxHistory(networkId, evmAddress)
+            .then((cachedTxs) => {
+                const mappedCached = (cachedTxs || []).map(tx => ({
+                    ...tx,
+                    networkId: tx.networkId || networkId
+                }));
+                const filteredCached = mappedCached.filter(tx => {
+                    const isSwapOrBridge = tx.type === 'swap' || (tx.type as string) === 'bridge' || (tx.description && (tx.description.toLowerCase().includes('swap') || tx.description.toLowerCase().includes('bridge')));
+                    
+                    if (isSwapOrBridge) {
+                        const targetSymbol = token.symbol.toLowerCase();
+                        const fromSym = (tx.fromTokenSymbol || tx.token || '').toLowerCase();
+                        const toSym = (tx.toTokenSymbol || '').toLowerCase();
+                        if (fromSym === targetSymbol || toSym === targetSymbol) {
+                            return true;
+                        }
+                    }
+
+                    if (isNativeToken) {
+                        // Match if no contract address is set (native tx) OR if the token symbol matches POL/BNB/ETH case-insensitively
+                        const isTxNative = !tx.contractAddress || tx.contractAddress === '0x0000000000000000000000000000000000000000';
+                        return isTxNative || tx.token?.toLowerCase() === token.symbol.toLowerCase();
+                    } else {
+                        // Match ERC-20 transfers by contract address or symbol case-insensitively
+                        return (tx.contractAddress && tx.contractAddress.toLowerCase() === token.contractAddress?.toLowerCase()) ||
+                               (tx.token && tx.token.toLowerCase() === token.symbol.toLowerCase());
+                    }
+                });
+
+                // Merge with any local pending/confirmed txs from transactions prop
+                const mappedProps = transactions.map(tx => ({
+                    ...tx,
+                    networkId: tx.networkId || networkId
+                }));
+                const combined = [...mappedProps, ...filteredCached];
+                const seen = new Set<string>();
+                const deduped = combined.filter(tx => {
+                    if (!tx.hash) return true;
+                    if (seen.has(tx.hash)) return false;
+                    seen.add(tx.hash);
+                    return true;
+                });
+                
+                setEvmTxs(deduped);
+            })
             .catch(() => setEvmTxs([]))
             .finally(() => setIsLoadingEvm(false));
-    }, [token.symbol, evmAddress]);
+    }, [token.symbol, token.contractAddress, token.chainId, evmAddress, transactions]);
 
-    const octraTxs = transactions?.filter(tx =>
-        (token.isNative && !tx.token) || tx.token === token.symbol
-    ) || [];
+    useEffect(() => {
+        const fetchPrice = async () => {
+            // For EVM tokens with a contract address, query CoinGecko by contract (works for any chain)
+            if (token.isEVM && token.contractAddress &&
+                token.contractAddress !== '0x0000000000000000000000000000000000000000' &&
+                token.chainId) {
+                const map = await getMultiplePricesByContractsMultiChain([{
+                    symbol: token.symbol,
+                    contractAddress: token.contractAddress,
+                    chainId: token.chainId,
+                }]).catch(() => new Map<string, { price: number; change24h: number }>());
+                const data = map.get(token.symbol);
+                if (data && data.price > 0) { setPriceData(data); return; }
+            }
+            // Fallback: symbol-based lookup (native tokens, well-known symbols)
+            const data = await getTokenPrice(token.symbol).catch(() => null);
+            if (data) setPriceData(data);
+        };
+        fetchPrice();
+    }, [token.symbol, token.contractAddress, token.chainId, token.balance]);
+
+    const evmShowTxs = evmTxs;
+
+    const octraTxs = transactions?.filter(tx => {
+        const isSwapOrBridge = tx.type === 'swap' || (tx.type as string) === 'bridge' || (tx.description && (tx.description.toLowerCase().includes('swap') || tx.description.toLowerCase().includes('bridge')));
+        if (isSwapOrBridge) {
+            const targetSymbol = token.symbol.toLowerCase();
+            const fromSym = (tx.fromTokenSymbol || tx.token || '').toLowerCase();
+            const toSym = (tx.toTokenSymbol || '').toLowerCase();
+            return fromSym === targetSymbol || toSym === targetSymbol;
+        }
+        return (token.isNative && !tx.token) || tx.token === token.symbol;
+    }) || [];
 
     const labelColor: Record<string, string> = {
         'Bridge In': 'var(--color-success, #22c55e)',
@@ -151,29 +131,80 @@ export function TokenDetailView({ token, evmAddress, onBack, onSend, onShowQR, t
         'Sent': 'inherit',
     };
 
+    const network = resolveNetworkForToken(token);
+
+    const handleCopyAddress = () => {
+        if (token.contractAddress) {
+            navigator.clipboard.writeText(token.contractAddress);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    const balanceNum = typeof token.balance === 'string' ? parseFloat(token.balance) : (token.balance || 0);
+    const usdValue = priceData ? balanceNum * priceData.price : 0;
+
+    // Format balance using standard US style (comma for thousands, dot for decimals)
+    // Shorten decimals intelligently: if balance is very small (< 0.01), show up to 6 decimals, otherwise maximum 4 decimals.
+    const maxDecimals = (balanceNum > 0 && balanceNum < 0.01) ? 6 : 4;
+    const formattedBalance = balanceNum.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: maxDecimals
+    });
+
+    const formattedFiat = formatUsd(usdValue);
+
     return (
         <div className="td">
-            {/* Header */}
-            <header className="td-nav">
-                <button className="td-back" onClick={onBack}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {/* Header Redesigned exactly like the screenshot */}
+            <div className="td-header-card">
+                <button className="td-back-btn" onClick={onBack} title="Back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M15 18l-6-6 6-6" />
                     </svg>
                 </button>
-                <span className="td-nav-title">{token.symbol}</span>
-                <div style={{ width: 18 }} />
-            </header>
 
-            {/* Token Hero */}
-            <div className="td-hero">
-                <TokenIcon symbol={token.symbol} logoUrl={token.logoUrl} size={48} />
-                <div className="td-token-name">{token.name}</div>
+                <div className="td-header-logo-container">
+                    <TokenIcon symbol={token.symbol} logoUrl={token.logoUrl} size={42} />
+                    {network && (
+                        <img src={network.iconUrl} alt="" className="td-header-network-badge" />
+                    )}
+                </div>
+
+                <div className="td-header-info">
+                    <div className="td-header-symbol">{token.symbol}</div>
+                    {token.isTestnet && (
+                        <span className="td-testnet-badge">testnet</span>
+                    )}
+                    {token.contractAddress && token.contractAddress !== '0x0000000000000000000000000000000000000000' && (
+                        <div className="td-header-address-row" onClick={handleCopyAddress}>
+                            <span className="td-header-address">{truncateAddress(token.contractAddress, 6, 4)}</span>
+                            <button className="td-copy-btn" title="Copy Address">
+                                {copied ? 'Copied' : (
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Balance */}
-            <div className="td-balance">
-                <span className="td-balance-amt">{formatAmount(token.balance, 6)}</span>
-                <span className="td-balance-sym">{token.symbol}</span>
+            {/* Large Balance Display */}
+            <div className="td-balance-block">
+                <div 
+                    className="td-large-balance-amt"
+                    style={{
+                        fontSize: formattedBalance.length > 12 ? '24px' : (formattedBalance.length > 8 ? '28px' : '32px')
+                    }}
+                >
+                    {formattedBalance}
+                </div>
+                <div className="td-fiat-val">
+                    {formattedFiat}
+                </div>
             </div>
 
             {/* Actions */}
@@ -204,7 +235,7 @@ export function TokenDetailView({ token, evmAddress, onBack, onSend, onShowQR, t
                                 <span style={{ opacity: 0.5, fontSize: '13px' }}>Loading...</span>
                             </div>
                         )}
-                        {!isLoadingEvm && evmTxs.length === 0 && (
+                        {!isLoadingEvm && evmShowTxs.length === 0 && (
                             <div className="td-empty">
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.4">
                                     <circle cx="12" cy="12" r="10" />
@@ -213,23 +244,27 @@ export function TokenDetailView({ token, evmAddress, onBack, onSend, onShowQR, t
                                 <span>No transactions yet</span>
                             </div>
                         )}
-                        {!isLoadingEvm && evmTxs.length > 0 && (
+                        {!isLoadingEvm && evmShowTxs.length > 0 && (
                             <div className="td-txs">
-                                {evmTxs.map((tx, i) => (
-                                    <div key={tx.hash || i} className="td-tx">
+                                {evmShowTxs.map((tx, i) => (
+                                    <div
+                                        key={tx.hash || i}
+                                        className="td-tx td-tx-clickable"
+                                        onClick={() => setSelectedTx(tx)}
+                                    >
                                         <div className={`td-tx-icon ${tx.type}`}>
                                             {tx.type === 'in' ? <ReceiveIcon /> : <SendIcon />}
                                         </div>
                                         <div className="td-tx-info">
-                                            <span className="td-tx-type" style={{ color: labelColor[tx.label] }}>
-                                                {tx.label}
+                                            <span className="td-tx-type" style={{ color: labelColor[tx.description || ''] || 'inherit' }}>
+                                                {tx.description || (tx.type === 'in' ? 'Received' : 'Sent')}
                                             </span>
                                             <span className="td-tx-date">
-                                                {truncateAddress(tx.address, 4, 4)}
+                                                {tx.type === 'in' ? 'From' : 'To'} {truncateAddress(tx.address, 4, 4)}
                                             </span>
                                         </div>
                                         <span className={`td-tx-amt ${tx.type}`}>
-                                            {tx.type === 'in' ? '+' : '-'}{Number(tx.amount).toFixed(6)} {tx.asset}
+                                            {tx.type === 'in' ? '+' : '-'}{formatAmount(tx.amount, 6)} {tx.token || token.symbol}
                                         </span>
                                     </div>
                                 ))}
@@ -281,11 +316,13 @@ export function TokenDetailView({ token, evmAddress, onBack, onSend, onShowQR, t
             </div>
 
             {selectedTx && (
-                <TransactionDetailModal
-                    tx={selectedTx}
-                    network="mainnet"
-                    onClose={() => setSelectedTx(null)}
-                />
+                <div className="td-tx-detail-overlay">
+                    <TransactionDetailPage
+                        tx={selectedTx}
+                        network="mainnet"
+                        onBack={() => setSelectedTx(null)}
+                    />
+                </div>
             )}
         </div>
     );

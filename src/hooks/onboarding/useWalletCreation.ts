@@ -17,6 +17,7 @@ interface UseWalletCreationProps {
     setPendingWallet: (wallet: Wallet | null) => void;
     showToast: (message: string, type: 'info' | 'success' | 'warning' | 'error') => void;
     saveActiveSession: (pwd: string) => Promise<void>;
+    refreshBalance: (mode?: 'public' | 'private' | 'both', opts?: { force?: boolean }) => Promise<void>;
 }
 
 export function useWalletCreation({
@@ -31,7 +32,8 @@ export function useWalletCreation({
     setView,
     setPendingWallet,
     showToast,
-    saveActiveSession
+    saveActiveSession,
+    refreshBalance
 }: UseWalletCreationProps) {
 
     const handleSetupPassword = useCallback(async (newPassword: string) => {
@@ -91,11 +93,15 @@ export function useWalletCreation({
             setTransactions([]);
 
             setView('dashboard');
+
+            setTimeout(() => {
+                refreshBalance('both', { force: true });
+            }, 200);
         } catch (err: any) {
             console.error('Failed to create wallet:', err);
             showToast(err.message || 'Failed to create wallet', 'error');
         }
-    }, [password, saveActiveSession, showToast, setView, setWallets, setPassword, setIsUnlocked, setBalance, setNonce, setTransactions]);
+    }, [password, saveActiveSession, showToast, setView, setWallets, setPassword, setIsUnlocked, setBalance, setNonce, setTransactions, refreshBalance]);
 
     return { handleSetupPassword, handleWalletGenerated };
 }

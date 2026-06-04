@@ -18,6 +18,7 @@ import { ethers } from 'ethers';
 import { logActivity } from '../../utils/activityLogger';
 import { logWarn, logError, logSecurity } from '../../utils/logger';
 import { canonicalJson, TransactionPayload } from '../../utils/crypto/transaction';
+import { loadWalletsSecure } from '../../utils/storage';
 interface KeyData {
     privateKeyB64: string;
     publicKeyB64: string;
@@ -29,7 +30,84 @@ let _decryptedKeys: Map<string, KeyData> | null = null;   // Decrypted keys (cle
 let _isUnlocked: boolean = false;
 
 // EVM key storage — separate from Octra keys
-let _evmKeys: Map<string, string> | null = null; // address → evmPrivateKeyHex (wiped on lock)
+let _evmKeys: Map<string, string> | null = null; // octraAddress → evmPrivateKeyHex (wiped on lock)
+let _evmAddresses: Map<string, string> | null = null; // octraAddress → evmAddress (0x...)
+
+// Non-EVM chain address storage (public info only, no private keys)
+let _solanaAddresses: Map<string, string> | null = null; // octraAddress → solanaAddress (base58)
+let _suiAddresses: Map<string, string> | null = null;    // octraAddress → suiAddress
+
+// Active wallet address (updated by setActiveWallet)
+let _activeAddress: string | null = null;
+
+const IS_BACKGROUND = typeof window === 'undefined' || typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage;
+
+// Popup state cache for synchronous UI compatibility
+const _popupState = {
+    isUnlocked: false,
+    addresses: [] as string[],
+    activeAddress: null as string | null,
+    evmAddresses: {} as Record<string, string>,
+    publicKeyB64s: {} as Record<string, string>,
+};
+
+async function syncPopupState() {
+    if (IS_BACKGROUND) return;
+    try {
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.sendMessage({
+                type: 'KEYRING_ACTION',
+                action: 'GET_STATE'
+            }, (response) => {
+                if (response && response.result) {
+                    const state = response.result;
+                    _popupState.isUnlocked = state.isUnlocked;
+                    _popupState.addresses = state.addresses;
+                    _popupState.activeAddress = state.activeAddress;
+                    _popupState.evmAddresses = state.evmAddresses || {};
+                    _popupState.publicKeyB64s = state.publicKeyB64s || {};
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Failed to sync keyring state:', e);
+    }
+}
+
+// Automatically sync state when in popup context
+if (!IS_BACKGROUND) {
+    syncPopupState();
+    // Listen for state change broadcasts from background
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        chrome.runtime.onMessage.addListener((message) => {
+            if (message && message.type === 'KEYRING_STATE_CHANGED') {
+                syncPopupState();
+            }
+        });
+    }
+}
+
+function sendMessageToBackground(action: string, payload?: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.sendMessage({
+                type: 'KEYRING_ACTION',
+                action,
+                payload
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else if (response && response.error) {
+                    reject(new Error(response.error));
+                } else {
+                    resolve(response ? response.result : undefined);
+                }
+            });
+        } else {
+            reject(new Error('Extension runtime not available'));
+        }
+    });
+}
 
 /**
  * SECURITY: Triple-pass secure memory wipe
@@ -127,41 +205,64 @@ class KeyringService {
 
         // Note: Auto-lock removed per security review
         // Wallet only locks on manual action or browser close
+        if (!IS_BACKGROUND) {
+            syncPopupState();
+        }
     }
 
     /**
      * Check if the keyring is unlocked
      */
     isUnlocked() {
+        if (!IS_BACKGROUND) {
+            return _popupState.isUnlocked;
+        }
         return _isUnlocked && _password !== null;
     }
 
     /**
-     * Initialize the keyring with a password (for new setup)
-     */
-    /**
      * Initialize the keyring with wallets and password (for new setup/recovery)
      */
     async initialize(wallets: any[], password: string): Promise<void> {
+        if (!IS_BACKGROUND) {
+            // Only send password — background loads wallets from vault to avoid
+            // transmitting private keys over the extension message bus.
+            await sendMessageToBackground('initialize', { password });
+            await syncPopupState();
+            return;
+        }
+
         _password = password;
         _isUnlocked = true;
         _decryptedKeys = new Map();
-
-        if (Array.isArray(wallets)) {
-            for (const wallet of wallets) {
-                if (wallet.privateKeyB64) {
-                    _decryptedKeys.set(wallet.address, {
-                        privateKeyB64: wallet.privateKeyB64,
-                        publicKeyB64: wallet.publicKeyB64
-                    });
-                }
-            }
-        }
-
         _evmKeys = new Map();
-        for (const wallet of wallets) {
-            if (wallet.privateKeyHex && wallet.address) {
-                _evmKeys.set(wallet.address, wallet.privateKeyHex);
+        _evmAddresses = new Map();
+        _solanaAddresses = new Map();
+        _suiAddresses = new Map();
+
+        // Load wallets directly from the encrypted vault on the background side.
+        let loadedWallets: any[] = [];
+        try {
+            const result = await loadWalletsSecure(password);
+            if (Array.isArray(result)) loadedWallets = result;
+        } catch {
+            // vault unavailable — fall back to caller-supplied wallets
+        }
+        const allWallets = loadedWallets.length > 0 ? loadedWallets : wallets;
+
+        for (const wallet of allWallets) {
+            if (wallet.privateKeyB64 && wallet.address) {
+                _decryptedKeys.set(wallet.address, {
+                    privateKeyB64: wallet.privateKeyB64,
+                    publicKeyB64: wallet.publicKeyB64
+                });
+            }
+            if (wallet.address) {
+                const evmKey = wallet.evmPrivateKeyHex ?? wallet.privateKeyHex;
+                if (evmKey) _evmKeys.set(wallet.address, evmKey);
+                if (wallet.evmAddress) _evmAddresses.set(wallet.address, wallet.evmAddress);
+                if (wallet.solanaAddress) _solanaAddresses.set(wallet.address, wallet.solanaAddress);
+                if (wallet.suiAddress) _suiAddresses.set(wallet.address, wallet.suiAddress);
             }
         }
     }
@@ -170,25 +271,46 @@ class KeyringService {
      * Unlock the keyring with password
      */
     async unlock(password: string, wallets: any[]): Promise<void> {
+        if (!IS_BACKGROUND) {
+            // Only send password — background loads wallets from vault to avoid
+            // transmitting private keys over the extension message bus.
+            await sendMessageToBackground('unlock', { password });
+            await syncPopupState();
+            return;
+        }
+
         _password = password;
         _isUnlocked = true;
 
-        // Store decrypted keys in memory (mapped by address)
         _decryptedKeys = new Map();
+        _evmKeys = new Map();
+        _evmAddresses = new Map();
+        _solanaAddresses = new Map();
+        _suiAddresses = new Map();
 
-        for (const wallet of wallets) {
-            if (wallet.privateKeyB64) {
+        // Load wallets directly from the encrypted vault on the background side.
+        let loadedWallets: any[] = [];
+        try {
+            const result = await loadWalletsSecure(password);
+            if (Array.isArray(result)) loadedWallets = result;
+        } catch {
+            // vault unavailable — fall back to caller-supplied wallets
+        }
+        const allWallets = loadedWallets.length > 0 ? loadedWallets : wallets;
+
+        for (const wallet of allWallets) {
+            if (wallet.privateKeyB64 && wallet.address) {
                 _decryptedKeys.set(wallet.address, {
                     privateKeyB64: wallet.privateKeyB64,
                     publicKeyB64: wallet.publicKeyB64
                 });
             }
-        }
-
-        _evmKeys = new Map();
-        for (const wallet of wallets) {
-            if (wallet.privateKeyHex && wallet.address) {
-                _evmKeys.set(wallet.address, wallet.privateKeyHex);
+            if (wallet.address) {
+                const evmKey = wallet.evmPrivateKeyHex ?? wallet.privateKeyHex;
+                if (evmKey) _evmKeys.set(wallet.address, evmKey);
+                if (wallet.evmAddress) _evmAddresses.set(wallet.address, wallet.evmAddress);
+                if (wallet.solanaAddress) _solanaAddresses.set(wallet.address, wallet.solanaAddress);
+                if (wallet.suiAddress) _suiAddresses.set(wallet.address, wallet.suiAddress);
             }
         }
     }
@@ -198,6 +320,11 @@ class KeyringService {
      * Performs aggressive memory sanitization
      */
     lock(): void {
+        if (!IS_BACKGROUND) {
+            sendMessageToBackground('lock').then(() => syncPopupState()).catch(() => {});
+            return;
+        }
+
         logSecurity('KEYRING_LOCK', { action: 'Initiating secure lock sequence' });
 
         // Securely wipe password
@@ -239,6 +366,22 @@ class KeyringService {
             _evmKeys = null;
         }
 
+        if (_evmAddresses) {
+            _evmAddresses.clear();
+            _evmAddresses = null;
+        }
+
+        if (_solanaAddresses) {
+            _solanaAddresses.clear();
+            _solanaAddresses = null;
+        }
+
+        if (_suiAddresses) {
+            _suiAddresses.clear();
+            _suiAddresses = null;
+        }
+
+        _activeAddress = null;
         _isUnlocked = false;
 
         logSecurity('KEYRING_LOCKED', { status: 'Memory sanitized' });
@@ -248,6 +391,11 @@ class KeyringService {
      * Add a new key to the keyring
      */
     addKey(address: string, privateKeyB64: string, publicKeyB64: string): void {
+        if (!IS_BACKGROUND) {
+            sendMessageToBackground('addKey', { address, privateKeyB64, publicKeyB64 }).then(() => syncPopupState()).catch(() => {});
+            return;
+        }
+
         if (!_isUnlocked) {
             throw new Error('Keyring is locked');
         }
@@ -269,6 +417,10 @@ class KeyringService {
      * REPLAY PROTECTION: Always fetches latest nonce from network
      */
     async signTransaction(address: string, txParams: any): Promise<any> {
+        if (!IS_BACKGROUND) {
+            return sendMessageToBackground('signTransaction', { address, txParams });
+        }
+
         if (!_isUnlocked) {
             throw new Error('Keyring is locked. Please unlock your wallet first.');
         }
@@ -362,15 +514,51 @@ class KeyringService {
         txRequest: ethers.TransactionRequest,
         rpcUrl: string
     ): Promise<ethers.TransactionResponse> {
+        if (!IS_BACKGROUND) {
+            // Serialize BigInt fields — chrome.runtime.sendMessage requires JSON-serializable data
+            const serializedTxRequest = JSON.parse(JSON.stringify(txRequest, (_, v) =>
+                typeof v === 'bigint' ? v.toString() : v
+            ));
+            const rawResponse = await sendMessageToBackground('signAndSendEvm', { walletAddress, txRequest: serializedTxRequest, rpcUrl });
+            if (!rawResponse) {
+                throw new Error('No transaction response returned from background');
+            }
+
+            // Reconstruct response with custom wait method running inside the popup/dapp thread
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            const txResponse = {
+                ...rawResponse,
+                wait: async (confirmations?: number) => {
+                    const receipt = await provider.waitForTransaction(rawResponse.hash, confirmations);
+                    if (!receipt) return null;
+                    return receipt;
+                }
+            };
+            return txResponse as any as ethers.TransactionResponse;
+        }
+
         if (!_isUnlocked) throw new Error('Keyring is locked');
-        const evmKey = _evmKeys?.get(walletAddress);
+        const evmKey = this.resolveBackgroundEvmKey(walletAddress);
         if (!evmKey) throw new Error('No EVM key found — wallet may not have an EVM address');
 
         const fullKey = evmKey.startsWith('0x') ? evmKey : '0x' + evmKey;
         const provider = new ethers.JsonRpcProvider(rpcUrl);
         const signer = new ethers.Wallet(fullKey, provider);
         try {
-            return await signer.sendTransaction(txRequest);
+            const txResponse = await signer.sendTransaction(txRequest);
+            return {
+                hash: txResponse.hash,
+                to: txResponse.to,
+                from: txResponse.from,
+                nonce: txResponse.nonce,
+                gasLimit: txResponse.gasLimit ? txResponse.gasLimit.toString() : undefined,
+                gasPrice: txResponse.gasPrice ? txResponse.gasPrice.toString() : undefined,
+                maxFeePerGas: txResponse.maxFeePerGas ? txResponse.maxFeePerGas.toString() : undefined,
+                maxPriorityFeePerGas: txResponse.maxPriorityFeePerGas ? txResponse.maxPriorityFeePerGas.toString() : undefined,
+                data: txResponse.data,
+                value: txResponse.value ? txResponse.value.toString() : '0',
+                chainId: txResponse.chainId ? txResponse.chainId.toString() : '1'
+            } as any as ethers.TransactionResponse;
         } finally {
             // ethers.Wallet holds key in memory — nothing more we can do in JS
             // but at least we never passed it to component state/props
@@ -378,9 +566,126 @@ class KeyringService {
     }
 
     /**
+     * Resolve background EVM private key using either Octra address, EVM address, or first key fallback.
+     */
+    resolveBackgroundEvmKey(addrOrEvmAddr: string): string | null {
+        if (!_evmKeys || _evmKeys.size === 0) return null;
+        
+        // 1. Direct match in _evmKeys (Octra address)
+        const directKey = _evmKeys.get(addrOrEvmAddr);
+        if (directKey) return directKey;
+
+        // 2. Search by EVM address match
+        const lower = addrOrEvmAddr.toLowerCase();
+        for (const [octraAddr, privKey] of _evmKeys.entries()) {
+            const evmAddr = this.getEvmAddress(octraAddr);
+            if (evmAddr?.toLowerCase() === lower) {
+                return privKey;
+            }
+        }
+
+        // No fallback: return null rather than silently signing with a wrong key.
+        return null;
+    }
+
+    /**
+     * Sign an EVM message in the background.
+     */
+    async signEvmMessage(
+        walletAddress: string,
+        message: string | Uint8Array
+    ): Promise<string> {
+        if (!IS_BACKGROUND) {
+            return sendMessageToBackground('signEvmMessage', { walletAddress, message });
+        }
+
+        if (!_isUnlocked) throw new Error('Keyring is locked');
+        
+        const evmKey = this.resolveBackgroundEvmKey(walletAddress);
+        if (!evmKey) throw new Error('No EVM key found for this address');
+
+        const fullKey = evmKey.startsWith('0x') ? evmKey : '0x' + evmKey;
+        const signer = new ethers.Wallet(fullKey);
+        
+        let signingMessage: string | Uint8Array = message;
+        if (typeof message === 'string' && message.startsWith('0x')) {
+            try {
+                signingMessage = ethers.getBytes(message);
+            } catch {
+                signingMessage = message;
+            }
+        }
+
+        return await signer.signMessage(signingMessage);
+    }
+
+    /**
+     * Sign EVM EIP-712 typed data in the background.
+     */
+    async signEvmTypedData(
+        walletAddress: string,
+        typedData: any
+    ): Promise<string> {
+        if (!IS_BACKGROUND) {
+            return sendMessageToBackground('signEvmTypedData', { walletAddress, typedData });
+        }
+
+        if (!_isUnlocked) throw new Error('Keyring is locked');
+
+        const evmKey = this.resolveBackgroundEvmKey(walletAddress);
+        if (!evmKey) throw new Error('No EVM key found for this address');
+
+        const fullKey = evmKey.startsWith('0x') ? evmKey : '0x' + evmKey;
+        const signer = new ethers.Wallet(fullKey);
+        const parsed = typeof typedData === 'string' ? JSON.parse(typedData) : typedData;
+        const { domain, types, message: typedMsg } = parsed;
+        const { EIP712Domain: _drop, ...cleanTypes } = types || {};
+
+        // Helper to recursively replace Octra addresses with their EVM address mappings
+        const convertOctraToEvm = (val: any): any => {
+            if (val === null || val === undefined) return val;
+            if (typeof val === 'string') {
+                if (val.startsWith('oct') && val.length >= 40) {
+                    const mapped = this.getEvmAddress(val);
+                    if (mapped) {
+                        return mapped;
+                    }
+                }
+                return val;
+            }
+            if (Array.isArray(val)) {
+                return val.map(convertOctraToEvm);
+            }
+            if (typeof val === 'object') {
+                const copy: any = {};
+                for (const [k, v] of Object.entries(val)) {
+                    copy[k] = convertOctraToEvm(v);
+                }
+                return copy;
+            }
+            return val;
+        };
+
+        const cleanDomain = convertOctraToEvm(domain || {});
+        const cleanMsg = convertOctraToEvm(typedMsg || {});
+
+        // Checksum address fields in domain to prevent ethers ENS resolution attempts
+        const safeDomain = { ...cleanDomain };
+        if (safeDomain.verifyingContract) {
+            try { safeDomain.verifyingContract = ethers.getAddress(safeDomain.verifyingContract); } catch { /* keep original */ }
+        }
+        return await signer.signTypedData(safeDomain, cleanTypes, cleanMsg);
+    }
+
+    /**
      * Register EVM key for an address (called when adding new wallet to keyring)
      */
     addEvmKey(address: string, privateKeyHex: string): void {
+        if (!IS_BACKGROUND) {
+            sendMessageToBackground('addEvmKey', { address, privateKeyHex }).then(() => syncPopupState()).catch(() => {});
+            return;
+        }
+
         if (!_evmKeys) _evmKeys = new Map();
         _evmKeys.set(address, privateKeyHex);
     }
@@ -389,6 +694,10 @@ class KeyringService {
      * Sign a message (for dApp connections, etc.)
      */
     async signMessage(address: string, message: string | Uint8Array): Promise<string> {
+        if (!IS_BACKGROUND) {
+            return sendMessageToBackground('signMessage', { address, message });
+        }
+
         if (!_isUnlocked) {
             throw new Error('Keyring is locked');
         }
@@ -432,6 +741,10 @@ class KeyringService {
      * Sign a contract call for OCS01 contracts
      */
     async signContractCall(address: string, callParams: any): Promise<any> {
+        if (!IS_BACKGROUND) {
+            return sendMessageToBackground('signContractCall', { address, callParams });
+        }
+
         if (!_isUnlocked) {
             throw new Error('Keyring is locked');
         }
@@ -510,6 +823,10 @@ class KeyringService {
      * Get public key for an address (safe to expose)
      */
     getPublicKey(address: string): string | null {
+        if (!IS_BACKGROUND) {
+            return _popupState.publicKeyB64s[address] || null;
+        }
+
         if (!_isUnlocked) {
             throw new Error('Keyring is locked');
         }
@@ -522,30 +839,80 @@ class KeyringService {
      * Get all addresses in the keyring
      */
     getAddresses(): string[] {
+        if (!IS_BACKGROUND) {
+            return _popupState.addresses;
+        }
+
         if (!_decryptedKeys) return [];
         return Array.from(_decryptedKeys.keys());
+    }
+
+    /** Get the EVM (0x) address for a given Octra address, or null if not available. */
+    getEvmAddress(octraAddress: string): string | null {
+        if (!IS_BACKGROUND) {
+            return _popupState.evmAddresses[octraAddress] || null;
+        }
+        return _evmAddresses?.get(octraAddress) ?? null;
+    }
+
+    /** Get the Solana (base58) address for a given Octra address, or null. */
+    getSolanaAddress(octraAddress: string): string | null {
+        return _solanaAddresses?.get(octraAddress) ?? null;
+    }
+
+    /** Get the Sui address for a given Octra address, or null. */
+    getSuiAddress(octraAddress: string): string | null {
+        return _suiAddresses?.get(octraAddress) ?? null;
+    }
+
+    /** Get the first EVM address available in the keyring, or null. */
+    getFirstEvmAddress(): string | null {
+        if (!IS_BACKGROUND) {
+            const keys = Object.keys(_popupState.evmAddresses);
+            if (keys.length === 0) return null;
+            return _popupState.evmAddresses[keys[0]] ?? null;
+        }
+
+        if (!_evmAddresses || _evmAddresses.size === 0) return null;
+        return _evmAddresses.values().next().value ?? null;
     }
 
     /**
      * Set active wallet for operations
      */
     async setActiveWallet(address: string): Promise<boolean> {
-        if (!_isUnlocked) {
-            throw new Error('Keyring is locked');
+        if (!IS_BACKGROUND) {
+            await sendMessageToBackground('setActiveWallet', { address });
+            await syncPopupState();
+            return true;
         }
 
-        if (!_decryptedKeys?.has(address)) {
-            throw new Error('Wallet not found in keyring');
-        }
+        if (!_isUnlocked) throw new Error('Keyring is locked');
+        if (!_decryptedKeys?.has(address)) throw new Error('Wallet not found in keyring');
+        _activeAddress = address;
 
-        // Just verify the wallet exists, no need to store active state
+        if (!IS_BACKGROUND) {
+            await syncPopupState();
+        }
         return true;
+    }
+
+    getActiveAddress(): string | null {
+        if (!IS_BACKGROUND) {
+            return _popupState.activeAddress;
+        }
+        return _activeAddress ?? (_decryptedKeys ? (_decryptedKeys.keys().next().value ?? null) : null);
     }
 
     /**
      * Remove a key from the keyring
      */
     removeKey(address: string): void {
+        if (!IS_BACKGROUND) {
+            sendMessageToBackground('removeKey', { address }).then(() => syncPopupState()).catch(() => {});
+            return;
+        }
+
         if (_decryptedKeys?.has(address)) {
             const keyData = _decryptedKeys.get(address);
             secureWipeAggressive(keyData);
@@ -570,6 +937,22 @@ class KeyringService {
         } catch (e) {
             // Ignore GC errors
         }
+    }
+
+
+    /** Get the Evm Addresses Map directly */
+    getEvmAddressesMap(): Map<string, string> | null {
+        return _evmAddresses;
+    }
+
+    /** Get the Decrypted Keys Map directly */
+    getDecryptedKeysMap(): Map<string, KeyData> | null {
+        return _decryptedKeys;
+    }
+
+    /** Get the active session password (only in background service worker context) */
+    getPassword(): string | null {
+        return _password;
     }
 }
 

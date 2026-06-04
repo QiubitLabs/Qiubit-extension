@@ -1,0 +1,120 @@
+.add-network-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: 100%;
+}
+
+.add-network-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 24px 20px 16px;
+    text-align: center;
+}
+
+.add-network-site-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    margin-bottom: 4px;
+}
+
+.add-network-placeholder-icon {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-network-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.add-network-origin {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin: 0;
+}
+
+.add-network-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.add-network-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+}
+
+.add-network-field:last-of-type {
+    border-bottom: none;
+}
+
+.add-network-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 1px;
+}
+
+.add-network-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    text-align: right;
+    word-break: break-all;
+}
+
+.add-network-mono {
+    font-family: var(--font-mono, 'Courier New', monospace);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.add-network-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    border-radius: 8px;
+    background: rgba(251, 146, 60, 0.08);
+    border: 1px solid rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.add-network-warning svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.add-network-footer {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+}
+
+.add-network-footer .btn {
+    flex: 1;
+}

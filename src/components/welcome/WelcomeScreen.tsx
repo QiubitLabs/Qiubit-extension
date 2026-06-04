@@ -570,7 +570,7 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
             if (importType === 'mnemonic') {
                 newWallet = await importFromMnemonic(mnemonic.trim());
             } else {
-                newWallet = await importFromPrivateKey(privateKey.trim());
+                newWallet = await importFromPrivateKey(privateKey);
             }
 
             setWallet(newWallet);
@@ -712,7 +712,6 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
                     />
 
                     <div className="step-content">
-                        {/* Icon */}
                         <div className="step-icon">
                             <ImportIcon size={48} />
                         </div>
@@ -739,7 +738,7 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
                                 </div>
                                 <div className="onboarding-option-content">
                                     <div className="onboarding-option-title">Private Key</div>
-                                    <div className="onboarding-option-desc">Import using base64 encoded private key</div>
+                                    <div className="onboarding-option-desc">Import using your private key</div>
                                 </div>
                                 <ChevronRightIcon size={20} className="onboarding-option-arrow" />
                             </button>
@@ -748,7 +747,7 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
                 </div>
             )}
 
-            {/* Step 3: Enter Phrase or Key */}
+            {/* Step 3: Enter phrase or key */}
             {step === 2 && importType && (
                 <div className="create-password-step">
                     <StepHeader
@@ -759,7 +758,6 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
                     />
 
                     <div className="step-content">
-                        {/* Icon */}
                         <div className="step-icon">
                             {importType === 'mnemonic' ? (
                                 <ImportIcon size={48} />
@@ -771,7 +769,7 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
                         <p className="step-description">
                             {importType === 'mnemonic'
                                 ? 'Enter your 12-word recovery phrase'
-                                : 'Enter your private key (Base64 encoded)'
+                                : 'Enter your private key'
                             }
                         </p>
 
@@ -799,7 +797,7 @@ export function ImportWalletScreen({ onBack, onComplete }: ImportWalletScreenPro
                                             className="input input-mono"
                                             value={privateKey}
                                             onChange={(e) => { setPrivateKey(e.target.value); setError(''); }}
-                                            placeholder="Paste your base64 private key..."
+                                            placeholder="Paste your private key..."
                                             autoFocus
                                         />
                                         <button

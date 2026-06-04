@@ -3,10 +3,10 @@
 .token-item {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 14px var(--space-xl); /* Airy vertical padding and perfectly aligned horizontal bleed */
     border: none !important;
     box-shadow: none !important;
-    border-radius: var(--radius-md);
+    border-radius: 0; /* Full bleed edge-to-edge look */
     transition: background var(--transition-fast);
     cursor: pointer;
 }
@@ -16,7 +16,7 @@
 }
 
 .token-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04); /* Premium subtle hover highlight */
     border-color: transparent;
     transform: none;
 }
@@ -66,4 +66,19 @@
     font-size: 12px;
     color: var(--text-secondary);
     font-weight: 500;
+}
+
+/* Network badge — minimal pill, luxury dark style */
+.token-network-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    width: fit-content;
+    opacity: 0.9;
+    margin-top: 1px;
 }

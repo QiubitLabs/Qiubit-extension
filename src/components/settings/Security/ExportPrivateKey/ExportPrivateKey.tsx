@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { ChevronLeftIcon, EyeIcon, EyeOffIcon, CheckIcon, CopyIcon, LockIcon, KeyIcon } from '../../../shared/Icons';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeftIcon, EyeIcon, EyeOffIcon, CheckIcon, CopyIcon, LockIcon, ChevronDownIcon } from '../../../shared/Icons';
 import { verifyPasswordSecure as verifyPassword } from '../../../../utils/storage';
 import { Wallet } from '../../../../types';
 import '../Security.css';
@@ -9,10 +10,178 @@ interface ExportPrivateKeyProps {
     onBack: () => void;
 }
 
-export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
-    const [showKey, setShowKey] = useState(false);
-    const [showInputPassword, setShowInputPassword] = useState(false);
+function hasEvmKey(wallet: Wallet): boolean {
+    return !!(wallet.privateKeyHex && wallet.evmAddress);
+}
+
+interface PrivateKeySectionProps {
+    label: string;
+    privateKey: string;
+    logoUrl: string;
+    formatLabel: string;
+}
+
+function PrivateKeySection({ label, privateKey, logoUrl, formatLabel }: PrivateKeySectionProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [revealed, setRevealed] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setRevealed(false);
+        }
+    }, [isOpen]);
+
+    const handleCopy = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await navigator.clipboard.writeText(privateKey);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch { /* ignore */ }
+    };
+
+    const censoredKey = '•'.repeat(Math.min(privateKey.length, 36));
+
+    return (
+        <div className="address-section-collapsible" style={{ marginBottom: '12px' }}>
+            {/* Header / Network Bar */}
+            <div 
+                className={`network-header-bar ${isOpen ? 'active' : ''}`}
+                onClick={() => setIsOpen(prev => !prev)}
+                style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: isOpen ? '12px 12px 0 0' : '12px',
+                    padding: '14px 16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out',
+                    borderBottom: isOpen ? 'none' : '1px solid var(--border-default)'
+                }}
+            >
+                <div className="network-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img 
+                        src={logoUrl} 
+                        alt={label} 
+                        style={{ width: '20px', height: '20px', borderRadius: '50%' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span className="network-name-text" style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {label}
+                    </span>
+                </div>
+                <ChevronDownIcon 
+                    size={16} 
+                    style={{
+                        transform: isOpen ? 'rotate(180deg)' : 'none',
+                        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        color: 'var(--text-tertiary)'
+                    }}
+                />
+            </div>
+
+            {/* Dropdown private key block */}
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                    >
+                        <div 
+                            className="address-dropdown-inner"
+                            style={{
+                                padding: '14px 16px',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-default)',
+                                borderTop: 'none',
+                                borderRadius: '0 0 12px 12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                alignItems: 'stretch'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 11, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 6, padding: '3px 8px', color: 'var(--text-tertiary)' }}>
+                                    {formatLabel}
+                                </span>
+                            </div>
+
+                            <div 
+                                style={{ 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px'
+                                }}
+                            >
+                                <div 
+                                    style={{ 
+                                        flex: 1, 
+                                        cursor: 'pointer', 
+                                        background: 'var(--bg-card)', 
+                                        padding: '10px 12px', 
+                                        borderRadius: '8px', 
+                                        border: '1px solid var(--border-subtle)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        minHeight: '44px',
+                                        wordBreak: 'break-all',
+                                        userSelect: revealed ? 'all' : 'none'
+                                    }}
+                                    onClick={() => setRevealed(prev => !prev)}
+                                    title={revealed ? "Click to hide private key" : "Click to reveal private key"}
+                                >
+                                    <span 
+                                        className="font-mono"
+                                        style={{
+                                            fontSize: '0.8125rem',
+                                            color: revealed ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                            lineHeight: '1.4',
+                                            flex: 1,
+                                            letterSpacing: revealed ? 'normal' : '2px'
+                                        }}
+                                    >
+                                        {revealed ? privateKey : censoredKey}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                                    <button 
+                                        className="action-btn-mini" 
+                                        onClick={handleCopy}
+                                        title="Copy Private Key"
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'var(--text-tertiary)',
+                                            padding: '8px',
+                                            borderRadius: '6px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {copied ? <CheckIcon size={14} style={{ color: 'var(--color-success, #10b981)' }} /> : <CopyIcon size={14} />}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
+    const [showInputPassword, setShowInputPassword] = useState(false);
     const [inputPassword, setInputPassword] = useState('');
     const [isVerified, setIsVerified] = useState(false);
     const [error, setError] = useState('');
@@ -41,15 +210,7 @@ export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
         }
     };
 
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(wallet.privateKeyB64);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch {
-            console.error('Failed to copy');
-        }
-    };
+
 
     return (
         <div className="animate-fade-in">
@@ -112,47 +273,80 @@ export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
                         </button>
                     </>
                 ) : (
-                    <>
-                        {/* Animated Icon */}
-                        <div className="security-icon-container">
-                            <div className="security-icon-pulse">
-                                <KeyIcon size={32} />
-                            </div>
-                        </div>
-
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '16px' }}>
                         {/* Security Warning - Professional */}
-                        <div className="security-notice">
+                        <div className="security-notice" style={{ marginBottom: '16px' }}>
                             <p>Never share your private key. Anyone with this key has full control of your wallet.</p>
                         </div>
 
-                        {/* Private Key Display */}
-                        <div
-                            className="secret-display"
-                            style={{
-                                filter: showKey ? 'none' : 'blur(6px)',
-                                userSelect: showKey ? 'all' : 'none'
-                            }}
-                        >
-                            <p className="text-mono text-sm">{wallet.privateKeyB64}</p>
-                        </div>
+                        {/* Octra Network */}
+                        <PrivateKeySection 
+                            label="Octra Network"
+                            privateKey={wallet.privateKeyB64}
+                            logoUrl="/qiubit-icon.svg"
+                            formatLabel="Octra - Base64"
+                        />
 
-                        {/* Action row - Show (20%) + Copy (80%) */}
-                        <div className="secret-actions">
-                            <button
-                                className="secret-btn secret-btn-toggle"
-                                onClick={() => setShowKey(!showKey)}
-                            >
-                                {showKey ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
-                            </button>
-                            <button
-                                className={`secret-btn secret-btn-copy ${copied ? 'copied' : ''}`}
-                                onClick={handleCopy}
-                            >
-                                {copied ? <CheckIcon size={18} /> : <CopyIcon size={18} />}
-                                <span>{copied ? 'Copied!' : 'Copy Private Key'}</span>
-                            </button>
-                        </div>
-                    </>
+                        {/* EVM compatible chains */}
+                        {hasEvmKey(wallet) && (
+                            <>
+                                <PrivateKeySection 
+                                    label="Ethereum / EVM"
+                                    privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                    logoUrl="/eth-icon.svg"
+                                    formatLabel="Ethereum - Hex"
+                                />
+                                <PrivateKeySection 
+                                    label="Binance Smart Chain"
+                                    privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                    logoUrl="https://static.debank.com/image/chain/logo_url/bsc/bc73fa84b7fc5337905e527dadcbc854.png"
+                                    formatLabel="BSC - Hex"
+                                />
+                                <PrivateKeySection 
+                                    label="Monad Network"
+                                    privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                    logoUrl="https://icons.llamao.fi/icons/chains/rsz_monad.jpg"
+                                    formatLabel="Monad - Hex"
+                                />
+                                <PrivateKeySection 
+                                    label="Hyperliquid EVM"
+                                    privateKey={wallet.privateKeyHex.startsWith('0x') ? wallet.privateKeyHex : '0x' + wallet.privateKeyHex}
+                                    logoUrl="https://icons.llamao.fi/icons/chains/rsz_hyperliquid.jpg"
+                                    formatLabel="Hyperliquid - Hex"
+                                />
+                            </>
+                        )}
+
+                        {/* Solana */}
+                        {wallet.solanaPrivateKeyHex && (
+                            <PrivateKeySection 
+                                label="Solana Network"
+                                privateKey={wallet.solanaPrivateKeyHex.startsWith('0x') ? wallet.solanaPrivateKeyHex : '0x' + wallet.solanaPrivateKeyHex}
+                                logoUrl="https://icons.llamao.fi/icons/chains/rsz_solana.jpg"
+                                formatLabel="Solana - Hex (Ed25519)"
+                            />
+                        )}
+
+                        {/* Sui */}
+                        {wallet.suiPrivateKeyHex && (
+                            <PrivateKeySection 
+                                label="Sui Network"
+                                privateKey={wallet.suiPrivateKeyHex.startsWith('0x') ? wallet.suiPrivateKeyHex : '0x' + wallet.suiPrivateKeyHex}
+                                logoUrl="https://icons.llamao.fi/icons/chains/rsz_sui.jpg"
+                                formatLabel="Sui - Hex (Ed25519)"
+                            />
+                        )}
+
+                        {/* Bitcoin */}
+                        {wallet.bitcoinPrivateKeyHex && (
+                            <PrivateKeySection 
+                                label="Bitcoin Network"
+                                privateKey={wallet.bitcoinPrivateKeyHex.startsWith('0x') ? wallet.bitcoinPrivateKeyHex : '0x' + wallet.bitcoinPrivateKeyHex}
+                                logoUrl="https://icons.llamao.fi/icons/chains/rsz_bitcoin.jpg"
+                                formatLabel="Bitcoin - Hex (secp256k1)"
+                            />
+                        )}
+                    </div>
                 )}
             </div>
         </div>

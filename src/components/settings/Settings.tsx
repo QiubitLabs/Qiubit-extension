@@ -10,6 +10,8 @@ import { SettingsMenu } from './Menu/SettingsMenu';
 import { ChangePassword } from './Security/ChangePassword/ChangePassword';
 import { ExportPrivateKey } from './Security/ExportPrivateKey/ExportPrivateKey';
 import { RecoveryPhrase } from './Security/RecoveryPhrase/RecoveryPhrase';
+import { ConnectedSites } from './ConnectedSites/ConnectedSites';
+import { AutoLockSettings } from './AutoLockSettings/AutoLockSettings';
 
 interface SettingsScreenProps {
     onPasswordChange: (newPassword: string) => Promise<void>;
@@ -19,7 +21,7 @@ export function SettingsScreen({ onPasswordChange }: SettingsScreenProps) {
     const { wallet, settings, updateSettings, setView: setAppView, activeWalletIndex, deleteWallet } = useWallet();
     const { lock, clearActiveSession, password } = useSession(); // Get password and lock
 
-    const [view, setView] = useState('main'); // 'main' | 'network' | 'export' | 'recovery-phrase' | 'change-password'
+    const [view, setView] = useState('main'); // 'main' | 'network' | 'export' | 'recovery-phrase' | 'change-password' | 'connected-sites' | 'auto-lock'
     const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
     if (!wallet) return null;
@@ -61,11 +63,11 @@ export function SettingsScreen({ onPasswordChange }: SettingsScreenProps) {
     if (view === 'network') {
         return (
             <NetworkSwitcher
-                settings={settings || { network: 'mainnet', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
+                settings={settings || { network: 'all' as const, showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
                 onUpdateSettings={updateSettings}
                 onBack={() => setView('main')}
-                onSwitchComplete={(network) => {
-                    console.log(`Switched to ${network}`);
+                onSwitchComplete={() => {
+                    setAppView('dashboard');
                 }}
             />
         );
@@ -98,11 +100,27 @@ export function SettingsScreen({ onPasswordChange }: SettingsScreenProps) {
         );
     }
 
+    if (view === 'connected-sites') {
+        return (
+            <ConnectedSites
+                onBack={() => setView('main')}
+            />
+        );
+    }
+
+    if (view === 'auto-lock') {
+        return (
+            <AutoLockSettings
+                onBack={() => setView('main')}
+            />
+        );
+    }
+
     return (
         <>
             <SettingsMenu
                 wallet={wallet}
-                settings={settings || { network: 'mainnet', showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
+                settings={settings || { network: 'all' as const, showTestnet: false, hideDust: false, explorerUrl: '', rpcUrl: '' }}
                 onViewChange={setView}
                 onBack={onBackToDashboard}
                 onExportKeystore={handleExportKeystore}

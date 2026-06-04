@@ -11,7 +11,7 @@
 }
 
 .token-icon-native {
-    border-radius: var(--radius-md);
+    border-radius: 50%;
 }
 
 .token-icon-unknown {
