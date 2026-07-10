@@ -1,131 +1,131 @@
 /**
  * Security Service
  * Handles password rate limiting to prevent brute force attacks
- * 
+ *
  * SECURITY v2.0:
  * - Persistent state (survives page refresh)
  * - Automatic lockout recovery
  * - State stored in secure storage
  * */
 
-import { storage } from '../../utils/storage';
+import { storage } from "../../utils/storage";
 
 const MAX_PASSWORD_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
-const STORAGE_KEY = '_security_state';
+const STORAGE_KEY = "_security_state";
 
 class SecurityService {
-    passwordAttempts: number = 0;
-    lockoutUntil: number | null = null;
+  passwordAttempts: number = 0;
+  lockoutUntil: number | null = null;
 
-    constructor() {
-        // Load persistent state
-        this.loadState();
+  constructor() {
+    this.loadState();
 
-        // Clean expired lockouts on init
-        if (this.isLocked() && this.lockoutUntil && Date.now() >= this.lockoutUntil) {
-            this.reset();
-        }
+    if (
+      this.isLocked() &&
+      this.lockoutUntil &&
+      Date.now() >= this.lockoutUntil
+    ) {
+      this.reset();
     }
+  }
 
-    // Load state from StorageAdapter
-    async loadState() {
-        try {
-            const data = await storage.get(STORAGE_KEY);
-            const stored = data[STORAGE_KEY];
+  async loadState() {
+    try {
+      const data = await storage.get(STORAGE_KEY);
+      const stored = data[STORAGE_KEY];
 
-            if (stored) {
-                const state = JSON.parse(stored);
-                this.passwordAttempts = state.attempts || 0;
-                this.lockoutUntil = state.lockoutUntil || null;
-            } else {
-                this.passwordAttempts = 0;
-                this.lockoutUntil = null;
-            }
-        } catch (error) {
-            console.error('[SecurityService] Failed to load state:', error);
-            this.passwordAttempts = 0;
-            this.lockoutUntil = null;
-        }
-    }
-
-    // Save state to StorageAdapter
-    async saveState() {
-        try {
-            const state = {
-                attempts: this.passwordAttempts,
-                lockoutUntil: this.lockoutUntil,
-                updatedAt: Date.now()
-            };
-            await storage.set({ [STORAGE_KEY]: JSON.stringify(state) });
-        } catch (error) {
-            console.error('[SecurityService] Failed to save state:', error);
-        }
-    }
-
-    // Password rate limiting
-    isLocked() {
-        if (!this.lockoutUntil) return false;
-
-        if (Date.now() < this.lockoutUntil) {
-            return true;
-        }
-
-        // Lockout expired, reset
-        this.reset();
-        return false;
-    }
-
-    getRemainingLockoutTime() {
-        if (!this.lockoutUntil) return 0;
-        const remaining = this.lockoutUntil - Date.now();
-        return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
-    }
-
-    recordSuccessfulAttempt() {
+      if (stored) {
+        const state = JSON.parse(stored);
+        this.passwordAttempts = state.attempts || 0;
+        this.lockoutUntil = state.lockoutUntil || null;
+      } else {
         this.passwordAttempts = 0;
         this.lockoutUntil = null;
-        this.saveState(); // Persist reset
-        return { allowed: true, success: true };
+      }
+    } catch (error) {
+      console.error("[SecurityService] Failed to load state:", error);
+      this.passwordAttempts = 0;
+      this.lockoutUntil = null;
+    }
+  }
+
+  async saveState() {
+    try {
+      const state = {
+        attempts: this.passwordAttempts,
+        lockoutUntil: this.lockoutUntil,
+        updatedAt: Date.now(),
+      };
+      await storage.set({ [STORAGE_KEY]: JSON.stringify(state) });
+    } catch (error) {
+      console.error("[SecurityService] Failed to save state:", error);
+    }
+  }
+
+  isLocked() {
+    if (!this.lockoutUntil) return false;
+
+    if (Date.now() < this.lockoutUntil) {
+      return true;
     }
 
-    recordFailedAttempt() {
-        this.passwordAttempts++;
-        this.saveState(); // Persist state
+    this.reset();
+    return false;
+  }
 
-        if (this.passwordAttempts >= MAX_PASSWORD_ATTEMPTS) {
-            this.lockoutUntil = Date.now() + LOCKOUT_DURATION;
-            this.saveState(); // Persist lockout
-            console.warn(`[SecurityService] Account locked for ${LOCKOUT_DURATION / 1000 / 60} minutes`);
-            return {
-                allowed: false,
-                locked: true,
-                remainingTime: this.getRemainingLockoutTime(),
-                message: `Too many failed attempts. Try again in ${Math.ceil(LOCKOUT_DURATION / 60000)} minutes.`
-            };
-        }
+  getRemainingLockoutTime() {
+    if (!this.lockoutUntil) return 0;
+    const remaining = this.lockoutUntil - Date.now();
+    return remaining > 0 ? Math.ceil(remaining / 1000) : 0;
+  }
 
-        return {
-            allowed: true,
-            success: false,
-            attemptsRemaining: MAX_PASSWORD_ATTEMPTS - this.passwordAttempts,
-            message: `Invalid password. ${MAX_PASSWORD_ATTEMPTS - this.passwordAttempts} attempts remaining.`
-        };
+  recordSuccessfulAttempt() {
+    this.passwordAttempts = 0;
+    this.lockoutUntil = null;
+    this.saveState(); // Persist reset
+    return { allowed: true, success: true };
+  }
+
+  recordFailedAttempt() {
+    this.passwordAttempts++;
+    this.saveState(); // Persist state
+
+    if (this.passwordAttempts >= MAX_PASSWORD_ATTEMPTS) {
+      this.lockoutUntil = Date.now() + LOCKOUT_DURATION;
+      this.saveState(); // Persist lockout
+      console.warn(
+        `[SecurityService] Account locked for ${LOCKOUT_DURATION / 1000 / 60} minutes`,
+      );
+      return {
+        allowed: false,
+        locked: true,
+        remainingTime: this.getRemainingLockoutTime(),
+        message: `Too many failed attempts. Try again in ${Math.ceil(LOCKOUT_DURATION / 60000)} minutes.`,
+      };
     }
 
-    recordPasswordAttempt(success: boolean) {
-        if (success) {
-            return this.recordSuccessfulAttempt();
-        } else {
-            return this.recordFailedAttempt();
-        }
-    }
+    return {
+      allowed: true,
+      success: false,
+      attemptsRemaining: MAX_PASSWORD_ATTEMPTS - this.passwordAttempts,
+      message: `Invalid password. ${MAX_PASSWORD_ATTEMPTS - this.passwordAttempts} attempts remaining.`,
+    };
+  }
 
-    reset() {
-        this.passwordAttempts = 0;
-        this.lockoutUntil = null;
-        this.saveState(); // Persist reset
+  recordPasswordAttempt(success: boolean) {
+    if (success) {
+      return this.recordSuccessfulAttempt();
+    } else {
+      return this.recordFailedAttempt();
     }
+  }
+
+  reset() {
+    this.passwordAttempts = 0;
+    this.lockoutUntil = null;
+    this.saveState(); // Persist reset
+  }
 }
 
 export const securityService = new SecurityService();

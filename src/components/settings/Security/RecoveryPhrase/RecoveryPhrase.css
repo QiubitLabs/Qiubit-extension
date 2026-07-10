@@ -2,52 +2,52 @@
 
 /* Mnemonic Grid */
 .mnemonic-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    padding: 12px;
-    background: var(--bg-elevated);
-    border-radius: 12px;
-    width: 100%;
-    box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 12px;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .mnemonic-word {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
 }
 
 .mnemonic-word-num {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text-tertiary);
-    opacity: 0.5;
-    min-width: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  opacity: 0.5;
+  min-width: 14px;
 }
 
 .mnemonic-word-text {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-primary);
-    font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
 }
 
 /* Recovery Notice - Professional */
 .recovery-notice {
-    padding: 12px 14px;
-    background: var(--bg-elevated);
-    border-radius: var(--radius-md);
-    border-left: 3px solid var(--text-tertiary);
-    margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--text-tertiary);
+  margin-bottom: 16px;
 }
 
 .recovery-notice p {
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text-secondary);
-    margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
 }

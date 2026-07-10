@@ -64,7 +64,8 @@
     <p>Send a small amount of Sepolia ETH. Triggers the transaction approval popup in the wallet.</p>
     <div class="field-row">
       <label class="label">To Address</label>
-      <input type="text" id="sendTo" value="0x000000000000000000000000000000000000dEaD">
+      <input type="text" id="sendTo" placeholder="0x… (Recipient address)">
+      <button class="btn btn-outline" style="margin-top: 5px; padding: 5px 10px; font-size: 11px;" onclick="fillSendTo()">Use My Address</button>
     </div>
     <div class="field-row">
       <label class="label">Value (ETH)</label>
@@ -80,7 +81,8 @@
     <p>Send ETH with raw hex calldata. The wallet should decode and display the function selector.</p>
     <div class="field-row">
       <label class="label">To Address (contract)</label>
-      <input type="text" id="calldataTo" value="0x779877A7B0D9E8603169DdbD7836e478b4624789">
+      <input type="text" id="calldataTo" value="0x779877A7B0D9E8603169DdbD7836e478b4624789" placeholder="0x… (Contract address)">
+      <button class="btn btn-outline" style="margin-top: 5px; padding: 5px 10px; font-size: 11px;" onclick="fillCalldataTo()">Use My Address</button>
     </div>
     <div class="field-row">
       <label class="label">Calldata (hex)</label>
@@ -96,7 +98,8 @@
     <p>Estimate gas for a transaction without sending it.</p>
     <div class="field-row">
       <label class="label">To</label>
-      <input type="text" id="estimateTo" value="0x000000000000000000000000000000000000dEaD">
+      <input type="text" id="estimateTo" placeholder="0x… (Recipient address)">
+      <button class="btn btn-outline" style="margin-top: 5px; padding: 5px 10px; font-size: 11px;" onclick="fillEstimateTo()">Use My Address</button>
     </div>
     <div class="field-row">
       <label class="label">Value (ETH)</label>
@@ -199,7 +202,7 @@ async function sendEth() {
     log(logId, `Sending from ${account}…`, 'info');
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [{ from: account, to, value, gas: '0x5208' }],
+      params: [{ from: account, to, value, gas: '0x5208', chainId: '0xaa36a7' }],
     });
     log(logId, `TX submitted: ${txHash}`, 'ok');
     setLastTx(txHash);
@@ -218,7 +221,7 @@ async function sendWithCalldata() {
     log(logId, `Sending with calldata selector ${data.slice(0,10)}…`, 'info');
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [{ from: account, to, value: '0x0', data }],
+      params: [{ from: account, to, value: '0x0', data, chainId: '0xaa36a7' }],
     });
     log(logId, `TX submitted: ${txHash}`, 'ok');
     setLastTx(txHash);
@@ -273,6 +276,33 @@ async function fillMyAddress() {
   }
 }
 
+async function fillSendTo() {
+  try {
+    const account = await getAccount();
+    document.getElementById('sendTo').value = account;
+  } catch (e) {
+    log('sendEthLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillCalldataTo() {
+  try {
+    const account = await getAccount();
+    document.getElementById('calldataTo').value = account;
+  } catch (e) {
+    log('calldataLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillEstimateTo() {
+  try {
+    const account = await getAccount();
+    document.getElementById('estimateTo').value = account;
+  } catch (e) {
+    log('gasLog', `Error: ${e.message}`, 'err');
+  }
+}
+
 async function getTransactionCount() {
   const logId = 'nonceLog';
   try {
@@ -314,7 +344,23 @@ window.addEventListener('load', () => {
       const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
       if (accounts[0]) {
         document.getElementById('balanceAddr').value = accounts[0];
+        document.getElementById('sendTo').value = accounts[0];
+        document.getElementById('estimateTo').value = accounts[0];
       }
+      
+      try {
+        await ensureSepolia();
+      } catch (e) {
+        console.warn('Failed to switch to Sepolia automatically:', e);
+      }
+
+      window.ethereum.on('accountsChanged', (newAccounts) => {
+        if (newAccounts[0]) {
+          document.getElementById('balanceAddr').value = newAccounts[0];
+          document.getElementById('sendTo').value = newAccounts[0];
+          document.getElementById('estimateTo').value = newAccounts[0];
+        }
+      });
     }
   }, 400);
 });

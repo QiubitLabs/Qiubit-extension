@@ -1,1 +1,1 @@
-export { AddWalletModal } from './AddWalletModal';
+export { AddWalletModal } from "./AddWalletModal";

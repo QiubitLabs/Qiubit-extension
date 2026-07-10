@@ -1,0 +1,165 @@
+.ab-add-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-strong, rgba(255, 255, 255, 0.18));
+  background: transparent;
+  color: var(--color-accent, #00d4ff);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: background 150ms ease;
+}
+.ab-add-btn:hover {
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.ab-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--bg-card, #131820);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  margin-bottom: 16px;
+}
+.ab-input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-primary, #0b0f14);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  outline: none;
+}
+.ab-input:focus {
+  border-color: var(--color-accent, #00d4ff);
+}
+.ab-input.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+.ab-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff6b6b;
+  font-size: 12px;
+}
+.ab-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.ab-cancel,
+.ab-save {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+.ab-cancel {
+  background: transparent;
+  color: var(--text-secondary, #9aa5b1);
+}
+.ab-save {
+  background: var(--color-accent, #00d4ff);
+  color: #041016;
+}
+
+.ab-empty {
+  text-align: center;
+  color: var(--text-tertiary, #6b7580);
+  font-size: 13px;
+  padding: 32px 0;
+}
+
+.ab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ab-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--bg-card, #131820);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+}
+.ab-item-info {
+  min-width: 0;
+  flex: 1;
+}
+.ab-item-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+.ab-net-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 5px;
+  letter-spacing: 0.03em;
+}
+.ab-net-badge.evm {
+  background: rgba(98, 126, 234, 0.18);
+  color: #8fa2f0;
+}
+.ab-net-badge.octra {
+  background: rgba(0, 212, 255, 0.16);
+  color: #00d4ff;
+}
+.ab-net-badge.solana {
+  background: rgba(153, 69, 255, 0.18);
+  color: #b98bff;
+}
+.ab-net-badge.sui {
+  background: rgba(77, 162, 255, 0.18);
+  color: #6fb8ff;
+}
+.ab-net-badge.bitcoin {
+  background: rgba(247, 147, 26, 0.18);
+  color: #f7b25a;
+}
+.ab-item-addr {
+  font-size: 11px;
+  color: var(--text-tertiary, #6b7580);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 3px;
+}
+.ab-item-actions {
+  display: flex;
+  gap: 4px;
+}
+.ab-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9aa5b1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ab-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.ab-icon-btn.danger:hover {
+  background: rgba(255, 107, 107, 0.14);
+  color: #ff6b6b;
+}

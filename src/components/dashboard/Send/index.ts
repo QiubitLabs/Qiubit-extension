@@ -1,1 +1,1 @@
-export { SendView } from './SendView';
+export { SendView } from "./SendView";

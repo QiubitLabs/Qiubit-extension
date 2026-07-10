@@ -1,178 +1,183 @@
 /* Privacy Dashboard Styles - Qiubit Aesthetic */
 
 .privacy-dashboard {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
 }
 
 /* Privacy Main Card - Flat Minimalism */
 .privacy-main-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 20px;
-    padding: var(--space-xl);
-    text-align: center;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: var(--space-xl);
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .privacy-main-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
 }
 
 .privacy-main-card.updating {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 .main-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-    opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  opacity: 0.8;
 }
 
 .main-card-icon {
-    color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .main-card-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .main-card-balance {
-    margin-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
 }
 
 .main-balance-usd {
-    font-size: 34px;
-    font-weight: 700;
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
 }
 
 /* Shield Progress - Minimalist */
 .shield-progress {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin: var(--space-md) auto 0 auto;
-    max-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: var(--space-md) auto 0 auto;
+  max-width: 200px;
 }
 
 .shield-progress-bar {
-    flex: 1;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-full);
-    overflow: hidden;
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
 }
 
 .shield-progress-fill {
-    height: 100%;
-    background: var(--accent-primary);
-    border-radius: var(--radius-full);
-    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: var(--radius-full);
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .shield-progress-text {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent-primary);
-    white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  white-space: nowrap;
 }
 
 /* Privacy Action Grid - Now Transparent/Minimal */
 .privacy-action-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-sm);
-    padding: var(--space-xs) 0;
-    background: transparent;
-    border: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  background: transparent;
+  border: none;
 }
 
 .privacy-grid-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-lg) var(--space-xs);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-xs);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border-radius: 12px;
 }
 
 .privacy-grid-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .privacy-grid-btn:active:not(:disabled) {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 .privacy-grid-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    filter: grayscale(1);
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: grayscale(1);
 }
 
 .grid-btn-icon {
-    width: 64px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 18px;
-    position: relative;
-    background: transparent;
-    color: var(--text-primary);
-    transition: all var(--transition-normal);
-    border: none;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  position: relative;
+  background: transparent;
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+  border: none;
 }
 
 .grid-btn-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    background: var(--error);
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 700;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid var(--bg-card);
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--error);
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-card);
 }
 
 .grid-btn-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-primary);
-    transition: color 0.2s ease;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
 }
 
 .privacy-grid-btn:hover:not(:disabled) .grid-btn-label {
-    color: var(--text-primary);
+  color: var(--text-primary);
 }

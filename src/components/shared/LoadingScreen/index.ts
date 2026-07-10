@@ -1,1 +1,1 @@
-export { LoadingScreen } from './LoadingScreen';
+export { LoadingScreen } from "./LoadingScreen";

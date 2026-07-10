@@ -1,1 +1,1 @@
-export { LockScreen, SetupPassword } from './LockScreen';
+export { LockScreen, SetupPassword } from "./LockScreen";

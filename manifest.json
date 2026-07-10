@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Qiubit Wallet",
     "short_name": "Qiubit",
-    "version": "2.0.5",
+    "version": "2.1.0",
     "description": "Secure non-custodial wallet for Octra Network. Manage assets, send transactions, and connect to dApps.",
     "author": "Qiubit Labs",
     "minimum_chrome_version": "88",
@@ -10,7 +10,9 @@
         "storage",
         "alarms",
         "sidePanel",
-        "tabs"
+        "tabs",
+        "favicon",
+        "notifications"
     ],
     "host_permissions": [
         "<all_urls>"
@@ -33,6 +35,17 @@
         "128": "icons/icon-128.png"
     },
     "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "inpage.js"
+            ],
+            "run_at": "document_start",
+            "world": "MAIN",
+            "all_frames": true
+        },
         {
             "matches": [
                 "<all_urls>"

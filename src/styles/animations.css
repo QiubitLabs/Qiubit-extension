@@ -1,229 +1,226 @@
 /* Shared Animations */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
+  from {
+    opacity: 0;
+  }
 
-    to {
-        opacity: 1;
-    }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
 
-    0%,
-    100% {
-        transform: translateX(0);
-    }
+  15% {
+    transform: translateX(-6px);
+  }
 
-    15% {
-        transform: translateX(-6px);
-    }
+  30% {
+    transform: translateX(6px);
+  }
 
-    30% {
-        transform: translateX(6px);
-    }
+  45% {
+    transform: translateX(-4px);
+  }
 
-    45% {
-        transform: translateX(-4px);
-    }
+  60% {
+    transform: translateX(4px);
+  }
 
-    60% {
-        transform: translateX(4px);
-    }
+  75% {
+    transform: translateX(-2px);
+  }
 
-    75% {
-        transform: translateX(-2px);
-    }
-
-    90% {
-        transform: translateX(2px);
-    }
+  90% {
+    transform: translateX(2px);
+  }
 }
 
 .shake {
-    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 .animate-fade-in {
-    animation: fadeIn var(--transition-fast) ease-out;
+  animation: fadeIn var(--transition-fast) ease-out;
 }
 
 .animate-slide-up {
-    animation: slideUp var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUp var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Success Animation */
 .success-checkmark {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--success-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--success);
-    animation: fadeInScale var(--transition-normal);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--success-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  animation: fadeInScale var(--transition-normal);
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-    }
+  from {
+    transform: translateY(-100%);
+  }
 
-    to {
-        transform: translateY(0);
-    }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
 
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes shimmer {
-    0% {
-        background-position: -200% 0;
-    }
+  0% {
+    background-position: -200% 0;
+  }
 
-    100% {
-        background-position: 200% 0;
-    }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .animate-fade-in-up {
-    animation: fadeInUp var(--transition-normal) ease;
+  animation: fadeInUp var(--transition-normal) ease;
 }
 
 .animate-fade-in-scale {
-    animation: fadeInScale var(--transition-normal) ease;
+  animation: fadeInScale var(--transition-normal) ease;
 }
 
 .animate-pulse {
-    animation: pulse 2s ease-in-out infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .animate-spin {
-    animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 /* Loading Skeleton */
 .skeleton {
-    background: linear-gradient(90deg,
-            var(--bg-hover) 25%,
-            var(--bg-elevated) 50%,
-            var(--bg-hover) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-    border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
 }
 
 /* Ghost Animation Global */
 @keyframes ghostFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+    opacity: 0.5;
+  }
 
-    0%,
-    100% {
-        transform: translateY(0px);
-        opacity: 0.5;
-    }
-
-    50% {
-        transform: translateY(-8px);
-        opacity: 0.8;
-    }
+  50% {
+    transform: translateY(-8px);
+    opacity: 0.8;
+  }
 }
 
 .ghost-icon {
-    animation: ghostFloat 3s ease-in-out infinite;
-    color: var(--text-tertiary);
+  animation: ghostFloat 3s ease-in-out infinite;
+  color: var(--text-tertiary);
 }
 
 /* Detailed Ghost Character Animation */
 .ghost-body {
-    animation: ghostBodyFloat 3s ease-in-out infinite;
-    transform-origin: center;
+  animation: ghostBodyFloat 3s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .ghost-shadow {
-    animation: ghostShadowScale 3s ease-in-out infinite;
-    transform-origin: center;
+  animation: ghostShadowScale 3s ease-in-out infinite;
+  transform-origin: center;
 }
 
 @keyframes ghostBodyFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes ghostShadowScale {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
 
-    0%,
-    100% {
-        transform: scale(1);
-        opacity: 0.2;
-    }
-
-    50% {
-        transform: scale(0.8);
-        opacity: 0.1;
-    }
+  50% {
+    transform: scale(0.8);
+    opacity: 0.1;
+  }
 }

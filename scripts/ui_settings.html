@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qiubit Wallet - Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0B0C10;
+            --bg-surface: rgba(22, 26, 37, 0.65);
+            --bg-surface-solid: #171A26;
+            --bg-hover: rgba(35, 41, 58, 0.85);
+            --bg-card: rgba(28, 30, 46, 0.55);
+            
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --border-active: rgba(99, 102, 241, 0.4);
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+            --error: #f43f5e;
+            --error-bg: rgba(244, 63, 94, 0.08);
+            
+            --font-sans: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --wallet-width: 375px;
+            --wallet-height: 600px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030406;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 40%);
+        }
+
+        .wallet-container {
+            width: var(--wallet-width);
+            height: var(--wallet-height);
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, rgba(23, 26, 38, 0.4) 0%, rgba(11, 12, 16, 0.95) 100%);
+        }
+
+        .header-bar {
+            height: 56px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .header-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            padding-left: 6px;
+        }
+
+        .options-list {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .option-item {
+            height: 52px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+        }
+
+        .option-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .option-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .option-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Modals & Sheet overlay */
+        .modal-sheet {
+            position: absolute;
+            inset: 0;
+            background: rgba(3, 4, 6, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+        }
+
+        .modal-sheet.active {
+            display: flex;
+        }
+
+        .sheet-body {
+            width: 100%;
+            background: var(--bg-surface-solid);
+            border-top: 1px solid var(--border-subtle);
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sheet-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 0 12px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .btn {
+            height: 46px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #ffffff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+        }
+
+        .mnemonic-display-box {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .word-chip {
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .word-num {
+            color: var(--text-muted);
+            margin-right: 4px;
+        }
+
+        .icon-svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wallet-container">
+        
+        <div class="header-bar">
+            <button class="btn-back" onclick="window.location.href='ui_dashboard.html'">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+            </button>
+            <span class="header-title">Settings</span>
+            <span style="width: 32px;"></span> <!-- Spacer -->
+        </div>
+
+        <div class="settings-content">
+            
+            <!-- Category: General -->
+            <div class="settings-section">
+                <span class="section-label">General</span>
+                <div class="options-list">
+                    <div class="option-item" onclick="alert('Mock setting clicked!')">
+                        <div class="option-left">
+                            <div class="option-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="2" y1="12" x2="22" y2="12" />
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                                </svg>
+                            </div>
+                            <span class="option-title">Language</span>
+                        </div>
+                        <div class="option-right">
+                            <span>English</span>
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke-width: 3;">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="option-item" onclick="alert('Mock setting clicked!')">
+                        <div class="option-left">
+                            <div class="option-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <line x1="12" y1="1" x2="12" y2="23" />
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                                </svg>
+                            </div>
+                            <span class="option-title">Primary Currency</span>
+                        </div>
+                        <div class="option-right">
+                            <span>USD ($)</span>
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke-width: 3;">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category: Security & Keys -->
+            <div class="settings-section">
+                <span class="section-label">Security</span>
+                <div class="options-list">
+                    <div class="option-item" onclick="openModal('confirm-pass-modal')">
+                        <div class="option-left">
+                            <div class="option-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                            </div>
+                            <span class="option-title">Secret Backup Phrase</span>
+                        </div>
+                        <div class="option-right">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke-width: 3;">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="option-item" onclick="openModal('change-pass-modal')">
+                        <div class="option-left">
+                            <div class="option-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zM12 15.5l1.5 1.5M16 11.5l1.5 1.5M19 8.5l1.5 1.5" />
+                                </svg>
+                            </div>
+                            <span class="option-title">Change Password</span>
+                        </div>
+                        <div class="option-right">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke-width: 3;">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category: Connections -->
+            <div class="settings-section">
+                <span class="section-label">Connections</span>
+                <div class="options-list">
+                    <div class="option-item" onclick="openModal('connected-apps-modal')">
+                        <div class="option-left">
+                            <div class="option-icon">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                </svg>
+                            </div>
+                            <span class="option-title">Connected dApps</span>
+                        </div>
+                        <div class="option-right">
+                            <span style="background: var(--success-bg); color: var(--success); padding: 1px 6px; border-radius: 4px; font-weight: 600; font-size: 10px;">1 Active</span>
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; stroke-width: 3;">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MOCK MODAL: PASSWORD CONFIRMATION TO SHOW SEED -->
+        <div class="modal-sheet" id="confirm-pass-modal">
+            <div class="sheet-body">
+                <div class="sheet-header">
+                    <span class="sheet-title">Confirm Password</span>
+                    <button class="btn-icon" onclick="closeModal('confirm-pass-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <p style="font-size: 12px; color: var(--text-secondary);">
+                    Enter your wallet password to view your Secret Recovery Phrase.
+                </p>
+                <div class="form-group">
+                    <input type="password" class="form-input" id="confirm-pwd-input" placeholder="Enter password">
+                </div>
+                <button class="btn btn-primary" onclick="verifyPwdForMnemonic()">
+                    Reveal Seed Phrase
+                </button>
+            </div>
+        </div>
+
+        <!-- MOCK MODAL: SHOW SEED PHRASE -->
+        <div class="modal-sheet" id="show-mnemonic-modal">
+            <div class="sheet-body">
+                <div class="sheet-header">
+                    <span class="sheet-title">Secret Recovery Phrase</span>
+                    <button class="btn-icon" onclick="closeModal('show-mnemonic-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">
+                    Write these 12 words down. Keeping them offline is the safest way to store them.
+                </p>
+                
+                <div class="mnemonic-display-box">
+                    <div class="word-chip"><span class="word-num">1.</span>quantum</div>
+                    <div class="word-chip"><span class="word-num">2.</span>gravity</div>
+                    <div class="word-chip"><span class="word-num">3.</span>shield</div>
+                    <div class="word-chip"><span class="word-num">4.</span>matrix</div>
+                    <div class="word-chip"><span class="word-num">5.</span>cipher</div>
+                    <div class="word-chip"><span class="word-num">6.</span>nebula</div>
+                    <div class="word-chip"><span class="word-num">7.</span>orbit</div>
+                    <div class="word-chip"><span class="word-num">8.</span>vertex</div>
+                    <div class="word-chip"><span class="word-num">9.</span>tensor</div>
+                    <div class="word-chip"><span class="word-num">10.</span>glitch</div>
+                    <div class="word-chip"><span class="word-num">11.</span>flux</div>
+                    <div class="word-chip"><span class="word-num">12.</span>beacon</div>
+                </div>
+
+                <button class="btn btn-secondary" onclick="closeModal('show-mnemonic-modal')">
+                    Done
+                </button>
+            </div>
+        </div>
+
+        <!-- MOCK MODAL: CHANGE PASSWORD -->
+        <div class="modal-sheet" id="change-pass-modal">
+            <div class="sheet-body">
+                <div class="sheet-header">
+                    <span class="sheet-title">Change Password</span>
+                    <button class="btn-icon" onclick="closeModal('change-pass-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Current Password</label>
+                    <input type="password" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-input" placeholder="Min. 8 characters">
+                </div>
+
+                <button class="btn btn-primary" onclick="alert('Password updated in sandbox state.'); closeModal('change-pass-modal')">
+                    Save New Password
+                </button>
+            </div>
+        </div>
+
+        <!-- MOCK MODAL: CONNECTED APPS -->
+        <div class="modal-sheet" id="connected-apps-modal">
+            <div class="sheet-body">
+                <div class="sheet-header">
+                    <span class="sheet-title">Connected dApps</span>
+                    <button class="btn-icon" onclick="closeModal('connected-apps-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin: 4px 0;" id="apps-list">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: 12px;" id="dapp-item-1">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--bg-surface-solid); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center;">
+                                <svg class="icon-svg" viewBox="0 0 24 24" style="width: 16px; height: 16px; color: var(--primary);">
+                                    <polyline points="16 3 21 3 21 8" />
+                                    <line x1="4" y1="20" x2="21" y2="3" />
+                                    <polyline points="21 16 21 21 16 21" />
+                                </svg>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                                <span style="font-size: 12px; font-weight: 600;">OctraSwap DEX</span>
+                                <span style="font-size: 9px; color: var(--text-muted); font-family: var(--font-mono);">app.octraswap.io</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" style="height: 28px; font-size: 11px; padding: 0 10px; border-radius: 6px; color: var(--error);" onclick="disconnectDapp()">
+                            Disconnect
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function verifyPwdForMnemonic() {
+            const pwd = document.getElementById('confirm-pwd-input').value;
+            if (pwd === '') {
+                alert('Please enter a password');
+                return;
+            }
+            closeModal('confirm-pass-modal');
+            openModal('show-mnemonic-modal');
+            document.getElementById('confirm-pwd-input').value = '';
+        }
+
+        function disconnectDapp() {
+            const item = document.getElementById('dapp-item-1');
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            item.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                item.style.display = 'none';
+                alert('Disconnected from OctraSwap DEX');
+                closeModal('connected-apps-modal');
+            }, 300);
+        }
+    </script>
+</body>
+</html>

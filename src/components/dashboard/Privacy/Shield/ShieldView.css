@@ -1,6 +1,6 @@
-@import '../PrivacySharedActions.css';
+@import "../PrivacySharedActions.css";
 
 /* Shield Specific Styles */
 .action-form-view.shield .btn-action-submit {
-    background: var(--accent-primary);
+  background: var(--accent-primary);
 }

@@ -1,1 +1,1 @@
-export { TokenItem } from './TokenItem';
+export { TokenItem } from "./TokenItem";

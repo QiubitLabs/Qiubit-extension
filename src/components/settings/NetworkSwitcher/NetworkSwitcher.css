@@ -4,421 +4,422 @@
  */
 /* ===== Wallet Rename ===== */
 .wallet-switcher-avatar {
-    position: relative;
-    width: 36px;
-    height: 36px;
-    cursor: pointer;
-    border-radius: 50%;
-    /* Added based on context, standard avatar style */
+  position: relative;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  border-radius: 50%;
+  /* Added based on context, standard avatar style */
 }
 
 .wallet-switcher-icon {
-    width: 100%;
-    height: 100%;
-    background: var(--bg-elevated);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-primary);
-    transition: all 0.2s ease;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
 }
 
 .wallet-switcher-edit {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-    background: var(--bg-secondary);
-    border: 1.5px solid var(--border-default);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.2s ease;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
 }
 
 .wallet-switcher-avatar:hover .wallet-switcher-edit {
-    opacity: 1;
-    pointer-events: auto;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .wallet-switcher-avatar:hover .wallet-switcher-icon {
-    filter: brightness(0.6);
+  filter: brightness(0.6);
 }
 
 /* Mobile: Always show edit icon */
 @media (hover: none) {
-    .wallet-switcher-edit {
-        opacity: 0.8;
-        pointer-events: auto;
-    }
+  .wallet-switcher-edit {
+    opacity: 0.8;
+    pointer-events: auto;
+  }
 }
 
 .rename-wallet-modal {
-    max-width: 320px;
-    width: 100%;
+  max-width: 320px;
+  width: 100%;
 }
 
 /* ===== Network Switcher UI ===== */
 .wallet-content {
-    max-height: calc(100vh - 75px);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  max-height: calc(100vh - 75px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 /* Custom ultra-minimalist scrollbars */
 .wallet-content::-webkit-scrollbar {
-    width: 4px;
+  width: 4px;
 }
 
 .wallet-content::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .wallet-content::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 
 .wallet-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .wallet-header {
-    padding: var(--space-xl);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--bg-primary);
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  padding: var(--space-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .header-icon-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    padding: var(--space-xs);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    transition: background var(--transition-fast);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
 
 .header-icon-btn:hover {
-    background: var(--bg-hover);
+  background: var(--bg-hover);
 }
 
 .network-options {
-    display: flex;
-    flex-direction: column;
-    gap: 2px; /* Tight layout gap for minimalist look */
-    padding: var(--space-md) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--space-md) 0;
 }
 
 .network-option {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 12px;
-    background: transparent;
-    border: none;
-    border-radius: 12px;
-    color: var(--text-primary);
-    text-align: left;
-    cursor: pointer;
-    width: 100%;
-    position: relative;
-    box-sizing: border-box;
-    
-    /* Staggered Entry Animation */
-    opacity: 0;
-    transform: translateY(8px);
-    animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    animation-delay: calc(var(--index, 0) * 0.05s);
-    
-    /* Interactive transition */
-    transition: 
-        background var(--transition-fast), 
-        color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 13px;
+  background: var(--bg-card, #1a1a1a);
+  border: 1px solid var(--border-subtle, #2a2a2a);
+  border-radius: var(--radius-md, 10px);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
+
+  /* Static states only — no motion on hover/entry */
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .network-option:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-elevated, #222);
+  border-color: var(--border-default, #333);
 }
 
 .network-option.active {
-    background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 212, 255, 0.45);
+  background: linear-gradient(
+    100deg,
+    var(--accent-glow, rgba(0, 212, 255, 0.08)),
+    transparent 70%
+  );
 }
 
 .network-option:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .network-option-icon {
-    width: 36px; /* Enlarge icon container */
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.04); /* Subtle backing */
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: var(--radius-full);
-    transition: transform var(--transition-fast), color var(--transition-fast);
+  width: 36px; /* Enlarge icon container */
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04); /* Subtle backing */
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .network-option.active .network-option-icon {
-    color: var(--accent-primary);
-    background: rgba(0, 212, 255, 0.08);
-    border-color: rgba(0, 212, 255, 0.2);
+  color: var(--accent-primary);
+  background: rgba(0, 212, 255, 0.08);
+  border-color: rgba(0, 212, 255, 0.2);
 }
 
 .network-option-icon img {
-    display: block;
-    width: 24px; /* Larger high definition logos */
-    height: 24px;
-    border-radius: 50%;
+  display: block;
+  width: 24px; /* Larger high definition logos */
+  height: 24px;
+  border-radius: 50%;
 }
 
 .network-option-icon svg {
-    width: 24px;
-    height: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .network-option-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
-    flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  flex: 1;
 }
 
 .network-option-name {
-    font-size: 15px; /* Bigger readable typography */
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
+  font-size: 15px; /* Bigger readable typography */
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .network-option.active .network-option-name {
-    color: var(--accent-primary); /* Highlight active name */
+  color: var(--accent-primary); /* Highlight active name */
 }
 
 .network-option-badge {
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.08);
-    padding: 2px 6px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .network-option-chain-id {
-    font-size: 10px;
-    color: var(--text-tertiary);
+  font-size: 10px;
+  color: var(--text-tertiary);
 }
 
 /* Active indicator - Custom clean circle with check icon */
 .network-active-indicator {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(0, 212, 255, 0.1);
-    color: var(--accent-primary);
-    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--accent-primary);
 }
 
 /* User-added network items layout alignment */
 .network-option-user {
-    padding: 0;
-    overflow: hidden;
+  padding: 0;
+  overflow: hidden;
 }
 
 .network-option-inner {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
-    padding: 12px 12px;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    text-align: left;
-    cursor: pointer;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  padding: 12px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
 }
 
 .network-option-remove {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 100%;
-    min-height: 44px;
-    background: transparent;
-    border: none;
-    border-left: 1px solid rgba(255, 255, 255, 0.05);
-    color: var(--text-tertiary);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: color 0.2s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .network-option-remove:hover {
-    color: #ff4a4a;
-    background: rgba(255, 74, 74, 0.08);
+  color: #ff4a4a;
+  background: rgba(255, 74, 74, 0.08);
 }
 
 /* Keyframes for Staggered and Active animations */
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleIn {
-    from {
-        transform: scale(0.6);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Switching Animation Overlay */
 .network-switching-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(13, 13, 13, 0.85);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn var(--transition-normal);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 13, 13, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn var(--transition-normal);
 }
 
 .network-switching-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .network-switch-icon {
-    color: var(--accent-primary);
-    margin-bottom: var(--space-lg);
+  color: var(--accent-primary);
+  margin-bottom: var(--space-lg);
 }
 
 .network-switch-arrow-1 {
-    animation: switchArrow1 1.5s infinite ease-in-out;
-    transform-origin: center;
+  animation: switchArrow1 1.5s infinite ease-in-out;
+  transform-origin: center;
 }
 
 .network-switch-arrow-2 {
-    animation: switchArrow2 1.5s infinite ease-in-out;
-    transform-origin: center;
+  animation: switchArrow2 1.5s infinite ease-in-out;
+  transform-origin: center;
 }
 
 .network-switching-text {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    animation: pulse 2s infinite;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  animation: pulse 2s infinite;
 }
 
 @keyframes switchArrow1 {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
 
-    0%,
-    100% {
-        transform: translateX(0);
-        opacity: 0.5;
-    }
-
-    50% {
-        transform: translateX(4px);
-        opacity: 1;
-    }
+  50% {
+    transform: translateX(4px);
+    opacity: 1;
+  }
 }
 
 @keyframes switchArrow2 {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.5;
+  }
 
-    0%,
-    100% {
-        transform: translateX(0);
-        opacity: 0.5;
-    }
-
-    50% {
-        transform: translateX(-4px);
-        opacity: 1;
-    }
+  50% {
+    transform: translateX(-4px);
+    opacity: 1;
+  }
 }
 
 /* ===== Segmented Control Filter Tabs ===== */
 .network-filter-tabs {
-    display: flex;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 3px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.02);
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 3px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
 }
 
 .network-filter-tab {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    border-radius: 6px;
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .network-filter-tab:hover {
-    color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .network-filter-tab.active {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--accent-primary);
-    font-weight: 600;
-}
-
-.network-filter-tab:active {
-    transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-primary);
+  font-weight: 600;
 }

@@ -109,7 +109,8 @@
     </div>
     <div class="field-row">
       <label class="label">Spender</label>
-      <input type="text" id="allowanceSpender" value="0x000000000000000000000000000000000000dEaD">
+      <input type="text" id="allowanceSpender" placeholder="0x… (Spender address)">
+      <button class="btn btn-outline" style="margin-top: 5px; padding: 5px 10px; font-size: 11px;" onclick="fillAllowanceSpender()">Use My Address as Spender</button>
     </div>
     <button class="btn btn-outline" onclick="getAllowance()">allowance()</button>
     <button class="btn btn-outline" onclick="fillOwner()">Use My Address as Owner</button>
@@ -122,7 +123,8 @@
     <p>Sends an ERC-20 approve() transaction. Opens the wallet approval popup showing the approve calldata decoded.</p>
     <div class="field-row">
       <label class="label">Spender Address</label>
-      <input type="text" id="approveSpender" value="0x000000000000000000000000000000000000dEaD">
+      <input type="text" id="approveSpender" placeholder="0x… (Spender address)">
+      <button class="btn btn-outline" style="margin-top: 5px; padding: 5px 10px; font-size: 11px;" onclick="fillApproveSpender()">Use My Address as Spender</button>
     </div>
     <div class="field-row">
       <label class="label">Amount (LINK, whole tokens)</label>
@@ -138,7 +140,8 @@
     <p>Sends an ERC-20 transfer() transaction. Opens the wallet approval popup.</p>
     <div class="field-row">
       <label class="label">Recipient</label>
-      <input type="text" id="transferTo" value="0x000000000000000000000000000000000000dEaD">
+      <input type="text" id="transferTo" placeholder="0x… (Recipient address)">
+      <button class="btn btn-outline" style="margin-top: 5px; padding: 5px 10px; font-size: 11px;" onclick="fillTransferTo()">Use My Address as Recipient</button>
     </div>
     <div class="field-row">
       <label class="label">Amount (LINK, whole tokens)</label>
@@ -274,6 +277,33 @@ async function fillOwner() {
   }
 }
 
+async function fillAllowanceSpender() {
+  try {
+    const account = await getAccount();
+    document.getElementById('allowanceSpender').value = account;
+  } catch (e) {
+    log('allowLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillApproveSpender() {
+  try {
+    const account = await getAccount();
+    document.getElementById('approveSpender').value = account;
+  } catch (e) {
+    log('approveLog', `Error: ${e.message}`, 'err');
+  }
+}
+
+async function fillTransferTo() {
+  try {
+    const account = await getAccount();
+    document.getElementById('transferTo').value = account;
+  } catch (e) {
+    log('transferLog', `Error: ${e.message}`, 'err');
+  }
+}
+
 async function getTokenMeta() {
   try {
     if (!window.ethereum) throw new Error('window.ethereum not found');
@@ -284,7 +314,6 @@ async function getTokenMeta() {
       ethCall(LINK_ADDRESS, '0x95d89b41'),
       ethCall(LINK_ADDRESS, '0x313ce567'),
     ]);
-    // Decode ABI-encoded string: offset(32) + length(32) + data
     const decodeStr = (hex) => {
       const bytes = hex.slice(2);
       const len = parseInt(bytes.slice(64, 128), 16);
@@ -326,12 +355,13 @@ async function doApprove() {
     const account = await getAccount();
     await ensureSepolia();
     const spender = document.getElementById('approveSpender').value.trim();
+    if (!spender) { log('approveLog', 'Enter spender address', 'err'); return; }
     const amt = BigInt(document.getElementById('approveAmount').value) * (10n ** 18n);
     const data = '0x095ea7b3' + encodeAddress(spender) + encodeUint256(amt);
     log('approveLog', `approve(${spender.slice(0,10)}…, ${formatToken(amt)} LINK)`, 'info');
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [{ from: account, to: LINK_ADDRESS, data, value: '0x0' }],
+      params: [{ from: account, to: LINK_ADDRESS, data, value: '0x0', chainId: '0xaa36a7' }],
     });
     log('approveLog', `TX: ${txHash}`, 'ok');
   } catch (e) {
@@ -344,12 +374,13 @@ async function doTransfer() {
     const account = await getAccount();
     await ensureSepolia();
     const to = document.getElementById('transferTo').value.trim();
+    if (!to) { log('transferLog', 'Enter recipient address', 'err'); return; }
     const amt = BigInt(document.getElementById('transferAmount').value) * (10n ** 18n);
     const data = '0xa9059cbb' + encodeAddress(to) + encodeUint256(amt);
     log('transferLog', `transfer(${to.slice(0,10)}…, ${formatToken(amt)} LINK)`, 'info');
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [{ from: account, to: LINK_ADDRESS, data, value: '0x0' }],
+      params: [{ from: account, to: LINK_ADDRESS, data, value: '0x0', chainId: '0xaa36a7' }],
     });
     log('transferLog', `TX: ${txHash}`, 'ok');
   } catch (e) {
@@ -378,7 +409,26 @@ window.addEventListener('load', () => {
       if (accounts[0]) {
         document.getElementById('balanceOfAddr').value = accounts[0];
         document.getElementById('allowanceOwner').value = accounts[0];
+        document.getElementById('allowanceSpender').value = accounts[0];
+        document.getElementById('approveSpender').value = accounts[0];
+        document.getElementById('transferTo').value = accounts[0];
       }
+
+      try {
+        await ensureSepolia();
+      } catch (e) {
+        console.warn('Failed to switch to Sepolia automatically:', e);
+      }
+
+      window.ethereum.on('accountsChanged', (newAccounts) => {
+        if (newAccounts[0]) {
+          document.getElementById('balanceOfAddr').value = newAccounts[0];
+          document.getElementById('allowanceOwner').value = newAccounts[0];
+          document.getElementById('allowanceSpender').value = newAccounts[0];
+          document.getElementById('approveSpender').value = newAccounts[0];
+          document.getElementById('transferTo').value = newAccounts[0];
+        }
+      });
     }
   }, 400);
 });

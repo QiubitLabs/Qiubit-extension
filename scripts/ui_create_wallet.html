@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qiubit Wallet - Create Wallet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0B0C10;
+            --bg-surface: rgba(22, 26, 37, 0.65);
+            --bg-surface-solid: #171A26;
+            --bg-hover: rgba(35, 41, 58, 0.85);
+            
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --border-active: rgba(99, 102, 241, 0.4);
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+            --error: #f43f5e;
+            
+            --font-sans: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --wallet-width: 375px;
+            --wallet-height: 600px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030406;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 40%);
+        }
+
+        .wallet-container {
+            width: var(--wallet-width);
+            height: var(--wallet-height);
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, rgba(23, 26, 38, 0.4) 0%, rgba(11, 12, 16, 0.95) 100%);
+        }
+
+        .header-bar {
+            width: 100%;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .btn-back {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .header-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .step-indicator {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+        }
+
+        .step-container {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .step-container.active {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .step-info {
+            margin-bottom: 8px;
+        }
+
+        .step-heading {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .step-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 46px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 0 42px 0 16px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.04);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+        }
+
+        .input-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .input-toggle-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .strength-meter {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .strength-bars {
+            display: flex;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .strength-bar {
+            height: 4px;
+            flex: 1;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .strength-bar.active-weak {
+            background: var(--error);
+        }
+
+        .strength-bar.active-medium {
+            background: var(--warning);
+        }
+
+        .strength-bar.active-strong {
+            background: var(--success);
+        }
+
+        .strength-text {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .alert-box {
+            background: var(--warning-bg);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--warning);
+        }
+
+        .alert-icon-svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .mnemonic-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .word-chip {
+            height: 38px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .word-num {
+            font-size: 10px;
+            color: var(--text-muted);
+            width: 16px;
+            margin-right: 4px;
+            display: inline-block;
+        }
+
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            height: 38px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+
+        .btn-copy:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        /* Verify Step Specifics */
+        .verification-zone {
+            width: 100%;
+            min-height: 90px;
+            border: 1.5px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-content: flex-start;
+            background: rgba(0, 0, 0, 0.15);
+            transition: border-color 0.2s;
+        }
+
+        .verification-zone.active-drop {
+            border-color: var(--primary);
+        }
+
+        .verify-word-chip {
+            padding: 6px 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .word-pool {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .pool-word-chip {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pool-word-chip:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--border-hover);
+        }
+
+        .pool-word-chip.used {
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .btn-action-container {
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            opacity: 0.95;
+            transform: translateY(-1.5px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* SVG Icons */
+        .icon-svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wallet-container">
+        
+        <div class="header-bar">
+            <button class="btn-back" onclick="goBack()">
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+            </button>
+            <span class="header-title" id="header-title">Create Wallet</span>
+            <span class="step-indicator" id="step-indicator">Step 1/3</span>
+        </div>
+
+        <div class="main-content">
+            
+            <!-- STEP 1: CREATE PASSWORD -->
+            <div class="step-container active" id="step-1">
+                <div class="step-info">
+                    <h2 class="step-heading">Create Password</h2>
+                    <p class="step-desc">This password will unlock your wallet only on this device.</p>
+                </div>
+
+                <div class="form-group" style="margin-top: 8px;">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" id="password" placeholder="Min. 8 characters" oninput="validatePassword()">
+                        <button class="input-toggle-btn" onclick="togglePasswordVisibility('password')">
+                            <svg class="icon-svg" viewBox="0 0 24 24" id="eye-icon-password">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="strength-meter">
+                        <div class="strength-bars">
+                            <div class="strength-bar" id="strength-1"></div>
+                            <div class="strength-bar" id="strength-2"></div>
+                            <div class="strength-bar" id="strength-3"></div>
+                        </div>
+                        <span class="strength-text" id="strength-label">Password Strength: Empty</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" id="confirm-password" placeholder="Repeat your password" oninput="validatePassword()">
+                        <button class="input-toggle-btn" onclick="togglePasswordVisibility('confirm-password')">
+                            <svg class="icon-svg" viewBox="0 0 24 24" id="eye-icon-confirm">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                    <span class="strength-text" id="match-label" style="color: var(--error); display: none;">Passwords do not match</span>
+                </div>
+            </div>
+
+            <!-- STEP 2: SECRET PHRASE -->
+            <div class="step-container" id="step-2">
+                <div class="step-info">
+                    <h2 class="step-heading">Backup Phrase</h2>
+                    <p class="step-desc">Write down this 12-word recovery phrase. Never share it with anyone.</p>
+                </div>
+
+                <div class="mnemonic-grid" id="mnemonic-grid">
+                    <!-- JS populated -->
+                </div>
+
+                <button class="btn-copy" onclick="copyMnemonic()">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    <span id="copy-text">Copy to Clipboard</span>
+                </button>
+
+                <div class="alert-box">
+                    <svg class="alert-icon-svg" viewBox="0 0 24 24">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    <div>
+                        If you lose this phrase, you lose access to your funds forever. No one can recover it for you.
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: VERIFICATION -->
+            <div class="step-container" id="step-3">
+                <div class="step-info">
+                    <h2 class="step-heading">Verify Phrase</h2>
+                    <p class="step-desc">Select the words in the correct order to confirm your backup.</p>
+                </div>
+
+                <div class="verification-zone" id="verify-zone">
+                    <!-- Selected words placed here -->
+                </div>
+
+                <div class="word-pool" id="word-pool">
+                    <!-- Shuffled words pool -->
+                </div>
+            </div>
+
+            <div class="btn-action-container">
+                <button class="btn btn-primary" id="btn-next" disabled onclick="handleNext()">
+                    Continue
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const words = ["quantum", "gravity", "shield", "matrix", "cipher", "nebula", "orbit", "vertex", "tensor", "glitch", "flux", "beacon"];
+        let shuffledWords = [...words].sort(() => Math.random() - 0.5);
+        let selectedWords = [];
+
+        // Check if loading as import mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const isImport = urlParams.get('mode') === 'import';
+        if (isImport) {
+            document.getElementById('header-title').innerText = "Import Wallet";
+            document.querySelector('.step-heading').innerText = "Import Seed Phrase";
+            document.querySelector('.step-desc').innerText = "Enter your 12-word seed phrase or private key to restore your wallet.";
+        }
+
+        function togglePasswordVisibility(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById('eye-icon-' + id);
+            if (el.type === 'password') {
+                el.type = 'text';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                el.type = 'password';
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+
+        function validatePassword() {
+            const pw = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm-password').value;
+            const nextBtn = document.getElementById('btn-next');
+            const matchLabel = document.getElementById('match-label');
+            
+            // Password Strength
+            const str1 = document.getElementById('strength-1');
+            const str2 = document.getElementById('strength-2');
+            const str3 = document.getElementById('strength-3');
+            const label = document.getElementById('strength-label');
+
+            str1.className = 'strength-bar';
+            str2.className = 'strength-bar';
+            str3.className = 'strength-bar';
+
+            let valid = false;
+
+            if (pw.length === 0) {
+                label.innerText = "Password Strength: Empty";
+            } else if (pw.length < 5) {
+                str1.classList.add('active-weak');
+                label.innerText = "Password Strength: Weak (too short)";
+            } else if (pw.length < 8) {
+                str1.classList.add('active-medium');
+                str2.classList.add('active-medium');
+                label.innerText = "Password Strength: Medium";
+            } else {
+                str1.classList.add('active-strong');
+                str2.classList.add('active-strong');
+                str3.classList.add('active-strong');
+                label.innerText = "Password Strength: Strong";
+                if (pw === confirm) {
+                    valid = true;
+                }
+            }
+
+            if (confirm.length > 0 && pw !== confirm) {
+                matchLabel.style.display = 'block';
+            } else {
+                matchLabel.style.display = 'none';
+            }
+
+            nextBtn.disabled = !valid;
+        }
+
+        function populateMnemonic() {
+            const grid = document.getElementById('mnemonic-grid');
+            grid.innerHTML = '';
+            words.forEach((word, index) => {
+                grid.innerHTML += `
+                    <div class="word-chip">
+                        <span class="word-num">${index + 1}</span>
+                        <span>${word}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function copyMnemonic() {
+            const textToCopy = words.join(' ');
+            navigator.clipboard.writeText(textToCopy);
+            const copyText = document.getElementById('copy-text');
+            copyText.innerText = "Copied!";
+            setTimeout(() => {
+                copyText.innerText = "Copy to Clipboard";
+            }, 1500);
+        }
+
+        function populateVerifyPool() {
+            const pool = document.getElementById('word-pool');
+            pool.innerHTML = '';
+            shuffledWords.forEach((word, index) => {
+                pool.innerHTML += `
+                    <div class="pool-word-chip" id="pool-word-${word}" onclick="selectWord('${word}')">${word}</div>
+                `;
+            });
+        }
+
+        function selectWord(word) {
+            if (selectedWords.includes(word)) return;
+            selectedWords.push(word);
+            
+            // Mark pool chip as used
+            document.getElementById(`pool-word-${word}`).classList.add('used');
+
+            // Draw in select zone
+            const zone = document.getElementById('verify-zone');
+            zone.innerHTML += `
+                <div class="verify-word-chip" id="verify-word-${word}" onclick="deselectWord('${word}')">
+                    <span>${selectedWords.length}.</span> ${word}
+                </div>
+            `;
+
+            checkVerifyCompletion();
+        }
+
+        function deselectWord(word) {
+            selectedWords = selectedWords.filter(w => w !== word);
+            
+            // Unmark pool chip
+            document.getElementById(`pool-word-${word}`).classList.remove('used');
+
+            // Redraw verify zone
+            const zone = document.getElementById('verify-zone');
+            zone.innerHTML = '';
+            selectedWords.forEach((w, index) => {
+                zone.innerHTML += `
+                    <div class="verify-word-chip" id="verify-word-${w}" onclick="deselectWord('${w}')">
+                        <span>${index + 1}.</span> ${w}
+                    </div>
+                `;
+            });
+
+            checkVerifyCompletion();
+        }
+
+        function checkVerifyCompletion() {
+            const nextBtn = document.getElementById('btn-next');
+            if (selectedWords.length === words.length) {
+                // Check correct order
+                const isCorrect = selectedWords.every((w, idx) => w === words[idx]);
+                if (isCorrect) {
+                    nextBtn.disabled = false;
+                    document.getElementById('verify-zone').style.borderColor = 'var(--success)';
+                } else {
+                    nextBtn.disabled = true;
+                    document.getElementById('verify-zone').style.borderColor = 'var(--error)';
+                }
+            } else {
+                nextBtn.disabled = true;
+                document.getElementById('verify-zone').style.borderColor = 'var(--border-subtle)';
+            }
+        }
+
+        function handleNext() {
+            if (currentStep === 1) {
+                currentStep = 2;
+                document.getElementById('step-1').classList.remove('active');
+                document.getElementById('step-2').classList.add('active');
+                document.getElementById('step-indicator').innerText = "Step 2/3";
+                document.getElementById('btn-next').disabled = false; // Mnemonic copy is review, allow continue
+                populateMnemonic();
+            } else if (currentStep === 2) {
+                currentStep = 3;
+                document.getElementById('step-2').classList.remove('active');
+                document.getElementById('step-3').classList.add('active');
+                document.getElementById('step-indicator').innerText = "Step 3/3";
+                document.getElementById('btn-next').disabled = true;
+                populateVerifyPool();
+            } else if (currentStep === 3) {
+                // Complete - go to dashboard
+                document.querySelector('.wallet-container').style.opacity = '0';
+                document.querySelector('.wallet-container').style.transform = 'translateY(-10px)';
+                document.querySelector('.wallet-container').style.transition = 'all 0.4s ease';
+                setTimeout(() => {
+                    window.location.href = 'ui_dashboard.html';
+                }, 400);
+            }
+        }
+
+        function goBack() {
+            if (currentStep === 1) {
+                window.location.href = 'ui_welcome.html';
+            } else if (currentStep === 2) {
+                currentStep = 1;
+                document.getElementById('step-2').classList.remove('active');
+                document.getElementById('step-1').classList.add('active');
+                document.getElementById('step-indicator').innerText = "Step 1/3";
+                validatePassword();
+            } else if (currentStep === 3) {
+                currentStep = 2;
+                selectedWords = [];
+                document.getElementById('verify-zone').innerHTML = '';
+                document.getElementById('step-3').classList.remove('active');
+                document.getElementById('step-2').classList.add('active');
+                document.getElementById('step-indicator').innerText = "Step 2/3";
+                document.getElementById('btn-next').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

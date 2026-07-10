@@ -1,84 +1,84 @@
 /* TokenItem Component Styles */
 
 .token-item {
-    display: flex;
-    align-items: center;
-    padding: 14px var(--space-xl); /* Airy vertical padding and perfectly aligned horizontal bleed */
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0; /* Full bleed edge-to-edge look */
-    transition: background var(--transition-fast);
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 14px var(--space-xl); /* Airy vertical padding and perfectly aligned horizontal bleed */
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0; /* Full bleed edge-to-edge look */
+  transition: background var(--transition-fast);
+  cursor: pointer;
 }
 
 .token-item:last-child {
-    /* No border to remove */
+  /* No border to remove */
 }
 
 .token-item:hover {
-    background: rgba(255, 255, 255, 0.04); /* Premium subtle hover highlight */
-    border-color: transparent;
-    transform: none;
+  background: rgba(255, 255, 255, 0.04); /* Premium subtle hover highlight */
+  border-color: transparent;
+  transform: none;
 }
 
 .token-item-icon {
-    margin-right: 12px;
-    display: flex;
-    align-items: center;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
 }
 
 .token-item-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .token-item-symbol {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.2;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .token-item-balance-text {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .token-item-market {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .token-item-value-fiat {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.2;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .token-item-price {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Network badge — minimal pill, luxury dark style */
 .token-network-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    border-radius: 100px;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    line-height: 1.4;
-    width: fit-content;
-    opacity: 0.9;
-    margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  width: fit-content;
+  opacity: 0.9;
+  margin-top: 1px;
 }

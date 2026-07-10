@@ -1,1 +1,1 @@
-export { PrivacyView } from './PrivacyView';
+export { PrivacyView } from "./PrivacyView";

@@ -1,1 +1,5 @@
-export { WelcomeScreen, CreateWalletScreen, ImportWalletScreen } from './WelcomeScreen';
+export {
+  WelcomeScreen,
+  CreateWalletScreen,
+  ImportWalletScreen,
+} from "./WelcomeScreen";

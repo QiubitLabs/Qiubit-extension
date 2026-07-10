@@ -473,10 +473,11 @@
         <span class="card-tag">eth_sendTransaction</span>
       </div>
       <p class="card-desc">Send a small amount of Sepolia ETH to an address. Opens approval popup.</p>
-      <input class="input" id="tx-to" placeholder="To address" value="0x000000000000000000000000000000000000dead">
+      <input class="input" id="tx-to" placeholder="To address">
       <input class="input" id="tx-value" placeholder="Value in ETH" value="0.0001">
       <div class="btn-row">
         <button class="btn btn-primary" onclick="doSendEth()">Send ETH</button>
+        <button class="btn btn-secondary" onclick="useMyAddressForSend()">Use My Address</button>
       </div>
       <div id="st-send-eth" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
     </div>
@@ -492,6 +493,8 @@
       <input class="input" id="tx-data" placeholder="Calldata (hex)" value="0xa9059cbb000000000000000000000000000000000000000000000000000000000000dead0000000000000000000000000000000000000000000000000000000000000001">
       <div class="btn-row">
         <button class="btn btn-primary" onclick="doSendWithData()">Send with Data</button>
+        <button class="btn btn-secondary" onclick="useMyAddressForData()">Use My Address</button>
+        <button class="btn btn-outline" onclick="generateCalldataForMyAddress()">Set Calldata to Me</button>
       </div>
       <div id="st-send-data" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
     </div>
@@ -550,6 +553,7 @@
       <input class="input" id="bal-addr" placeholder="Address to check balance" id="bal-addr">
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="doBalanceOf()">Read Balance</button>
+        <button class="btn btn-outline" onclick="document.getElementById('bal-addr').value = getActiveEvmAddress()">Use My Address</button>
       </div>
       <div id="st-balance-of" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
     </div>
@@ -574,10 +578,11 @@
         <span class="card-tag">eth_sendTransaction · write</span>
       </div>
       <p class="card-desc">Call <code>approve(spender, amount)</code> on LINK token. Opens approval popup for ERC-20 approve.</p>
-      <input class="input" id="approve-spender" placeholder="Spender address" value="0x000000000000000000000000000000000000dead">
+      <input class="input" id="approve-spender" placeholder="Spender address">
       <input class="input" id="approve-amount" placeholder="Amount (in LINK units)" value="1000000000000000000">
       <div class="btn-row">
         <button class="btn btn-primary" onclick="doApprove()">Approve ERC-20</button>
+        <button class="btn btn-secondary" onclick="useMyAddressForApprove()">Use My Address</button>
       </div>
       <div id="st-approve" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
     </div>
@@ -589,10 +594,11 @@
         <span class="card-tag">eth_sendTransaction · write</span>
       </div>
       <p class="card-desc">Call <code>transfer(to, amount)</code> — sends LINK tokens. Approval popup shows decoded function name.</p>
-      <input class="input" id="transfer-to" placeholder="Recipient" value="0x000000000000000000000000000000000000dead">
+      <input class="input" id="transfer-to" placeholder="Recipient">
       <input class="input" id="transfer-amount" placeholder="Amount (wei units)" value="1">
       <div class="btn-row">
         <button class="btn btn-primary" onclick="doTransfer()">Transfer LINK</button>
+        <button class="btn btn-secondary" onclick="useMyAddressForTransfer()">Use My Address</button>
       </div>
       <div id="st-transfer" class="status idle"><span class="icon">○</span><span>Waiting…</span></div>
     </div>
@@ -828,6 +834,7 @@
       <div class="btn-row">
         <button class="btn btn-primary" onclick="sdkSignTransaction()">Sign Transaction Only</button>
         <button class="btn btn-secondary" onclick="sdkSendTransaction()">Sign & Send Transaction</button>
+        <button class="btn btn-outline" onclick="useMyAddressForSdk()">Use My Address</button>
       </div>
       <div id="st-sdk-tx" class="status idle"><span class="icon">○</span><span>Waiting...</span></div>
     </div>
@@ -840,9 +847,16 @@
       </div>
       <p class="card-desc">Interact with native contracts using view (read) or call (write) methods.</p>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-        <input class="input" id="sdk-contract-addr" placeholder="Contract Address (oct...)" value="oct1contract779877a7b0d9e8603169ddbd7836e478b462">
+        <input class="input" id="sdk-contract-addr" placeholder="Contract Address (oct...)" value="octBUHw585BrAMPMLQvGuWx4vqEsybYH9N7a3WNj1WBwrDn">
         <input class="input" id="sdk-contract-method" placeholder="Method Name (e.g. transfer)" value="transfer">
         <input class="input" id="sdk-contract-params" placeholder="Params array (JSON format, e.g. [&quot;oct1abc...&quot;, &quot;100&quot;])" value="[&quot;oct1deadbeef000000000000000000000000dead&quot;, &quot;10&quot;]" style="grid-column: 1 / -1">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; margin-bottom:8px;">
+        <span style="font-size:11px; align-self:center; color:#94a3b8; font-weight:500;">Prefill OCS-01:</span>
+        <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px; height:auto; width:auto; margin:0;" onclick="prefillName()">get_name()</button>
+        <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px; height:auto; width:auto; margin:0;" onclick="prefillBalanceOf()">balance_of()</button>
+        <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px; height:auto; width:auto; margin:0;" onclick="prefillTransfer()">transfer()</button>
+        <button class="btn btn-outline" style="padding:4px 10px; font-size:11px; height:auto; width:auto; margin:0;" onclick="useMyAddressForSdkParams()">Prefill My Address in Params</button>
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="sdkContractCall()">Contract Call (Write)</button>
@@ -1068,7 +1082,8 @@ async function updateWalletBar() {
   if (octraAddr) {
     try {
       const octBal = await p.request({ method: 'getBalance', params: { address: octraAddr } });
-      document.getElementById('infoOctraBalance').textContent = octBal + ' OCT';
+      const displayVal = typeof octBal === 'object' && octBal !== null ? (octBal.formatted || octBal.balance || '0') : octBal;
+      document.getElementById('infoOctraBalance').textContent = displayVal + ' OCT';
     } catch {
       document.getElementById('infoOctraBalance').textContent = '—';
     }
@@ -1096,6 +1111,10 @@ window.addEventListener('load', () => {
     log(`accountsChanged: ${JSON.stringify(accounts)}`, 'success');
     account = accounts[0] || null;
     updateWalletBar();
+    if (account) {
+      prefillAllFields(account);
+      ensureSepolia().catch(e => console.warn('ensureSepolia on accountsChanged failed:', e));
+    }
   });
 
   p.on('chainChanged', (cid) => {
@@ -1142,6 +1161,20 @@ window.addEventListener('load', () => {
       updateWalletBar();
     });
   }
+
+  setTimeout(async () => {
+    try {
+      const accounts = await p.request({ method: 'eth_accounts' }).catch(() => []);
+      if (accounts && accounts[0]) {
+        account = accounts[0];
+        updateWalletBar();
+        prefillAllFields(accounts[0]);
+        await ensureSepolia().catch(e => console.warn('ensureSepolia on load failed:', e));
+      }
+    } catch (e) {
+      console.warn('Failed to fetch accounts on load:', e);
+    }
+  }, 400);
 });
 
 // ─── Connect ──────────────────────────────────────────────────────────────────
@@ -1157,6 +1190,10 @@ async function doConnect() {
     setStatus('st-connect', 'success', `Connected: ${accounts.length} account(s)`, accounts);
     log(`Connected: ${account}`, 'success');
     updateWalletBar();
+    if (account) {
+      prefillAllFields(account);
+      await ensureSepolia().catch(e => console.warn('ensureSepolia on connect failed:', e));
+    }
   } catch (e) {
     setStatus('st-connect', 'error', e.message || 'Rejected', e);
     log(`Connect failed: ${e.message}`, 'error');
@@ -1473,17 +1510,139 @@ async function doSIWE() {
   }
 }
 
+function getActiveEvmAddress() {
+  return account && account.startsWith('0x') ? account : '';
+}
+
+function getActiveOctraAddress() {
+  const p = getProvider();
+  return p?.octraAddress || (account && account.startsWith('oct') ? account : null) || (window.octra?.selectedAddress?.startsWith('oct') ? window.octra.selectedAddress : null) || '';
+}
+
+function prefillAllFields(addr) {
+  if (!addr) return;
+  if (addr.startsWith('0x')) {
+    const txTo = document.getElementById('tx-to');
+    if (txTo) txTo.value = addr;
+    const txDataTo = document.getElementById('tx-data-to');
+    if (txDataTo) txDataTo.value = addr;
+    const balAddr = document.getElementById('bal-addr');
+    if (balAddr) balAddr.value = addr;
+    const approveSpender = document.getElementById('approve-spender');
+    if (approveSpender) approveSpender.value = addr;
+    const transferTo = document.getElementById('transfer-to');
+    if (transferTo) transferTo.value = addr;
+  }
+  const octraAddr = getActiveOctraAddress();
+  if (octraAddr) {
+    const sdkTxTo = document.getElementById('sdk-tx-to');
+    if (sdkTxTo) sdkTxTo.value = octraAddr;
+    const sdkContractParams = document.getElementById('sdk-contract-params');
+    if (sdkContractParams) {
+      sdkContractParams.value = JSON.stringify([octraAddr, "10"]);
+    }
+  }
+}
+
+function useMyAddressForSend() {
+  const addr = getActiveEvmAddress();
+  if (addr) {
+    document.getElementById('tx-to').value = addr;
+    log('st-send-eth', `Prefilled "To address" with your address: ${addr}`, 'success');
+  } else {
+    log('st-send-eth', 'Connect wallet first to get your address', 'warn');
+  }
+}
+
+function useMyAddressForData() {
+  const addr = getActiveEvmAddress();
+  if (addr) {
+    document.getElementById('tx-data-to').value = addr;
+    log('st-send-data', `Prefilled "To address" with your address: ${addr}`, 'success');
+  } else {
+    log('st-send-data', 'Connect wallet first to get your address', 'warn');
+  }
+}
+
+function generateCalldataForMyAddress() {
+  const addr = getActiveEvmAddress();
+  if (!addr) {
+    log('st-send-data', 'Connect wallet first to get your address', 'warn');
+    return;
+  }
+  const cleanAddr = addr.replace('0x', '').toLowerCase().padStart(64, '0');
+  const amount = '0000000000000000000000000000000000000000000000000de0b6b3a7640000';
+  document.getElementById('tx-data').value = '0xa9059cbb' + cleanAddr + amount;
+  log('st-send-data', 'Generated calldata for transfer(myAddress, 1 token)', 'success');
+}
+
+function useMyAddressForApprove() {
+  const addr = getActiveEvmAddress();
+  if (addr) {
+    document.getElementById('approve-spender').value = addr;
+    log('st-approve', `Prefilled spender with your address: ${addr}`, 'success');
+  } else {
+    log('st-approve', 'Connect wallet first to get your address', 'warn');
+  }
+}
+
+function useMyAddressForTransfer() {
+  const addr = getActiveEvmAddress();
+  if (addr) {
+    document.getElementById('transfer-to').value = addr;
+    log('st-transfer', `Prefilled recipient with your address: ${addr}`, 'success');
+  } else {
+    log('st-transfer', 'Connect wallet first to get your address', 'warn');
+  }
+}
+
+function useMyAddressForSdk() {
+  const addr = getActiveOctraAddress();
+  if (addr) {
+    document.getElementById('sdk-tx-to').value = addr;
+    log('st-sdk-tx', `Prefilled SDK To with your address: ${addr}`, 'success');
+  } else {
+    log('st-sdk-tx', 'Connect via SDK first to get your Octra address', 'warn');
+  }
+}
+
+function useMyAddressForSdkParams() {
+  const addr = getActiveOctraAddress();
+  if (addr) {
+    document.getElementById('sdk-contract-params').value = JSON.stringify([addr, "10"]);
+    log('st-sdk-contract', `Prefilled SDK Contract Params with your address: ${addr}`, 'success');
+  } else {
+    log('st-sdk-contract', 'Connect via SDK first to get your Octra address', 'warn');
+  }
+}
+
+// ─── Transaction ──────────────────────────────────────────────────────────────
+
+async function ensureSepolia() {
+  const p = getProvider();
+  if (!p) return;
+  const cid = await p.request({ method: 'eth_chainId' });
+  if (cid !== SEPOLIA_ID) {
+    log('Switching network to Sepolia…');
+    await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_ID }] });
+    chainId = SEPOLIA_ID;
+    updateWalletBar();
+  }
+}
+
 // ─── Transaction ──────────────────────────────────────────────────────────────
 
 async function doSendEth() {
   const p = checkProvider(); if (!p) return;
   if (!account) { setStatus('st-send-eth', 'warning', 'Connect wallet first'); return; }
   const to = document.getElementById('tx-to').value.trim();
+  if (!to) { setStatus('st-send-eth', 'warning', 'Enter recipient address'); return; }
   const ethVal = parseFloat(document.getElementById('tx-value').value) || 0.0001;
   const valueHex = '0x' + Math.round(ethVal * 1e18).toString(16);
   setStatus('st-send-eth', 'loading', `Sending ${ethVal} ETH…`);
   log(`eth_sendTransaction: to=${to}, value=${ethVal} ETH`);
   try {
+    await ensureSepolia();
     const txHash = await p.request({
       method: 'eth_sendTransaction',
       params: [{ from: account, to, value: valueHex, chainId: SEPOLIA_ID }]
@@ -1501,10 +1660,12 @@ async function doSendWithData() {
   const p = checkProvider(); if (!p) return;
   if (!account) { setStatus('st-send-data', 'warning', 'Connect wallet first'); return; }
   const to   = document.getElementById('tx-data-to').value.trim();
+  if (!to) { setStatus('st-send-data', 'warning', 'Enter recipient address'); return; }
   const data = document.getElementById('tx-data').value.trim();
   setStatus('st-send-data', 'loading', 'Sending transaction with calldata…');
   log(`eth_sendTransaction: to=${to}, data=${data.slice(0,20)}…`);
   try {
+    await ensureSepolia();
     const txHash = await p.request({
       method: 'eth_sendTransaction',
       params: [{ from: account, to, data, chainId: SEPOLIA_ID }]
@@ -1521,6 +1682,7 @@ async function doEstimateGas() {
   const p = checkProvider(); if (!p) return;
   setStatus('st-gas', 'loading', 'Estimating…');
   try {
+    await ensureSepolia();
     const gas = await p.request({
       method: 'eth_estimateGas',
       params: [{ from: account || '0x0000000000000000000000000000000000000001', to: '0x000000000000000000000000000000000000dead', value: '0x0' }]
@@ -1578,6 +1740,7 @@ async function doBalanceOf() {
   setStatus('st-balance-of', 'loading', `Calling balanceOf(${addr.slice(0,8)}…)…`);
   log(`eth_call: LINK.balanceOf(${addr})`);
   try {
+    await ensureSepolia();
     const result = await ethCall(LINK_SEPOLIA, SIG.balanceOf + padAddress(addr));
     const balance = BigInt(result) / BigInt(1e18);
     setStatus('st-balance-of', 'success', `Balance: ${balance} LINK (raw: ${result})`);
@@ -1592,6 +1755,7 @@ async function doTotalSupply() {
   setStatus('st-supply', 'loading', 'Calling totalSupply()…');
   log('eth_call: LINK.totalSupply()');
   try {
+    await ensureSepolia();
     const result = await ethCall(LINK_SEPOLIA, SIG.totalSupply);
     const supply = BigInt(result) / BigInt(1e18);
     setStatus('st-supply', 'success', `Total supply: ${supply.toLocaleString()} LINK`);
@@ -1606,11 +1770,13 @@ async function doApprove() {
   const p = checkProvider(); if (!p) return;
   if (!account) { setStatus('st-approve', 'warning', 'Connect wallet first'); return; }
   const spender = document.getElementById('approve-spender').value.trim();
+  if (!spender) { setStatus('st-approve', 'warning', 'Enter spender address'); return; }
   const amount  = document.getElementById('approve-amount').value.trim();
   const data = SIG.approve + padAddress(spender) + padUint256(amount);
   setStatus('st-approve', 'loading', 'Approval popup opening…');
   log(`eth_sendTransaction: LINK.approve(${spender.slice(0,8)}…, ${amount})`);
   try {
+    await ensureSepolia();
     const txHash = await p.request({
       method: 'eth_sendTransaction',
       params: [{ from: account, to: LINK_SEPOLIA, data, chainId: SEPOLIA_ID }]
@@ -1627,11 +1793,13 @@ async function doTransfer() {
   const p = checkProvider(); if (!p) return;
   if (!account) { setStatus('st-transfer', 'warning', 'Connect wallet first'); return; }
   const to     = document.getElementById('transfer-to').value.trim();
+  if (!to) { setStatus('st-transfer', 'warning', 'Enter recipient address'); return; }
   const amount = document.getElementById('transfer-amount').value.trim();
   const data = SIG.transfer + padAddress(to) + padUint256(amount);
   setStatus('st-transfer', 'loading', 'Approval popup opening…');
   log(`eth_sendTransaction: LINK.transfer(${to.slice(0,8)}…, ${amount})`);
   try {
+    await ensureSepolia();
     const txHash = await p.request({
       method: 'eth_sendTransaction',
       params: [{ from: account, to: LINK_SEPOLIA, data, chainId: SEPOLIA_ID }]
@@ -1769,7 +1937,8 @@ async function sdkGetBalance() {
   log(`Calling sdk.getBalance(${address || 'active'})...`);
   try {
     const balance = await sdk.getBalance(address);
-    setStatus('st-sdk-balance', 'success', `Balance: ${balance}`, balance);
+    const displayVal = typeof balance === 'object' && balance !== null ? (balance.formatted || balance.balance || '0') : balance;
+    setStatus('st-sdk-balance', 'success', `Balance: ${displayVal}`, balance);
     log(`[SDK] Balance standard response: ${JSON.stringify(balance)}`, 'success');
   } catch (e) {
     setStatus('st-sdk-balance', 'error', e.message, e);
@@ -1856,6 +2025,25 @@ async function sdkSendTransaction() {
     setStatus('st-sdk-tx', 'error', e.message, e);
     log(`[SDK] Send transaction failed: ${e.message}`, 'error');
   }
+}
+
+function prefillName() {
+  document.getElementById('sdk-contract-addr').value = 'octBUHw585BrAMPMLQvGuWx4vqEsybYH9N7a3WNj1WBwrDn';
+  document.getElementById('sdk-contract-method').value = 'get_name';
+  document.getElementById('sdk-contract-params').value = '[]';
+}
+
+function prefillBalanceOf() {
+  const activeAddr = (window.octra?.selectedAddress || (typeof sdk !== 'undefined' && sdk.address) || (typeof account !== 'undefined' && account.startsWith('oct') ? account : '') || 'oct1...').trim();
+  document.getElementById('sdk-contract-addr').value = 'octBUHw585BrAMPMLQvGuWx4vqEsybYH9N7a3WNj1WBwrDn';
+  document.getElementById('sdk-contract-method').value = 'balance_of';
+  document.getElementById('sdk-contract-params').value = JSON.stringify([activeAddr]);
+}
+
+function prefillTransfer() {
+  document.getElementById('sdk-contract-addr').value = 'octBUHw585BrAMPMLQvGuWx4vqEsybYH9N7a3WNj1WBwrDn';
+  document.getElementById('sdk-contract-method').value = 'transfer';
+  document.getElementById('sdk-contract-params').value = JSON.stringify(['oct1qtr9877a7b0d9e8603169ddbd7836e478b4624789', '1000000']);
 }
 
 async function sdkContractCall() {

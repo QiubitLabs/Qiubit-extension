@@ -1,40 +1,40 @@
 /* Toast.css */
 .toast {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: var(--space-xs) var(--space-md);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    font-size: 10px !important;
-    font-weight: 500;
-    z-index: 1000;
-    animation: fadeInUp var(--transition-normal) ease;
-    box-shadow: var(--shadow-lg);
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 10px !important;
+  font-weight: 500;
+  z-index: 1000;
+  animation: fadeInUp var(--transition-normal) ease;
+  box-shadow: var(--shadow-lg);
 }
 
 .toast-success {
-    background: var(--success-bg);
-    border-color: var(--success);
-    color: var(--success);
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
 }
 
 .toast-error {
-    background: var(--error-bg);
-    border-color: var(--error);
-    color: var(--error);
+  background: var(--error-bg);
+  border-color: var(--error);
+  color: var(--error);
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

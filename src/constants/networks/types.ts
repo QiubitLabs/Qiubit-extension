@@ -4,22 +4,22 @@
  */
 
 export interface EvmTokenConfig {
-    symbol: string;
-    name: string;
-    decimals: number;
-    contractAddress: string;
-    logoUrl: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  contractAddress: string;
+  logoUrl: string;
 }
 
 export interface EvmNetworkConfig {
-    chainId: number;
+  chainId: number;
+  name: string;
+  rpcUrl: string;
+  nativeToken: {
+    symbol: string;
     name: string;
-    rpcUrl: string;
-    nativeToken: {
-        symbol: string;
-        name: string;
-        decimals: number;
-        logoUrl: string;
-    };
-    tokens: EvmTokenConfig[];
+    decimals: number;
+    logoUrl: string;
+  };
+  tokens: EvmTokenConfig[];
 }

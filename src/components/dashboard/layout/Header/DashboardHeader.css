@@ -1,113 +1,117 @@
 /* Header Component */
 .wallet-header {
-    position: relative;
-    z-index: 1001;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-md) var(--space-md);
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-subtle);
-    height: var(--header-height);
+  position: relative;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-md);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  height: var(--header-height);
 }
 
 .wallet-logo {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
 }
 
 .wallet-logo-icon {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wallet-logo-text {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .header-icon-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .header-icon-btn:hover {
-    background: transparent !important;
-    color: var(--text-primary);
+  background: transparent !important;
+  color: var(--text-primary);
 }
 
 .header-icon-btn:active {
-    background: transparent !important;
-    color: var(--text-secondary);
+  background: transparent !important;
+  color: var(--text-secondary);
 }
 
 .header-icon-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Refresh Spin Animation */
 .spin-animation {
-    animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Address Pill in Header */
 .header-address-pill {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 6px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .header-address-pill:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-default);
+  background: var(--bg-hover);
+  border-color: var(--border-default);
 }
 
 .address-pill-text {
-    font-size: 10px;
-    font-family: var(--font-mono);
-    color: var(--text-secondary);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
 }
 
 .rotate-180 {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }

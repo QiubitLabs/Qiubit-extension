@@ -1,12 +1,15 @@
+/**
+ * LOGIC: Injects runtime polyfills for the browser and testing environments, globally mounting Node's Buffer and TextEncoder/TextDecoder helper structures.
+ * EXPORTS:
+ *   - None
+ */
 
-import { Buffer } from 'buffer';
+import { Buffer } from "buffer";
 
-// Polyfill Buffer for the browser/test environment
 globalThis.Buffer = Buffer;
 
-// Polyfill TextEncoder/TextDecoder if missing (jsdom usually has them, but safety first)
-if (typeof globalThis.TextEncoder === 'undefined') {
-    const { TextEncoder, TextDecoder } = require('util');
-    globalThis.TextEncoder = TextEncoder;
-    globalThis.TextDecoder = TextDecoder;
+if (typeof globalThis.TextEncoder === "undefined") {
+  const { TextEncoder, TextDecoder } = require("util");
+  globalThis.TextEncoder = TextEncoder;
+  globalThis.TextDecoder = TextDecoder;
 }

@@ -1,1 +1,1 @@
-export { TokenDetailView } from './TokenDetailView';
+export { TokenDetailView } from "./TokenDetailView";

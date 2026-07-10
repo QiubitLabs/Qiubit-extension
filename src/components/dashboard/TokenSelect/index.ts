@@ -1,1 +1,1 @@
-export { TokenSelectView } from './TokenSelectView';
+export { TokenSelectView } from "./TokenSelectView";

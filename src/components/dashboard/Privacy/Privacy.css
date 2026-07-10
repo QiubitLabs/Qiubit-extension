@@ -1,149 +1,149 @@
 /* ===== Privacy View Base Styling ===== */
 
 @keyframes shimmer {
-    0% {
-        opacity: 0.5;
-    }
+  0% {
+    opacity: 0.5;
+  }
 
-    50% {
-        opacity: 1;
-    }
+  50% {
+    opacity: 1;
+  }
 
-    100% {
-        opacity: 0.5;
-    }
+  100% {
+    opacity: 0.5;
+  }
 }
 
 .shimmer {
-    animation: shimmer 1.5s infinite ease-in-out;
+  animation: shimmer 1.5s infinite ease-in-out;
 }
 
 .privacy-view {
-    padding: 0 0 var(--space-xl) 0;
-    display: flex;
-    flex-direction: column;
+  padding: 0 0 var(--space-xl) 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .privacy-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-lg);
-    padding: var(--space-3xl);
-    color: var(--text-secondary);
-    font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-3xl);
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .privacy-content-scroll {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .privacy-content-scroll::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .view-header-minimal {
-    border-bottom: 1px solid var(--border-subtle);
-    padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
 }
 
 /* Common Components used across sub-pages */
 .header-icon-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .header-icon-btn:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-default);
+  background: var(--bg-hover);
+  border-color: var(--border-default);
 }
 
 .header-icon-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .refresh-status {
-    position: relative;
-    z-index: 10;
+  position: relative;
+  z-index: 10;
 }
 
 /* Shared Animations */
 .animate-fade-in {
-    animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .animate-slide-in {
-    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
+  from {
+    opacity: 0;
+  }
 
-    to {
-        opacity: 1;
-    }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .animate-spin {
-    animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Utility classes used by components */
 .input-field {
-    width: 100%;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 14px 16px;
-    color: var(--text-primary);
-    font-size: 15px;
-    transition: all 0.2s ease;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-size: 15px;
+  transition: all 0.2s ease;
 }
 
 .input-field:focus {
-    border-color: var(--accent);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.1);
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 204, 255, 0.1);
 }
 
 .input-field.amount {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 600;
 }

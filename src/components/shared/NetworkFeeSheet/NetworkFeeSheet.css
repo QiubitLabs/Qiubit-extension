@@ -1,218 +1,251 @@
 /* ─── NetworkFeeSheet — shared overlay for Send & Swap ──────────────────────── */
 
 .nfs-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: #0D0D0D;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: nfs-slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: nfs-slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes nfs-slide-up {
-    from { transform: translateY(12px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ─── Header ───────────────────────────────────────────────────────────────── */
 
 .nfs-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 20px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
 .nfs-title {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text-primary, #fff);
-    letter-spacing: -0.2px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  letter-spacing: -0.2px;
 }
 
 .nfs-close {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-    border: none;
-    color: var(--text-secondary, #aaa);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-secondary, #aaa);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .nfs-close:hover {
-    background: rgba(255,255,255,0.14);
-    color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
 
 /* ─── Body ─────────────────────────────────────────────────────────────────── */
 
 .nfs-body {
-    flex: 1;
-    padding: 16px 16px 20px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  flex: 1;
+  padding: 16px 16px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* ─── Speed option cards ────────────────────────────────────────────────────── */
 
 .nfs-option {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    border: 1.5px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.03);
-    cursor: pointer;
-    transition: border-color 0.18s, background 0.18s, transform 0.12s;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition:
+    border-color 0.18s,
+    background 0.18s,
+    transform 0.12s;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
 }
 .nfs-option:hover {
-    border-color: rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
 }
-.nfs-option:active { transform: scale(0.99); }
+.nfs-option:active {
+  transform: scale(0.99);
+}
 
 .nfs-option.active {
-    border-color: var(--accent, #00D4FF);
-    background: rgba(0, 212, 255, 0.06);
+  border-color: var(--accent, #00d4ff);
+  background: rgba(0, 212, 255, 0.06);
 }
 .nfs-option.active::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 0% 50%, rgba(0,212,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 0% 50%,
+    rgba(0, 212, 255, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
 }
 
 /* Speed icon pill */
 .nfs-speed-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
-.nfs-speed-icon.slow   { background: rgba(100,200,100,0.1); color: #2ecc71; }
-.nfs-speed-icon.normal { background: rgba(0,212,255,0.1);   color: var(--accent, #00D4FF); }
-.nfs-speed-icon.fast   { background: rgba(255,165,0,0.1);   color: #ffa500; }
-.nfs-speed-icon.custom { background: rgba(180,100,255,0.1); color: #b464ff; }
+.nfs-speed-icon.slow {
+  background: rgba(100, 200, 100, 0.1);
+  color: #2ecc71;
+}
+.nfs-speed-icon.normal {
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--accent, #00d4ff);
+}
+.nfs-speed-icon.fast {
+  background: rgba(255, 165, 0, 0.1);
+  color: #ffa500;
+}
+.nfs-speed-icon.custom {
+  background: rgba(180, 100, 255, 0.1);
+  color: #b464ff;
+}
 
 /* Meta (name + desc) */
 .nfs-meta {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .nfs-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
 }
 .nfs-desc {
-    font-size: 11px;
-    color: var(--text-tertiary, #666);
-    line-height: 1.3;
+  font-size: 11px;
+  color: var(--text-tertiary, #666);
+  line-height: 1.3;
 }
 
 /* Pricing */
 .nfs-pricing {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 .nfs-price-primary {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary, #fff);
-    white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
 }
 .nfs-price-secondary {
-    font-size: 10px;
-    color: var(--text-tertiary, #666);
-    white-space: nowrap;
+  font-size: 10px;
+  color: var(--text-tertiary, #666);
+  white-space: nowrap;
 }
 
 /* Checkmark */
 .nfs-check {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.18s, border-color 0.18s;
-    margin-left: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
+  margin-left: 8px;
 }
 .nfs-option.active .nfs-check {
-    background: var(--accent, #00D4FF);
-    border-color: var(--accent, #00D4FF);
-    color: #000;
+  background: var(--accent, #00d4ff);
+  border-color: var(--accent, #00d4ff);
+  color: #000;
 }
 
 /* ─── Custom gas input ──────────────────────────────────────────────────────── */
 
 .nfs-custom-wrap {
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .nfs-custom-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 8px;
-    padding: 0 12px;
-    border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .nfs-custom-input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text-primary, #fff);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 0;
-    min-width: 0;
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 0;
+  min-width: 0;
 }
-.nfs-custom-input::placeholder { color: rgba(255,255,255,0.2); }
+.nfs-custom-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
 
 .nfs-custom-suffix {
-    font-size: 12px;
-    color: var(--text-tertiary, #666);
-    font-weight: 500;
+  font-size: 12px;
+  color: var(--text-tertiary, #666);
+  font-weight: 500;
 }
 
 .nfs-custom-preview {
-    font-size: 11px;
-    color: var(--text-secondary, #aaa);
-    text-align: right;
+  font-size: 11px;
+  color: var(--text-secondary, #aaa);
+  text-align: right;
 }

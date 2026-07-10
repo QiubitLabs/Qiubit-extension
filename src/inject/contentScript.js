@@ -20,20 +20,8 @@
     const earlyQueue = []; // requests arriving before token handshake
     const EARLY_QUEUE_MAX = 20; // prevent memory DoS from malicious pages
 
-    // Inject inpage script into the page
-    function injectScript() {
-        try {
-            const script = document.createElement('script');
-            script.src = chrome.runtime.getURL('inpage.js');
-            script.onload = () => script.remove();
-            (document.head || document.documentElement).appendChild(script);
-        } catch (error) {
-            console.error('[ContentScript] Failed to inject inpage script:', error);
-        }
-    }
-
-    // Inject as early as possible
-    injectScript();
+    // inpage.js is now injected natively by Chrome via manifest.json content_scripts with world: "MAIN".
+    // This avoids DOM manipulation and prevents Content Security Policy (CSP) blocking on dApps.
 
     let port = null;
 

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qiubit Wallet - Connect dApp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0B0C10;
+            --bg-surface: rgba(22, 26, 37, 0.65);
+            --bg-surface-solid: #171A26;
+            --bg-hover: rgba(35, 41, 58, 0.85);
+            --bg-card: rgba(28, 30, 46, 0.55);
+            
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --border-active: rgba(99, 102, 241, 0.4);
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+            
+            --font-sans: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --wallet-width: 375px;
+            --wallet-height: 600px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030406;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 40%);
+        }
+
+        .wallet-container {
+            width: var(--wallet-width);
+            height: var(--wallet-height);
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, rgba(23, 26, 38, 0.4) 0%, rgba(11, 12, 16, 0.95) 100%);
+        }
+
+        .header-bar {
+            height: 56px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .header-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Dapp Request Cards */
+        .connect-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 16px 0;
+            width: 100%;
+        }
+
+        .app-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--bg-surface-solid);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .connection-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .connection-line {
+            height: 2px;
+            background: var(--border-subtle);
+            width: 80%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            z-index: 2;
+            animation: pulseDot 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; }
+        }
+
+        .dapp-info-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 16px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .dapp-name {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .dapp-url {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .verified-badge {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .permissions-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .permissions-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .permission-item {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
+
+        .permission-item svg {
+            width: 16px;
+            height: 16px;
+            color: var(--success);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Account Selection Card */
+        .account-preview-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .account-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .account-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .account-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .account-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .account-address {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .account-balance {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Footer buttons */
+        .actions-container {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            height: 48px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .icon-svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Success Overlay */
+        .success-overlay {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-base);
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--success-bg);
+            border: 2px solid var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success);
+            animation: popCheck 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes popCheck {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wallet-container">
+        
+        <!-- Success State Overlay -->
+        <div class="success-overlay" id="success-screen">
+            <div class="success-circle">
+                <svg class="icon-svg" viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke-width: 3;">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+            </div>
+            <h3 style="font-size: 18px; font-weight: 700;">Connected Successfully</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); text-align: center; max-width: 200px;">
+                You can now interact with app.octraswap.io safely.
+            </p>
+        </div>
+
+        <div class="header-bar">
+            <span class="header-title">Connection Request</span>
+        </div>
+
+        <div class="main-content">
+            
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="connect-flow">
+                    <div class="app-avatar" style="border-radius: 50%;">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                    </div>
+                    <div class="connection-indicator">
+                        <div class="connection-line"></div>
+                        <div class="connection-dot"></div>
+                    </div>
+                    <div class="app-avatar">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 24px; height: 24px; color: var(--primary);">
+                            <polyline points="16 3 21 3 21 8" />
+                            <line x1="4" y1="20" x2="21" y2="3" />
+                            <polyline points="21 16 21 21 16 21" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="dapp-info-card">
+                    <span class="dapp-name">OctraSwap DEX</span>
+                    <div class="dapp-url">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 12px; height: 12px; color: var(--success);">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        <span>https://app.octraswap.io</span>
+                    </div>
+                    <div class="verified-badge">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 10px; height: 10px; stroke-width: 3;">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>Verified Host</span>
+                    </div>
+                </div>
+
+                <div class="account-preview-card">
+                    <div class="account-left">
+                        <div class="account-avatar">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </div>
+                        <div class="account-meta">
+                            <span class="account-name">Account 1</span>
+                            <span class="account-address">0x8f2d...b12a</span>
+                        </div>
+                    </div>
+                    <span class="account-balance">1,420.50 OCT</span>
+                </div>
+
+                <div class="permissions-box">
+                    <span class="permissions-title">Requested Permissions</span>
+                    
+                    <div class="permission-item">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>View your wallet public address and assets.</span>
+                    </div>
+
+                    <div class="permission-item">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>Request transactions and signature approvals.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-container">
+                <button class="btn btn-secondary" onclick="rejectConnection()">Reject</button>
+                <button class="btn btn-primary" onclick="approveConnection()">Connect</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function approveConnection() {
+            const screen = document.getElementById('success-screen');
+            screen.style.display = 'flex';
+            
+            setTimeout(() => {
+                // Return to dashboard mockup
+                window.location.href = 'ui_dashboard.html';
+            }, 1800);
+        }
+
+        function rejectConnection() {
+            window.location.href = 'ui_dashboard.html';
+        }
+    </script>
+</body>
+</html>

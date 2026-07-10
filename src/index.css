@@ -1,13 +1,13 @@
 /* Qiubit Wallet - Design System Manifest */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 /* 1. Tokens & Base */
-@import './styles/variables.css';
-@import './styles/base.css';
+@import "./styles/variables.css";
+@import "./styles/base.css";
 
 /* 2. Utilities */
-@import './styles/utilities.css';
+@import "./styles/utilities.css";
 
 /* 3. Components */
 /* Buttons & Inputs are imported in main.tsx or component files, 
@@ -15,8 +15,8 @@
    For now, we keep the specific imports in main.tsx to be explicit,
    but we import the newly extracted ones that were global in index.css */
 
-@import './styles/Cards.css';
-@import './styles/Badges.css';
+@import "./styles/Cards.css";
+@import "./styles/Badges.css";
 
 /* Note: 
    - Buttons.css is imported in main.tsx
@@ -28,77 +28,77 @@
 
 /* Minimalist Collapsible Accordion styling (used for Address drawer and Export Private Key list) */
 .address-section-collapsible {
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    transition: all 0.2s ease-in-out;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  transition: all 0.2s ease-in-out;
 }
 
 .network-header-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
 .network-header-bar:hover {
-    border-color: var(--accent-primary);
-    background: rgba(255, 255, 255, 0.02);
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .network-header-bar.active {
-    border-bottom: none;
-    border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
 }
 
 .network-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .network-logo-mini {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    object-fit: cover;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .network-name-text {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .action-btn-mini {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--text-tertiary);
-    padding: 6px;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .action-btn-mini:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent-primary);
 }
 
 .address-dropdown-inner {
-    padding: 12px 16px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
-    border-top: none;
-    border-radius: 0 0 12px 12px;
-    display: flex;
-    align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  align-items: center;
 }

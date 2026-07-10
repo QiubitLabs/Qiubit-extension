@@ -3,51 +3,55 @@
  * Displays token image from URL or fallback to placeholder
  */
 
-import { useState, useEffect } from 'react';
-import { getCachedIcon, fetchAndCacheIcon, getCachedContractLogoUrl, setCachedContractLogoUrl } from '../../../utils/iconCache';
-import { resolveNetwork, resolveNetworkByChainId } from '../../../services/network/NetworkResolver';
+import { useState, useEffect } from "react";
+import {
+  getCachedIcon,
+  fetchAndCacheIcon,
+  getCachedContractLogoUrl,
+  setCachedContractLogoUrl,
+} from "../../../utils/iconCache";
+import {
+  resolveNetwork,
+  resolveNetworkByChainId,
+} from "../../../services/network/NetworkResolver";
 
 interface TokenInfo {
-    name: string;
-    symbol: string;
-    decimals: number;
-    isNative: boolean;
-    logoType: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  isNative: boolean;
+  logoType: string;
 }
 
-// Token metadata cache - in production this would come from an API or explorer
 const KNOWN_TOKENS: Record<string, TokenInfo> = {
-    'OCT': {
-        name: 'Octra',
-        symbol: 'OCT',
-        decimals: 6,
-        isNative: true,
-        // Native token uses built-in logo
-        logoType: 'native'
-    }
+  OCT: {
+    name: "Octra",
+    symbol: "OCT",
+    decimals: 6,
+    isNative: true,
+    logoType: "native",
+  },
 };
 
-// Preload OCT logo immediately
 const preloadQiubitLogo = (): void => {
-    if (typeof window !== 'undefined') {
-        const img = new Image();
-        img.src = '/qiubit-icon.svg';
-    }
+  if (typeof window !== "undefined") {
+    const img = new Image();
+    img.src = "/qiubit-icon.svg";
+  }
 };
 
-// Preload on module load
-if (typeof window !== 'undefined') {
-    preloadQiubitLogo();
+if (typeof window !== "undefined") {
+  preloadQiubitLogo();
 }
 
 export interface TokenIconProps {
-    symbol: string;
-    logoUrl?: string;
-    size?: number;
-    color?: string;
-    contractAddress?: string;
-    chainId?: number;
-    networkId?: string;
+  symbol: string;
+  logoUrl?: string;
+  size?: number;
+  color?: string;
+  contractAddress?: string;
+  chainId?: number;
+  networkId?: string;
 }
 
 /**
@@ -57,296 +61,313 @@ export interface TokenIconProps {
  * @param {number} size - Icon size in pixels
  * @param {string} color - Accent color for the icon
  */
-export function TokenIcon({ 
-    symbol, 
-    logoUrl, 
-    size = 40, 
-    color: _color = '#00D4FF',
-    contractAddress,
-    chainId,
-    networkId
+export function TokenIcon({
+  symbol,
+  logoUrl,
+  size = 40,
+  color: _color = "#00D4FF",
+  contractAddress,
+  chainId,
+  networkId,
 }: TokenIconProps) {
-    const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-    // Fallback URLs per symbol — used when logoUrl prop is absent or fails
-    const FALLBACK_LOGOS: Record<string, string> = {
-        'ETH':  'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27ead9083C756Cc2/logo.png',
-        'BNB':  'https://static.debank.com/image/chain/logo_url/bsc/bc73fa84b7fc5337905e527dadcbc854.png',
-        'POL':  'https://static.debank.com/image/chain/logo_url/matic/52ca152c08831e4765506c9bd75767e8.png',
-        'USDT': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png',
-        'USDC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
-        'DAI':  'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png',
-        'WBTC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png',
-        'LINK': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dff83E8264EcF986CA/logo.png',
-        'UNI':  'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png',
-        'PEPE': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6982508145454Ce325dDbE47a25d4ec3d2311933/logo.png',
-        'SHIB': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE/logo.png',
-        'MATIC': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0/logo.png',
-        'GRT':  'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xc944E90C64B2c07662A292be6244BDf05Cda44a7/logo.png',
-        'AAVE': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9/logo.png',
-        'MKR':  'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x9f8F72aA9304c8B593d555F12ef6589cC3A579A2/logo.png',
-        'LDO':  'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x5A98FcBE2B3eB3e90C40d0068FD99169C53F6af2/logo.png',
-        'MON':  'https://icons.llamao.fi/icons/chains/rsz_monad.jpg',
-        'HYPE': 'https://icons.llamao.fi/icons/chains/rsz_hyperliquid.jpg',
-        'BTC':  'https://icons.llamao.fi/icons/chains/rsz_bitcoin.jpg',
-        'SUI':  'https://icons.llamao.fi/icons/chains/rsz_sui.jpg',
-        'SOL':  'https://icons.llamao.fi/icons/chains/rsz_solana.jpg',
-    };
+  const FALLBACK_LOGOS: Record<string, string> = {
+    ETH: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27ead9083C756Cc2/logo.png",
+    BNB: "https://static.debank.com/image/chain/logo_url/bsc/bc73fa84b7fc5337905e527dadcbc854.png",
+    POL: "https://static.debank.com/image/chain/logo_url/matic/52ca152c08831e4765506c9bd75767e8.png",
+    USDT: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+    USDC: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+    DAI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+    WBTC: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+    LINK: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dff83E8264EcF986CA/logo.png",
+    UNI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png",
+    PEPE: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6982508145454Ce325dDbE47a25d4ec3d2311933/logo.png",
+    SHIB: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE/logo.png",
+    MATIC:
+      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0/logo.png",
+    GRT: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xc944E90C64B2c07662A292be6244BDf05Cda44a7/logo.png",
+    AAVE: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9/logo.png",
+    MKR: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x9f8F72aA9304c8B593d555F12ef6589cC3A579A2/logo.png",
+    LDO: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x5A98FcBE2B3eB3e90C40d0068FD99169C53F6af2/logo.png",
+    MON: "/chains/monad/logo.jpg",
+    HYPE: "/chains/hyperliquid/logo.jpg",
+    BTC: "/chains/bitcoin/btc.png",
+    SUI: "/chains/sui/sui.png",
+    SOL: "/chains/solana/sol.png",
+  };
 
-    const upperSymbol = symbol.toUpperCase();
-    const resolvedUrl = logoUrl || FALLBACK_LOGOS[upperSymbol] || '';
+  const upperSymbol = symbol.toUpperCase();
+  const resolvedUrl = logoUrl || FALLBACK_LOGOS[upperSymbol] || "";
 
-    // Load from localStorage cache first; fetch+cache on miss.
-    // Secondary lookup: if no resolvedUrl, check contract+chain → logoUrl cache.
-    const [srcUrl, setSrcUrl] = useState<string>(() => {
-        if (resolvedUrl) return getCachedIcon(resolvedUrl) ?? resolvedUrl;
-        if (contractAddress && chainId) {
-            const cachedLogoUrl = getCachedContractLogoUrl(contractAddress, chainId);
-            if (cachedLogoUrl) return getCachedIcon(cachedLogoUrl) ?? cachedLogoUrl;
-        }
-        return '';
+  const [srcUrl, setSrcUrl] = useState<string>(() => {
+    if (resolvedUrl) return getCachedIcon(resolvedUrl) ?? resolvedUrl;
+    if (contractAddress && chainId) {
+      const cachedLogoUrl = getCachedContractLogoUrl(contractAddress, chainId);
+      if (cachedLogoUrl) return getCachedIcon(cachedLogoUrl) ?? cachedLogoUrl;
+    }
+    return "";
+  });
+  const [isLoading, setIsLoading] = useState(
+    !srcUrl.startsWith("data:") && !srcUrl.startsWith("/") && !!srcUrl,
+  );
+
+  useEffect(() => {
+    if (!resolvedUrl) {
+      setIsLoading(false);
+      return;
+    }
+    if (resolvedUrl.startsWith("/")) {
+      setSrcUrl(resolvedUrl);
+      setIsLoading(false);
+      return;
+    }
+    const cached = getCachedIcon(resolvedUrl);
+    if (cached) {
+      setSrcUrl(cached);
+      setIsLoading(false);
+      return;
+    }
+    fetchAndCacheIcon(resolvedUrl).then((base64) => {
+      if (base64) {
+        setSrcUrl(base64);
+        setIsLoading(false);
+      }
     });
-    const [isLoading, setIsLoading] = useState(!srcUrl.startsWith('data:') && !srcUrl.startsWith('/') && !!srcUrl);
+  }, [resolvedUrl]);
 
-    useEffect(() => {
-        if (!resolvedUrl || resolvedUrl.startsWith('/')) {
-            setIsLoading(false);
-            return;
-        }
-        const cached = getCachedIcon(resolvedUrl);
-        if (cached) {
-            setSrcUrl(cached);
-            setIsLoading(false);
-            return;
-        }
-        // Fetch, convert to base64, save to localStorage
-        fetchAndCacheIcon(resolvedUrl).then(base64 => {
-            if (base64) {
-                setSrcUrl(base64);
-                setIsLoading(false);
-            }
-        });
-    }, [resolvedUrl]);
+  useEffect(() => {
+    const hasNoLogo = (!resolvedUrl && !srcUrl) || imageError;
+    const hasAddress =
+      contractAddress &&
+      contractAddress !== "0x0000000000000000000000000000000000000000";
+    if (!hasNoLogo || !hasAddress) return;
 
-    // Dynamic logo recovery: LI.FI → DexScreener
-    // Runs when no logoUrl is known. Saves both the URL mapping (contract→url)
-    // and the image (url→base64) to localStorage for instant display on next render.
-    useEffect(() => {
-        const hasNoLogo = (!resolvedUrl && !srcUrl) || imageError;
-        const hasAddress = contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000';
-        if (!hasNoLogo || !hasAddress) return;
+    if (srcUrl && !imageError) return;
 
-        // Already have a resolved icon from contract cache — no need to re-fetch
-        if (srcUrl && !imageError) return;
+    let isMounted = true;
+    setIsLoading(true);
 
-        let isMounted = true;
-        setIsLoading(true);
-
-        const saveLogoUrl = (logoUri: string) => {
-            if (contractAddress && chainId) {
-                setCachedContractLogoUrl(contractAddress, chainId, logoUri);
-            }
-            fetchAndCacheIcon(logoUri);
-        };
-
-        const fetchDynamicLogo = async () => {
-            // 1. LI.FI — best multi-chain token coverage
-            if (chainId) {
-                try {
-                    const resp = await fetch(
-                        `https://li.quest/v1/token?chain=${chainId}&token=${contractAddress}`,
-                        { signal: AbortSignal.timeout(5000) }
-                    );
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        const logoUri = (data?.logoURI as string) || '';
-                        if (logoUri && isMounted) {
-                            setSrcUrl(logoUri);
-                            setImageError(false);
-                            setIsLoading(false);
-                            saveLogoUrl(logoUri);
-                            return;
-                        }
-                    }
-                } catch { /* fall through */ }
-            }
-
-            // 2. DexScreener fallback
-            try {
-                const resp = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`);
-                if (!resp.ok) { if (isMounted) setIsLoading(false); return; }
-                const data = await resp.json();
-                const imageUrl = (data.pairs?.[0]?.info?.imageUrl as string) || '';
-                if (imageUrl && isMounted) {
-                    setSrcUrl(imageUrl);
-                    setImageError(false);
-                    setIsLoading(false);
-                    saveLogoUrl(imageUrl);
-                } else if (isMounted) {
-                    setIsLoading(false);
-                }
-            } catch {
-                if (isMounted) setIsLoading(false);
-            }
-        };
-
-        fetchDynamicLogo();
-        return () => { isMounted = false; };
-    }, [resolvedUrl, imageError, contractAddress, chainId]);
-
-    // OCT and wOCT share the same Qiubit icon
-    const isOctFamily = symbol === 'OCT' || symbol === 'wOCT' || symbol === 'WOCT';
-
-    const renderMainIcon = () => {
-        if (isOctFamily) {
-            return (
-                <div
-                    className="token-icon token-icon-native"
-                    style={{
-                        width: size,
-                        height: size,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        background: 'transparent'
-                    }}
-                >
-                    <img
-                        src="/qiubit-icon.svg"
-                        alt={symbol}
-                        width={size}
-                        height={size}
-                        loading="eager"
-                        style={{ display: 'block', opacity: 1, imageRendering: 'auto' }}
-                    />
-                </div>
-            );
-        }
-
-        const hasLogo = !!srcUrl;
-        const shouldShowImage = hasLogo && !imageError;
-
-        if (shouldShowImage) {
-            const isLocal = srcUrl.startsWith('/') || srcUrl.startsWith('data:');
-            return (
-                <div
-                    className="token-icon"
-                    style={{
-                        width: size,
-                        height: size,
-                        background: (isLoading && !isLocal) ? 'var(--bg-elevated)' : 'transparent',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '50%'
-                    }}
-                >
-                    <img
-                        src={srcUrl}
-                        alt={symbol}
-                        width={size}
-                        height={size}
-                        onError={() => {
-                            // Try fallback URL if primary failed
-                            const fallback = FALLBACK_LOGOS[upperSymbol];
-                            if (fallback && srcUrl !== fallback) {
-                                setSrcUrl(fallback);
-                                fetchAndCacheIcon(fallback).then(b => { if (b) setSrcUrl(b); });
-                            } else {
-                                setImageError(true);
-                            }
-                            setIsLoading(false);
-                        }}
-                        onLoad={() => setIsLoading(false)}
-                        style={{
-                            borderRadius: '50%',
-                            opacity: (isLoading && !isLocal) ? 0 : 1,
-                            transition: isLocal ? 'none' : 'opacity 0.2s',
-                            display: 'block'
-                        }}
-                    />
-                    {isLoading && !isLocal && (
-                        <div className="skeleton" style={{ position: 'absolute', inset: 0, borderRadius: '50%' }} />
-                    )}
-                </div>
-            );
-        }
-
-        // Fallback: Unknown token - show first letter of symbol placeholder
-        const firstLetter = symbol ? symbol.slice(0, 1).toUpperCase() : '?';
-        return (
-            <div
-                className="token-icon token-icon-unknown"
-                style={{
-                    width: size,
-                    height: size,
-                    background: 'var(--bg-elevated)',
-                    color: 'var(--text-tertiary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                    overflow: 'hidden'
-                }}
-            >
-                <span style={{ fontSize: size * 0.4, fontWeight: 700 }}>{firstLetter}</span>
-            </div>
-        );
+    const saveLogoUrl = (logoUri: string) => {
+      if (contractAddress && chainId) {
+        setCachedContractLogoUrl(contractAddress, chainId, logoUri);
+      }
+      fetchAndCacheIcon(logoUri);
     };
 
-    const netConfig = networkId
-        ? resolveNetwork(networkId)
-        : (chainId ? resolveNetworkByChainId(chainId) : null);
-    
-    const showNetworkBadge = !!(netConfig && netConfig.id !== 'octra');
+    const fetchDynamicLogo = async () => {
+      if (chainId) {
+        try {
+          const resp = await fetch(
+            `https://li.quest/v1/token?chain=${chainId}&token=${contractAddress}`,
+            { signal: AbortSignal.timeout(5000) },
+          );
+          if (resp.ok) {
+            const data = await resp.json();
+            const logoUri = (data?.logoURI as string) || "";
+            if (logoUri && isMounted) {
+              setSrcUrl(logoUri);
+              setImageError(false);
+              setIsLoading(false);
+              saveLogoUrl(logoUri);
+              return;
+            }
+          }
+        } catch {
+          /* fall through */
+        }
+      }
 
-    return (
+      try {
+        const resp = await fetch(
+          `https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`,
+        );
+        if (!resp.ok) {
+          if (isMounted) setIsLoading(false);
+          return;
+        }
+        const data = await resp.json();
+        const imageUrl = (data.pairs?.[0]?.info?.imageUrl as string) || "";
+        if (imageUrl && isMounted) {
+          setSrcUrl(imageUrl);
+          setImageError(false);
+          setIsLoading(false);
+          saveLogoUrl(imageUrl);
+        } else if (isMounted) {
+          setIsLoading(false);
+        }
+      } catch {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchDynamicLogo();
+    return () => {
+      isMounted = false;
+    };
+  }, [resolvedUrl, imageError, contractAddress, chainId]);
+
+  const isOctFamily =
+    symbol === "OCT" || symbol === "wOCT" || symbol === "WOCT";
+
+  const renderMainIcon = () => {
+    if (isOctFamily) {
+      return (
         <div
-            className="token-icon-wrapper"
-            style={{
-                position: 'relative',
-                width: size,
-                height: size,
-                display: 'inline-block',
-                overflow: 'visible',
-                flexShrink: 0
-            }}
+          className="token-icon token-icon-native"
+          style={{
+            width: size,
+            height: size,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "50%",
+            overflow: "hidden",
+            background: "transparent",
+          }}
         >
-            {renderMainIcon()}
-            {showNetworkBadge && netConfig && (
-                <div
-                    className="token-network-badge-overlay"
-                    title={`${netConfig.displayName}${netConfig.isTestnet ? ' (testnet)' : ''}`}
-                    style={{
-                        position: 'absolute',
-                        bottom: -2,
-                        right: -2,
-                        width: Math.max(12, size * 0.45),
-                        height: Math.max(12, size * 0.45),
-                        borderRadius: '50%',
-                        border: '1.5px solid var(--bg-card, #131820)',
-                        background: '#0d0d12',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        zIndex: 3
-                    }}
-                >
-                    <img
-                        src={netConfig.iconUrl}
-                        alt=""
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain'
-                        }}
-                    />
-                </div>
-            )}
+          <img
+            src="/qiubit-icon.svg"
+            alt={symbol}
+            width={size}
+            height={size}
+            loading="eager"
+            style={{ display: "block", opacity: 1, imageRendering: "auto" }}
+          />
         </div>
+      );
+    }
+
+    const hasLogo = !!srcUrl;
+    const shouldShowImage = hasLogo && !imageError;
+
+    if (shouldShowImage) {
+      const isLocal = srcUrl.startsWith("/") || srcUrl.startsWith("data:");
+      return (
+        <div
+          className="token-icon"
+          style={{
+            width: size,
+            height: size,
+            background:
+              isLoading && !isLocal ? "var(--bg-elevated)" : "transparent",
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "50%",
+          }}
+        >
+          <img
+            src={srcUrl}
+            alt={symbol}
+            width={size}
+            height={size}
+            onError={() => {
+              const fallback = FALLBACK_LOGOS[upperSymbol];
+              if (fallback && srcUrl !== fallback) {
+                setSrcUrl(fallback);
+                fetchAndCacheIcon(fallback).then((b) => {
+                  if (b) setSrcUrl(b);
+                });
+              } else {
+                setImageError(true);
+              }
+              setIsLoading(false);
+            }}
+            onLoad={() => setIsLoading(false)}
+            style={{
+              borderRadius: "50%",
+              opacity: isLoading && !isLocal ? 0 : 1,
+              transition: isLocal ? "none" : "opacity 0.2s",
+              display: "block",
+            }}
+          />
+          {isLoading && !isLocal && (
+            <div
+              className="skeleton"
+              style={{ position: "absolute", inset: 0, borderRadius: "50%" }}
+            />
+          )}
+        </div>
+      );
+    }
+
+    const firstLetter = symbol ? symbol.slice(0, 1).toUpperCase() : "?";
+    return (
+      <div
+        className="token-icon token-icon-unknown"
+        style={{
+          width: size,
+          height: size,
+          background: "var(--bg-elevated)",
+          color: "var(--text-tertiary)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "50%",
+          overflow: "hidden",
+        }}
+      >
+        <span style={{ fontSize: size * 0.4, fontWeight: 700 }}>
+          {firstLetter}
+        </span>
+      </div>
     );
+  };
+
+  const netConfig = networkId
+    ? resolveNetwork(networkId)
+    : chainId
+      ? resolveNetworkByChainId(chainId)
+      : null;
+
+  const showNetworkBadge = !!(netConfig && netConfig.id !== "octra");
+
+  return (
+    <div
+      className="token-icon-wrapper"
+      style={{
+        position: "relative",
+        width: size,
+        height: size,
+        display: "inline-block",
+        overflow: "visible",
+        flexShrink: 0,
+      }}
+    >
+      {renderMainIcon()}
+      {showNetworkBadge && netConfig && (
+        <div
+          className="token-network-badge-overlay"
+          title={`${netConfig.displayName}${netConfig.isTestnet ? " (testnet)" : ""}`}
+          style={{
+            position: "absolute",
+            bottom: -2,
+            right: -2,
+            width: Math.max(12, size * 0.45),
+            height: Math.max(12, size * 0.45),
+            borderRadius: "50%",
+            border: "1.5px solid var(--bg-card, #131820)",
+            background: "#0d0d12",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            zIndex: 3,
+          }}
+        >
+          <img
+            src={netConfig.iconUrl}
+            alt=""
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -354,31 +375,30 @@ export function TokenIcon({
  * In production, this would fetch from an API/explorer
  */
 export function getTokenInfo(symbol: string): TokenInfo | null {
-    return KNOWN_TOKENS[symbol] || null;
+  return KNOWN_TOKENS[symbol] || null;
 }
 
 /**
  * Format token amount based on decimals
  */
-export function formatTokenAmount(amount: string | number, _decimals: number = 6, displayDecimals: number = 4): string {
-    if (!amount) return '0';
+export function formatTokenAmount(
+  amount: string | number,
+  _decimals: number = 6,
+  displayDecimals: number = 4,
+): string {
+  if (!amount) return "0";
 
-    // Handle number 0 separately to avoid returning '0' for valid 0 amount if checked with !amount (Safe here as 0 is falsy but we check isNaN afterwards? No, !amount catches 0. So need explicit check)
-    // Actually !amount catches 0. So `if (!amount && amount !== 0)`
-    // But original code: `if (!amount || isNaN(amount)) return '0';`
-    // If amount is 0, !amount is true, returns '0'. Correct.
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
 
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(num)) return "0";
 
-    if (isNaN(num)) return '0';
+  if (num === 0) return "0";
+  if (num < 0.0001) return "<0.0001";
 
-    if (num === 0) return '0';
-    if (num < 0.0001) return '<0.0001';
-
-    return num.toLocaleString(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: displayDecimals
-    });
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: displayDecimals,
+  });
 }
 
 export default TokenIcon;

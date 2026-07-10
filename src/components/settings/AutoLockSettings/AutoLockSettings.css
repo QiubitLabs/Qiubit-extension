@@ -1,62 +1,62 @@
 /* AutoLockSettings.css */
 
 .al-description {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 12px 14px;
-    background: var(--bg-elevated);
-    border-radius: 10px;
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
 }
 
 .al-description svg {
-    flex-shrink: 0;
-    margin-top: 1px;
-    color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--text-tertiary);
 }
 
 .al-options {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .al-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 4px;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border-subtle);
-    cursor: pointer;
-    transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
 
 .al-option:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .al-option:hover {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 .al-option-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .al-option.active .al-option-label {
-    color: var(--accent, #00D4FF);
+  color: var(--accent, #00d4ff);
 }
 
 .al-option-check {
-    color: var(--accent, #00D4FF);
-    display: flex;
-    align-items: center;
+  color: var(--accent, #00d4ff);
+  display: flex;
+  align-items: center;
 }

@@ -5,69 +5,70 @@
  */
 
 :root {
-    /* Colors - Monochrome with subtle accent */
-    --bg-primary: #0D0D0D;
-    --bg-secondary: #141414;
-    --bg-card: #1A1A1A;
-    --bg-elevated: #222222;
-    --bg-hover: #2A2A2A;
+  /* Colors - Monochrome with subtle accent */
+  --bg-primary: #0d0d0d;
+  --bg-secondary: #141414;
+  --bg-card: #1a1a1a;
+  --bg-elevated: #222222;
+  --bg-hover: #2a2a2a;
 
-    --border-subtle: #2A2A2A;
-    --border-default: #333333;
+  --border-subtle: #2a2a2a;
+  --border-default: #333333;
 
-    --text-primary: #FFFFFF;
-    --text-secondary: #8C8C8C;
-    --text-tertiary: #666666;
-    --text-disabled: #444444;
+  --text-primary: #ffffff;
+  --text-secondary: #8c8c8c;
+  --text-tertiary: #666666;
+  --text-disabled: #444444;
 
-    /* Accent - Subtle cyan for Qiubit branding */
-    --accent-primary: #00D4FF;
-    --accent-secondary: #00A3CC;
-    --accent-glow: rgba(0, 212, 255, 0.08);
-    /* Reduced opacity for subtle effect, no neon */
+  /* Accent - Subtle cyan for Qiubit branding */
+  --accent-primary: #00d4ff;
+  --accent-secondary: #00a3cc;
+  --accent-glow: rgba(0, 212, 255, 0.08);
+  /* Reduced opacity for subtle effect, no neon */
 
-    /* Status colors */
-    --success: #00C853;
-    --success-bg: rgba(0, 200, 83, 0.1);
-    --warning: #FFB300;
-    --warning-bg: rgba(255, 179, 0, 0.1);
-    --error: #FF5252;
-    --error-bg: rgba(255, 82, 82, 0.1);
+  /* Status colors */
+  --success: #00c853;
+  --success-bg: rgba(0, 200, 83, 0.1);
+  --warning: #ffb300;
+  --warning-bg: rgba(255, 179, 0, 0.1);
+  --error: #ff5252;
+  --error-bg: rgba(255, 82, 82, 0.1);
 
-    /* Spacing - Tighter for mobile feel */
-    --space-xs: 2px;
-    --space-sm: 6px;
-    --space-md: 10px;
-    --space-lg: 14px;
-    --space-xl: 20px;
-    --space-2xl: 24px;
-    --space-3xl: 32px;
+  /* Spacing - Tighter for mobile feel */
+  --space-xs: 2px;
+  --space-sm: 6px;
+  --space-md: 10px;
+  --space-lg: 14px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
 
-    /* Border Radius */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 18px;
-    --radius-full: 9999px;
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
 
-    /* Shadows - No glow effects */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-glow: none;
-    /* Removed glow shadow */
+  /* Shadows - No glow effects */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow: none;
+  /* Removed glow shadow */
 
-    /* Transitions */
-    --transition-fast: 0.15s ease;
-    --transition-normal: 0.25s ease;
-    --transition-slow: 0.4s ease;
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.4s ease;
 
-    /* Typography */
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  /* Typography */
+  --font-family:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Consolas", monospace;
 
-    /* Container - Mobile Standard */
-    --container-width: 360px;
-    --header-height: 52px;
-    --nav-height: 60px;
+  /* Container - Mobile Standard */
+  --container-width: 360px;
+  --header-height: 52px;
+  --nav-height: 60px;
 }

@@ -1,0 +1,121 @@
+.ta-chain-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+.ta-chain-tabs::-webkit-scrollbar {
+  display: none;
+}
+.ta-chain-tab {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  background: var(--bg-card, #131820);
+  color: var(--text-secondary, #9aa5b1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ta-chain-tab.active {
+  border-color: var(--color-accent, #00d4ff);
+  color: var(--color-accent, #00d4ff);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.ta-status {
+  text-align: center;
+  color: var(--text-tertiary, #6b7580);
+  font-size: 13px;
+  padding: 24px 0;
+}
+.ta-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  color: #ff8f8f;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.ta-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-tertiary, #6b7580);
+  font-size: 13px;
+  padding: 40px 0;
+}
+
+.ta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-card, #131820);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+}
+.ta-item-main {
+  min-width: 0;
+  flex: 1;
+}
+.ta-item-token {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+.ta-unlimited {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(255, 107, 107, 0.18);
+  color: #ff8f8f;
+}
+.ta-item-meta {
+  font-size: 11px;
+  color: var(--text-tertiary, #6b7580);
+  margin-top: 3px;
+}
+.ta-item-amount {
+  font-size: 12px;
+  color: var(--text-secondary, #9aa5b1);
+  margin-top: 2px;
+}
+.ta-revoke-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: transparent;
+  color: #ff8f8f;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.ta-revoke-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.14);
+}
+.ta-revoke-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qiubit Wallet - Locked</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0B0C10;
+            --bg-surface: rgba(22, 26, 37, 0.65);
+            --bg-surface-solid: #171A26;
+            --bg-hover: rgba(35, 41, 58, 0.85);
+            
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --error: #f43f5e;
+            --error-bg: rgba(244, 63, 94, 0.08);
+            
+            --font-sans: 'Outfit', sans-serif;
+            
+            --wallet-width: 375px;
+            --wallet-height: 600px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030406;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 40%);
+        }
+
+        .wallet-container {
+            width: var(--wallet-width);
+            height: var(--wallet-height);
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, rgba(23, 26, 38, 0.4) 0%, rgba(11, 12, 16, 0.95) 100%);
+        }
+
+        .screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 28px;
+            align-items: center;
+            justify-content: space-between;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .brand-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-top: 24px;
+            gap: 12px;
+        }
+
+        .lock-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            animation: pulseSlow 3s infinite ease-in-out;
+        }
+
+        @keyframes pulseSlow {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: #F8FAFC;
+            stroke-width: 2.2;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #F8FAFC 30%, #94A3B8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .form-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        /* Error Shake Animation */
+        .shake {
+            animation: shakeAnim 0.4s ease-in-out;
+        }
+
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 48px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 0 42px 0 16px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+            text-align: center;
+            letter-spacing: 4px;
+        }
+
+        .form-input::placeholder {
+            letter-spacing: normal;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.04);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+        }
+
+        .form-input.input-error {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.08);
+        }
+
+        .input-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .input-toggle-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 12px;
+            text-align: center;
+            display: none;
+            background: var(--error-bg);
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(244, 63, 94, 0.15);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-forgot {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            padding: 4px;
+            transition: color 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-forgot:hover {
+            color: var(--text-secondary);
+        }
+
+        .footer-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .footer-text span {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .icon-svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wallet-container">
+        <div class="screen">
+            
+            <div class="brand-section">
+                <div class="lock-badge">
+                    <svg class="icon-svg" viewBox="0 0 24 24" style="width: 20px; height: 20px;">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                </div>
+                <div class="logo-group">
+                    <svg class="logo-svg" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    <span class="logo-text">Qiubit</span>
+                </div>
+                <p class="subtitle">Enter password to unlock wallet</p>
+            </div>
+
+            <div class="form-section" id="form-container">
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input type="password" class="form-input" id="unlock-pass" placeholder="Password" onkeydown="handleKeydown(event)">
+                        <button class="input-toggle-btn" onclick="togglePassword()">
+                            <svg class="icon-svg" viewBox="0 0 24 24" id="eye-icon">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="error-message" id="error-box">Incorrect password. Please try again.</div>
+                </div>
+
+                <button class="btn btn-primary" onclick="attemptUnlock()">
+                    Unlock
+                    <svg class="icon-svg" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                </button>
+
+                <button class="btn-forgot" onclick="forgotPassword()">
+                    Forgot Password?
+                </button>
+            </div>
+
+            <div class="footer-text">
+                Supported by <span>Octra Network</span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const el = document.getElementById('unlock-pass');
+            const icon = document.getElementById('eye-icon');
+            if (el.type === 'password') {
+                el.type = 'text';
+                el.style.letterSpacing = '1px';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                el.type = 'password';
+                el.style.letterSpacing = '4px';
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+
+        function attemptUnlock() {
+            const passEl = document.getElementById('unlock-pass');
+            const pass = passEl.value.trim();
+            const errorBox = document.getElementById('error-box');
+            const formContainer = document.getElementById('form-container');
+
+            if (pass === 'wrong') {
+                // Shake and show error
+                formContainer.classList.add('shake');
+                passEl.classList.add('input-error');
+                errorBox.style.display = 'block';
+                
+                setTimeout(() => {
+                    formContainer.classList.remove('shake');
+                }, 400);
+            } else if (pass === '') {
+                passEl.classList.add('input-error');
+            } else {
+                // Success - redirect to dashboard
+                document.querySelector('.wallet-container').style.opacity = '0';
+                document.querySelector('.wallet-container').style.transform = 'translateY(-10px)';
+                document.querySelector('.wallet-container').style.transition = 'all 0.35s ease';
+                setTimeout(() => {
+                    window.location.href = 'ui_dashboard.html';
+                }, 350);
+            }
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'Enter') {
+                attemptUnlock();
+            }
+            // Clear error border on type
+            document.getElementById('unlock-pass').classList.remove('input-error');
+            document.getElementById('error-box').style.display = 'none';
+        }
+
+        function forgotPassword() {
+            window.location.href = 'ui_create_wallet.html?mode=import';
+        }
+    </script>
+</body>
+</html>

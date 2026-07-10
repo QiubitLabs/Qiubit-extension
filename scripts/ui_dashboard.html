@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qiubit Wallet - Premium Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Color Palette - Premium Deep Space & Cyan/Steel Blue */
+            --bg-base: #06080C;
+            --bg-surface: rgba(14, 18, 27, 0.75);
+            --bg-surface-solid: #0E121B;
+            --bg-card: rgba(22, 28, 42, 0.45);
+            --bg-card-hover: rgba(30, 38, 56, 0.7);
+            
+            /* Cyan & Blue Brand Accents */
+            --primary: #00D4FF;
+            --primary-dark: #00A3CC;
+            --primary-gradient: linear-gradient(135deg, #00D4FF, #0088A8);
+            
+            --secondary: #3b82f6; /* Steel Blue */
+            --secondary-gradient: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(0, 212, 255, 0.25);
+            --border-active: rgba(0, 212, 255, 0.5);
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            
+            --font-sans: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --wallet-width: 375px;
+            --wallet-height: 600px;
+            
+            --shadow-subtle: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-glow: none;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: #030406;
+            font-family: var(--font-sans);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 212, 255, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.04) 0%, transparent 40%);
+        }
+
+        /* Container representing the Chrome Extension view */
+        .wallet-container {
+            width: var(--wallet-width);
+            height: var(--wallet-height);
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: linear-gradient(180deg, rgba(14, 18, 27, 0.5) 0%, rgba(6, 8, 12, 0.98) 100%);
+        }
+
+        /* Top Navigation Bar */
+        .top-navbar {
+            height: 58px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(6, 8, 12, 0.4);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .dropdown-trigger {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-trigger:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
+        }
+
+        .nav-right-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        /* Portfolio Balance & Glass Card */
+        .portfolio-section {
+            padding: 16px 16px 8px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .portfolio-card {
+            width: 100%;
+            background: linear-gradient(135deg, rgba(22, 28, 42, 0.8) 0%, rgba(14, 18, 27, 0.9) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .portfolio-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .card-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .address-badge {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .address-badge:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        .portfolio-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 600;
+        }
+
+        .balance-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .balance-amount {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .balance-change {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--success);
+            background: var(--success-bg);
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        /* Mini Chart Sparkline */
+        .card-chart {
+            width: 100%;
+            height: 32px;
+            margin-top: 14px;
+        }
+
+        /* Quick Action Grid */
+        .action-toolbar {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            padding: 12px 16px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 60px;
+        }
+
+        .action-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .action-icon-wrapper {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(0, 212, 255, 0.03);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover .action-icon-wrapper {
+            background: var(--primary-gradient);
+            border-color: var(--primary);
+            color: #030406;
+            transform: translateY(-2px);
+        }
+
+        /* Tabs Navigation (Segmented Pill Style) */
+        .tab-nav-container {
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+
+        .tab-nav-segment {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            display: flex;
+            padding: 3px;
+        }
+
+        .tab-segment-btn {
+            flex: 1;
+            height: 32px;
+            background: transparent;
+            border: none;
+            border-radius: 9px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-segment-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-segment-btn.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 0.5px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Scrollable Tab Views */
+        .tab-view-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px 16px;
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tab-content.active {
+            display: flex;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Token Row Design */
+        .token-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .token-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        .token-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .token-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .token-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .token-symbol {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .token-name {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Sparkline trend representation */
+        .token-sparkline {
+            width: 60px;
+            height: 20px;
+        }
+
+        .token-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .token-balance {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .token-fiat {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* NFT Cards */
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .nft-card {
+            border-radius: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nft-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .nft-media {
+            width: 100%;
+            height: 100px;
+            background: #090c13;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .nft-info {
+            padding: 8px;
+        }
+
+        .nft-title {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .nft-id {
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+
+        /* Transaction History */
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+        }
+
+        .history-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .history-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .history-action {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .history-time {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .history-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .history-amount {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            width: fit-content;
+            margin-left: auto;
+        }
+
+        .status-badge.success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .status-badge.pending {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        /* Privacy Shield Tab */
+        .privacy-card {
+            background: rgba(0, 212, 255, 0.02);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .privacy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .privacy-title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+        }
+
+        .switch-track {
+            width: 42px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 99px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .switch-track.active {
+            background: var(--primary-dark);
+        }
+
+        .switch-thumb {
+            width: 16px;
+            height: 16px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .switch-track.active .switch-thumb {
+            left: 23px;
+        }
+
+        .shield-value-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        /* Bottom Sheet Modals */
+        .modal-sheet {
+            position: absolute;
+            inset: 0;
+            background: rgba(3, 4, 6, 0.8);
+            backdrop-filter: blur(6px);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+        }
+
+        .modal-sheet.active {
+            display: flex;
+        }
+
+        .sheet-body {
+            width: 100%;
+            background: var(--bg-surface-solid);
+            border-top: 1px solid var(--border-subtle);
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sheet-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            padding: 0 12px;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Slippage selector */
+        .slippage-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .slip-option {
+            flex: 1;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .slip-option.active {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn {
+            height: 46px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #030406;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.95;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        /* Dropdowns Menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 62px;
+            background: var(--bg-surface-solid);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            width: 170px;
+            z-index: 100;
+        }
+
+        .dropdown-menu.active {
+            display: flex;
+            animation: popOpen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes popOpen {
+            from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        /* Toast notifications */
+        .toast-popup {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-surface-solid);
+            border: 1px solid var(--border-hover);
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--primary);
+            z-index: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: none;
+            animation: fadeInToast 0.2s ease-out;
+        }
+
+        @keyframes fadeInToast {
+            from { opacity: 0; transform: translate(-50%, -10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        .icon-svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wallet-container">
+        
+        <!-- Clipboard Toast -->
+        <div class="toast-popup" id="copy-toast">Address copied to clipboard!</div>
+
+        <!-- Top Navigation -->
+        <div class="top-navbar">
+            <div style="position: relative;">
+                <button class="dropdown-trigger" onclick="toggleDropdown('network-menu')">
+                    <span id="active-net-dot" style="width: 7px; height: 7px; border-radius: 50%; background: var(--primary);"></span>
+                    <span id="active-net-name">Octra Mainnet</span>
+                    <svg class="icon-svg" viewBox="0 0 24 24" style="width: 10px; height: 10px; stroke-width: 3;">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="network-menu">
+                    <div class="dropdown-item" onclick="selectNetwork('Octra Mainnet', '#00D4FF')">Octra Mainnet</div>
+                    <div class="dropdown-item" onclick="selectNetwork('Ethereum', '#627EEA')">Ethereum</div>
+                    <div class="dropdown-item" onclick="selectNetwork('Solana', '#9945FF')">Solana</div>
+                    <div class="dropdown-item" onclick="selectNetwork('Sui', '#6FBCF0')">Sui</div>
+                    <div class="dropdown-item" onclick="selectNetwork('Bitcoin', '#F7931A')">Bitcoin</div>
+                </div>
+            </div>
+
+            <div style="position: relative;">
+                <button class="dropdown-trigger" onclick="toggleDropdown('wallet-menu')">
+                    <svg class="icon-svg" viewBox="0 0 24 24" style="width: 13px; height: 13px;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <span id="active-wallet-name">Account 1</span>
+                    <svg class="icon-svg" viewBox="0 0 24 24" style="width: 10px; height: 10px; stroke-width: 3;">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="wallet-menu" style="right: 0; left: auto;">
+                    <div class="dropdown-item" onclick="selectWallet('Account 1')">Account 1</div>
+                    <div class="dropdown-item" onclick="selectWallet('Account 2')">Account 2</div>
+                    <div class="dropdown-item" style="border-top: 1px solid var(--border-subtle);" onclick="window.location.href='ui_create_wallet.html'">+ Add Wallet</div>
+                </div>
+            </div>
+
+            <div class="nav-right-actions">
+                <button class="btn-icon" onclick="window.location.href='ui_settings.html'">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Portfolio Card -->
+        <div class="portfolio-section">
+            <div class="portfolio-card">
+                <div class="card-header">
+                    <span class="portfolio-label">Total Balance</span>
+                    <div class="address-badge" onclick="copyAddress()">
+                        <span id="wallet-address-short">0x8f2d...b12a</span>
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 11px; height: 11px;">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="balance-row">
+                    <span class="balance-amount" id="total-val">$12,854.20</span>
+                    <span class="balance-change">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 10px; height: 10px; stroke-width: 3;">
+                            <polyline points="18 15 12 9 6 15" />
+                        </svg>
+                        <span>+4.82%</span>
+                    </span>
+                </div>
+
+                <!-- Portfolio Trend Sparkline (SVG) -->
+                <div class="card-chart">
+                    <svg viewBox="0 0 340 32" width="100%" height="100%">
+                        <defs>
+                            <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="rgba(0, 212, 255, 0.15)" />
+                                <stop offset="100%" stop-color="rgba(0, 212, 255, 0)" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M0 25 Q 40 12, 80 20 T 160 8 T 240 18 T 300 4 T 340 10 L 340 32 L 0 32 Z" fill="url(#chart-grad)" />
+                        <path d="M0 25 Q 40 12, 80 20 T 160 8 T 240 18 T 300 4 T 340 10" fill="none" stroke="var(--primary)" stroke-width="2" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Grid -->
+        <div class="action-toolbar">
+            <button class="action-btn" onclick="openModal('send-modal')">
+                <div class="action-icon-wrapper">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                </div>
+                <span>Send</span>
+            </button>
+            <button class="action-btn" onclick="openModal('receive-modal')">
+                <div class="action-icon-wrapper">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <polyline points="19 12 12 19 5 12" />
+                    </svg>
+                </div>
+                <span>Receive</span>
+            </button>
+            <button class="action-btn" onclick="openModal('swap-modal')">
+                <div class="action-icon-wrapper">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <polyline points="17 1 21 5 17 9" />
+                        <path d="M3 11V9a4 4 0 0 1 4-4h14M7 23 3 19 7 15" />
+                        <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                    </svg>
+                </div>
+                <span>Swap</span>
+            </button>
+            <button class="action-btn" onclick="openModal('swap-modal')">
+                <div class="action-icon-wrapper">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <polyline points="16 3 21 3 21 8" />
+                        <line x1="4" y1="20" x2="21" y2="3" />
+                        <polyline points="21 16 21 21 16 21" />
+                    </svg>
+                </div>
+                <span>Bridge</span>
+            </button>
+        </div>
+
+        <!-- Segmented Tab Nav -->
+        <div class="tab-nav-container">
+            <div class="tab-nav-segment">
+                <button class="tab-segment-btn active" onclick="switchTab('tokens-tab', this)">Tokens</button>
+                <button class="tab-segment-btn" onclick="switchTab('nfts-tab', this)">NFTs</button>
+                <button class="tab-segment-btn" onclick="switchTab('history-tab', this)">History</button>
+                <button class="tab-segment-btn" onclick="switchTab('privacy-tab', this)">Privacy</button>
+            </div>
+        </div>
+
+        <!-- Scrollable content Area -->
+        <div class="tab-view-container">
+            
+            <!-- TOKENS TAB -->
+            <div class="tab-content active" id="tokens-tab">
+                <div class="token-card">
+                    <div class="token-left">
+                        <div class="token-avatar">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="color: var(--primary);">
+                                <circle cx="12" cy="12" r="10" />
+                                <polygon points="12 6 16 14 8 14" />
+                            </svg>
+                        </div>
+                        <div class="token-meta">
+                            <span class="token-symbol">OCT</span>
+                            <span class="token-name">Octra Coin</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Sparkline trend -->
+                    <div class="token-sparkline">
+                        <svg viewBox="0 0 60 20" width="100%" height="100%">
+                            <path d="M0 10 L 10 5 L 20 12 L 30 4 L 40 15 L 50 6 L 60 8" fill="none" stroke="var(--success)" stroke-width="1.8" />
+                        </svg>
+                    </div>
+
+                    <div class="token-right">
+                        <span class="token-balance">1,420.50</span>
+                        <span class="token-fiat">$4,261.50</span>
+                    </div>
+                </div>
+
+                <div class="token-card">
+                    <div class="token-left">
+                        <div class="token-avatar">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="color: #00B4DB;">
+                                <circle cx="12" cy="12" r="10" />
+                                <rect x="8" y="8" width="8" height="8" rx="1" />
+                            </svg>
+                        </div>
+                        <div class="token-meta">
+                            <span class="token-symbol">wOCT</span>
+                            <span class="token-name">Wrapped Octra</span>
+                        </div>
+                    </div>
+
+                    <div class="token-sparkline">
+                        <svg viewBox="0 0 60 20" width="100%" height="100%">
+                            <path d="M0 8 L 15 14 L 30 8 L 45 12 L 60 4" fill="none" stroke="var(--success)" stroke-width="1.8" />
+                        </svg>
+                    </div>
+
+                    <div class="token-right">
+                        <span class="token-balance">500.00</span>
+                        <span class="token-fiat">$1,500.00</span>
+                    </div>
+                </div>
+
+                <div class="token-card">
+                    <div class="token-left">
+                        <div class="token-avatar">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="color: #627ee9;">
+                                <polygon points="12 2 22 8.5 12 15 2 8.5 12 2" />
+                                <polygon points="12 15 22 8.5 22 13 12 22 2 13 2 8.5 12 15" />
+                            </svg>
+                        </div>
+                        <div class="token-meta">
+                            <span class="token-symbol">ETH</span>
+                            <span class="token-name">Ethereum</span>
+                        </div>
+                    </div>
+
+                    <div class="token-sparkline">
+                        <svg viewBox="0 0 60 20" width="100%" height="100%">
+                            <path d="M0 12 L 10 16 L 20 8 L 30 14 L 40 4 L 50 8 L 60 2" fill="none" stroke="var(--success)" stroke-width="1.8" />
+                        </svg>
+                    </div>
+
+                    <div class="token-right">
+                        <span class="token-balance">1.624</span>
+                        <span class="token-fiat">$5,240.80</span>
+                    </div>
+                </div>
+
+                <div class="token-card">
+                    <div class="token-left">
+                        <div class="token-avatar">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="color: #9945FF;">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                            </svg>
+                        </div>
+                        <div class="token-meta">
+                            <span class="token-symbol">SOL</span>
+                            <span class="token-name">Solana</span>
+                        </div>
+                    </div>
+
+                    <div class="token-sparkline">
+                        <svg viewBox="0 0 60 20" width="100%" height="100%">
+                            <path d="M0 5 L 15 15 L 30 4 L 45 12 L 60 6" fill="none" stroke="var(--error)" stroke-width="1.8" />
+                        </svg>
+                    </div>
+
+                    <div class="token-right">
+                        <span class="token-balance">12.50</span>
+                        <span class="token-fiat">$1,851.90</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NFTS TAB -->
+            <div class="tab-content" id="nfts-tab">
+                <div class="nft-grid">
+                    <div class="nft-card">
+                        <div class="nft-media">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 28px; height: 28px; color: var(--text-muted);">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                        </div>
+                        <div class="nft-info">
+                            <span class="nft-title">Octra Pioneer</span>
+                            <span class="nft-id">#0421</span>
+                        </div>
+                    </div>
+
+                    <div class="nft-card">
+                        <div class="nft-media">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 28px; height: 28px; color: var(--text-muted);">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </div>
+                        <div class="nft-info">
+                            <span class="nft-title">Genesis Star</span>
+                            <span class="nft-id">#0098</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORY TAB -->
+            <div class="tab-content" id="history-tab">
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-badge" style="color: var(--success);">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <polyline points="19 12 12 19 5 12" />
+                            </svg>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-action">Received wOCT</span>
+                            <span class="history-time">Today, 10:45 AM</span>
+                        </div>
+                    </div>
+                    <div class="history-right">
+                        <span class="history-amount" style="color: var(--success);">+250.00</span>
+                        <span class="status-badge success">Success</span>
+                    </div>
+                </div>
+
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-badge" style="color: var(--text-primary);">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                            </svg>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-action">Sent OCT</span>
+                            <span class="history-time">Yesterday, 4:12 PM</span>
+                        </div>
+                    </div>
+                    <div class="history-right">
+                        <span class="history-amount">-80.00</span>
+                        <span class="status-badge success">Success</span>
+                    </div>
+                </div>
+
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-badge" style="color: var(--warning);">
+                            <svg class="icon-svg" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                                <polyline points="23 4 23 10 17 10" />
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                            </svg>
+                        </div>
+                        <div class="history-meta">
+                            <span class="history-action">Swapped ETH to SOL</span>
+                            <span class="history-time">May 29, 1:04 PM</span>
+                        </div>
+                    </div>
+                    <div class="history-right">
+                        <span class="history-amount">0.5 ETH</span>
+                        <span class="status-badge pending">Pending</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRIVACY TAB -->
+            <div class="tab-content" id="privacy-tab">
+                <div class="privacy-card">
+                    <div class="privacy-header">
+                        <div class="privacy-title-wrapper">
+                            <svg class="icon-svg" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            <span style="font-size: 13px; font-weight: 600;">OCS01 Privacy Shield</span>
+                        </div>
+                        <div class="switch-track" id="privacy-switch" onclick="togglePrivacyShield()">
+                            <div class="switch-thumb"></div>
+                        </div>
+                    </div>
+
+                    <p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;">
+                        Shield your transaction parameters within zero-knowledge proofs. Enables untraceable transfers.
+                    </p>
+
+                    <div class="shield-value-box">
+                        <span class="portfolio-label" style="font-size: 9px; color: var(--text-muted);">Shielded secured balance</span>
+                        <h3 style="font-size: 18px; font-weight: 700; margin-top: 4px; color: var(--primary);" id="private-balance">0.00 OCT</h3>
+                    </div>
+
+                    <button class="btn btn-primary" style="height: 38px; font-size: 12px;" onclick="alert('Asset shielding process initiated securely.')">
+                        Shield Main Asset
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SEND MODAL SHEET -->
+        <div class="modal-sheet" id="send-modal">
+            <div class="sheet-body">
+                <div class="sheet-header">
+                    <span class="sheet-title">Send Token</span>
+                    <button class="btn-icon" onclick="closeModal('send-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Destination Address</label>
+                    <input type="text" class="form-input" placeholder="Enter 0x... or Sui/Solana address">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <div style="position: relative; width: 100%;">
+                        <input type="number" class="form-input" placeholder="0.0">
+                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 600; color: var(--text-secondary);">OCT</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="alert('Sending transaction payload to local node.'); closeModal('send-modal')">
+                    Confirm Send
+                </button>
+            </div>
+        </div>
+
+        <!-- RECEIVE MODAL SHEET -->
+        <div class="modal-sheet" id="receive-modal">
+            <div class="sheet-body" style="align-items: center; text-align: center;">
+                <div class="sheet-header" style="width: 100%;">
+                    <span class="sheet-title">Receive Assets</span>
+                    <button class="btn-icon" onclick="closeModal('receive-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div style="width: 140px; height: 140px; background: white; padding: 10px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 12px 0;">
+                    <svg viewBox="0 0 100 100" style="width: 120px; height: 120px;">
+                        <rect x="0" y="0" width="25" height="25" fill="black" />
+                        <rect x="5" y="5" width="15" height="15" fill="white" />
+                        <rect x="75" y="0" width="25" height="25" fill="black" />
+                        <rect x="80" y="5" width="15" height="15" fill="white" />
+                        <rect x="0" y="75" width="25" height="25" fill="black" />
+                        <rect x="5" y="80" width="15" height="15" fill="white" />
+                        <rect x="35" y="10" width="10" height="20" fill="black" />
+                        <rect x="55" y="30" width="20" height="10" fill="black" />
+                        <rect x="15" y="45" width="30" height="10" fill="black" />
+                        <rect x="45" y="55" width="15" height="25" fill="black" />
+                        <rect x="70" y="70" width="25" height="25" fill="black" />
+                    </svg>
+                </div>
+
+                <p style="font-size: 11.5px; color: var(--text-secondary); max-width: 250px;">
+                    Send only assets supported by the selected network to this address.
+                </p>
+
+                <div class="address-badge" onclick="copyAddress()" style="margin-top: 12px;">
+                    <span id="full-deposit-address">0x8f2db617a26fcd65c01b12a6366f1954f8fafc2d</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SWAP MODAL SHEET -->
+        <div class="modal-sheet" id="swap-modal">
+            <div class="sheet-body">
+                <div class="sheet-header">
+                    <span class="sheet-title">Swap & Bridge Route</span>
+                    <button class="btn-icon" onclick="closeModal('swap-modal')">
+                        <svg class="icon-svg" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Sell Amount</label>
+                    <div style="position: relative;">
+                        <input type="number" class="form-input" placeholder="0.0" style="padding-right: 70px;">
+                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 600; color: var(--primary);">OCT</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; margin: -4px 0;">
+                    <div class="btn-icon" style="border-radius: 50%; width: 28px; height: 28px;">
+                        <svg class="icon-svg" viewBox="0 0 24 24" style="width: 14px; height: 14px;">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <polyline points="19 12 12 19 5 12" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Buy Estimated</label>
+                    <div style="position: relative;">
+                        <input type="number" class="form-input" placeholder="0.0" style="padding-right: 70px;" readonly>
+                        <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 600; color: var(--text-secondary);">ETH</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Slippage Tolerance</label>
+                    <div class="slippage-row">
+                        <div class="slip-option" id="slip-01" onclick="selectSlippage('slip-01')">0.1%</div>
+                        <div class="slip-option active" id="slip-05" onclick="selectSlippage('slip-05')">0.5%</div>
+                        <div class="slip-option" id="slip-10" onclick="selectSlippage('slip-10')">1.0%</div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="alert('Querying best cross-chain quote...'); closeModal('swap-modal')">
+                    Swap
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function toggleDropdown(id) {
+            const el = document.getElementById(id);
+            const isActive = el.classList.contains('active');
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+            if (!isActive) {
+                el.classList.add('active');
+            }
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-trigger') && !e.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        function selectNetwork(name, color) {
+            document.getElementById('active-net-name').innerText = name;
+            document.getElementById('active-net-dot').style.background = color;
+            document.getElementById('network-menu').classList.remove('active');
+            
+            const addressEl = document.getElementById('wallet-address-short');
+            const fullAddrEl = document.getElementById('full-deposit-address');
+            const totalEl = document.getElementById('total-val');
+            
+            if (name === 'Solana') {
+                addressEl.innerText = "8F2d...b12a";
+                fullAddrEl.innerText = "8F2db617a26fcd65c01b12a6366f1954f8fafc2d";
+                totalEl.innerText = "$1,851.90";
+            } else if (name === 'Sui') {
+                addressEl.innerText = "0x5c...d21e";
+                fullAddrEl.innerText = "0x5c4d617a26fcd65c01b12a6366f1954f8fafcd21e";
+                totalEl.innerText = "$420.00";
+            } else if (name === 'Ethereum') {
+                addressEl.innerText = "0x8f2d...b12a";
+                fullAddrEl.innerText = "0x8f2db617a26fcd65c01b12a6366f1954f8fafc2d";
+                totalEl.innerText = "$5,240.80";
+            } else if (name === 'Bitcoin') {
+                addressEl.innerText = "bc1q...u89a";
+                fullAddrEl.innerText = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhxu89a";
+                totalEl.innerText = "$1,500.00";
+            } else {
+                addressEl.innerText = "0x8f2d...b12a";
+                fullAddrEl.innerText = "0x8f2db617a26fcd65c01b12a6366f1954f8fafc2d";
+                totalEl.innerText = "$12,854.20";
+            }
+        }
+
+        function selectWallet(name) {
+            document.getElementById('active-wallet-name').innerText = name;
+            document.getElementById('wallet-menu').classList.remove('active');
+        }
+
+        function copyAddress() {
+            const address = document.getElementById('full-deposit-address').innerText;
+            navigator.clipboard.writeText(address);
+            
+            const toast = document.getElementById('copy-toast');
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-segment-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function togglePrivacyShield() {
+            const el = document.getElementById('privacy-switch');
+            const bal = document.getElementById('private-balance');
+            el.classList.toggle('active');
+            
+            if (el.classList.contains('active')) {
+                bal.innerText = "1,420.50 OCT";
+            } else {
+                bal.innerText = "0.00 OCT";
+            }
+        }
+
+        function selectSlippage(id) {
+            document.querySelectorAll('.slip-option').forEach(o => o.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+    </script>
+</body>
+</html>
