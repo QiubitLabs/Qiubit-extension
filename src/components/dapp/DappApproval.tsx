@@ -15,6 +15,7 @@ import "./AddNetworkModal.css";
 import "./DappApproval.css";
 import { keyringService } from "../../services/core/KeyringService";
 import { decodeTx, formatDecodedTx } from "../../services/network/TxDecoder";
+import { cleanErrorMessage } from "../../utils/errorMessages";
 import {
   buildSwapSummary,
   type SwapSummary,
@@ -23,6 +24,7 @@ import {
   resolveNetwork,
   resolveNetworkByChainId,
 } from "../../services/network/NetworkResolver";
+import { syncUserNetworksToLocalStorage } from "../../services/network/UserNetworkService";
 import { useWallet } from "../../context/WalletContext";
 import { Wallet } from "../../types";
 import { loadSnapshot } from "../../utils/walletSnapshot";
@@ -170,6 +172,15 @@ export function DappApproval({
   const [assetChanges, setAssetChanges] = useState<any[]>([]);
   const [approvalRisk, setApprovalRisk] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  // Bumped once user networks are mirrored into the sync cache, so a custom
+  // chain's name/native token resolve on the next render instead of showing
+  // "Chain <id>" + "ETH".
+  const [, setNetSyncTick] = useState(0);
+  useEffect(() => {
+    syncUserNetworksToLocalStorage()
+      .then(() => setNetSyncTick((t) => t + 1))
+      .catch(() => {});
+  }, []);
 
   const [selectedOctraAddr, setSelectedOctraAddr] = useState<string>("");
   const userPickedRef = useRef(false);
@@ -200,7 +211,7 @@ export function DappApproval({
   const currentNetwork = sessionNetSetting
     ? resolveNetwork(sessionNetSetting)
     : null;
-  const NON_EVM_CHAINS = ["sui", "solana", "bitcoin", "octra"];
+  const NON_EVM_CHAINS = ["sui", "solana", "bitcoin", "octra", "multichain"];
   const isEvmAction = !!(
     request?.action &&
     (request.action.startsWith("eth") ||
@@ -238,6 +249,11 @@ export function DappApproval({
               ? "bitcoin"
               : ""));
 
+    if (chain === "multichain") {
+      // Merged Solana+Sui connect (Wallet Standard). Show a non-EVM address —
+      // prefer Sui, fall back to Solana — never the EVM address.
+      return w.suiAddress || w.solanaAddress || octraAddr;
+    }
     if (chain === "sui") {
       return w.suiAddress || octraAddr;
     }
@@ -307,6 +323,19 @@ export function DappApproval({
     if (!txParams?.to) return;
     const fromAddr = getDisplayAddress(selectedOctraAddr);
     if (!fromAddr || !fromAddr.startsWith("0x")) return;
+
+    // Only simulate on the chains we officially support. Custom / user-added
+    // chains (id `user_<chainId>`) or unknown chains usually lack the trace RPC
+    // the simulator needs, producing false "likely to fail: missing revert
+    // data" warnings — so skip simulation there entirely.
+    const simNet = resolveNetworkByChainId(chainId || 1);
+    if (!simNet || simNet.id.startsWith("user_")) {
+      setSimResult(null);
+      setAssetChanges([]);
+      setApprovalRisk(null);
+      setIsSimulating(false);
+      return;
+    }
 
     let active = true;
     setSimResult(null);
@@ -468,6 +497,41 @@ export function DappApproval({
           txRequest,
           rpcUrl,
         );
+
+        // Record the dApp-initiated transaction (swap, bridge, approve, …) in
+        // the wallet's history so it shows on the History page like an in-wallet
+        // send. Best-effort — never block the response on it.
+        try {
+          const { saveEvmTxHistory } = await import("../../utils/storage");
+          // resolveNetworkByChainId also covers user-added custom chains, so a
+          // dApp tx on e.g. LitVM still lands in local history.
+          const net = resolveNetworkByChainId(chainId || 1);
+          const evmAddr =
+            keyringService.getEvmAddress(activeOctraAddr) || activeOctraAddr;
+          if (net?.id && evmAddr) {
+            const valueEth = txParams.value
+              ? Number(BigInt(txParams.value)) / 1e18
+              : 0;
+            const isContract = !!txParams.data && txParams.data !== "0x";
+            void saveEvmTxHistory(net.id, evmAddr, [
+              {
+                hash: txResponse.hash,
+                type: "out",
+                amount: valueEth,
+                symbol: net.nativeToken?.symbol || "ETH",
+                token: net.nativeToken?.symbol || "ETH",
+                address: txParams.to,
+                timestamp: Date.now(),
+                status: "pending",
+                contractAddress: isContract ? txParams.to : undefined,
+                networkId: net.id,
+              },
+            ]).catch(() => {});
+          }
+        } catch {
+          /* history is best-effort */
+        }
+
         if (onApprove)
           await onApprove({ ...request, _evmResult: txResponse.hash });
         window.close();
@@ -524,7 +588,32 @@ export function DappApproval({
           result = await svc.solanaSendTransaction(
             request.params.transaction,
             pk,
+            request.params.options?.chain,
           );
+          // Record the dApp-sent Solana tx locally so it shows in History
+          // (local-only mode). Amount is unknown from raw tx bytes.
+          const sig = typeof result === "string" ? result : result?.signature;
+          if (sig && selectedOctraAddr) {
+            const { saveTxHistorySecure } = await import("../../utils/storage");
+            void saveTxHistorySecure(
+              [
+                {
+                  hash: sig,
+                  type: "out",
+                  amount: 0,
+                  symbol: "SOL",
+                  token: "SOL",
+                  address: "",
+                  timestamp: Date.now(),
+                  status: "pending",
+                  networkId: "solana",
+                  dappOrigin: request.origin,
+                },
+              ],
+              "solana",
+              selectedOctraAddr,
+            );
+          }
         }
         if (onApprove) await onApprove({ ...request, _evmResult: result });
         window.close();
@@ -544,11 +633,35 @@ export function DappApproval({
             pk,
           );
         } else if (request.action === "suiSignAndExecuteTransaction") {
-          // Sign AND broadcast/execute on-chain.
+          // Sign AND broadcast/execute on-chain (on the dApp's target cluster).
           result = await svc.suiSignAndExecute(
             request.params.transaction ?? request.params.txBlock,
             pk,
+            request.params.options?.chain,
           );
+          const digest =
+            result?.digest || result?.effects?.transactionDigest || "";
+          if (digest && selectedOctraAddr) {
+            const { saveTxHistorySecure } = await import("../../utils/storage");
+            void saveTxHistorySecure(
+              [
+                {
+                  hash: digest,
+                  type: "out",
+                  amount: 0,
+                  symbol: "SUI",
+                  token: "SUI",
+                  address: "",
+                  timestamp: Date.now(),
+                  status: "pending",
+                  networkId: "sui",
+                  dappOrigin: request.origin,
+                },
+              ],
+              "sui",
+              selectedOctraAddr,
+            );
+          }
         } else {
           // suiSignTransaction — sign only, return bytes + signature.
           result = svc.suiSignTransaction(
@@ -578,13 +691,7 @@ export function DappApproval({
       if (onApprove) await onApprove(connectResult);
       window.close();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const clean = msg
-        .replace(/\(.*\)/gs, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 120);
-      setError(clean || "Transaction failed");
+      setError(cleanErrorMessage(err, "Transaction failed"));
     } finally {
       setIsLoading(false);
     }
@@ -636,15 +743,18 @@ export function DappApproval({
     solana: "#14F195",
     bitcoin: "#F7931A",
     octra: "#00D4FF",
+    multichain: "#6FB9FF",
   };
   const headerNetLabel = isOctraAction
     ? "Octra Net"
     : (txNetwork?.displayName ??
       settingNetwork?.displayName ??
-      (requestChain === "sui"
-        ? "Sui"
-        : requestChain === "solana"
-          ? "Solana"
+      (requestChain === "multichain"
+        ? "Sui / Solana"
+        : requestChain === "sui"
+          ? "Sui"
+          : requestChain === "solana"
+            ? "Solana"
           : requestChain === "bitcoin"
             ? "Bitcoin"
             : netSetting === "sepolia"

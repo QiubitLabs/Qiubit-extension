@@ -101,6 +101,48 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
     historyApi: { type: "none" },
   },
 
+  "solana-devnet": {
+    id: "solana-devnet",
+    displayName: "Solana Devnet",
+    shortName: "SOL Devnet",
+    chainId: 1151111081099720,
+    isEVM: false,
+    isTestnet: true,
+    iconUrl: "/chains/solana/logo.jpg",
+    badgeColor: "#14F195",
+    addressType: "solana",
+    nativeToken: {
+      symbol: "SOL",
+      name: "Solana Devnet",
+      decimals: 9,
+      logoUrl: "/chains/solana/sol.png",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://solscan.io/?cluster=devnet",
+    historyApi: { type: "none" },
+  },
+
+  "solana-testnet": {
+    id: "solana-testnet",
+    displayName: "Solana Testnet",
+    shortName: "SOL Testnet",
+    chainId: 1151111081099721,
+    isEVM: false,
+    isTestnet: true,
+    iconUrl: "/chains/solana/logo.jpg",
+    badgeColor: "#14F195",
+    addressType: "solana",
+    nativeToken: {
+      symbol: "SOL",
+      name: "Solana Testnet",
+      decimals: 9,
+      logoUrl: "/chains/solana/sol.png",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://solscan.io/?cluster=testnet",
+    historyApi: { type: "none" },
+  },
+
   sui: {
     id: "sui",
     displayName: "Sui",
@@ -119,6 +161,30 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
     },
     erc20Tokens: [],
     blockExplorerUrl: "https://suiscan.xyz",
+    historyApi: { type: "none" },
+  },
+
+  "sui-testnet": {
+    id: "sui-testnet",
+    displayName: "Sui Testnet",
+    shortName: "Sui Testnet",
+    // NOTE: must be an EVEN sentinel — this magnitude sits above
+    // Number.MAX_SAFE_INTEGER, where float64 can only represent multiples of
+    // 2. The previous ...001 silently rounded to the mainnet id (...000).
+    chainId: 9270000000000002,
+    isEVM: false,
+    isTestnet: true,
+    iconUrl: "/chains/sui/logo.jpg",
+    badgeColor: "#6FB9FF",
+    addressType: "sui",
+    nativeToken: {
+      symbol: "SUI",
+      name: "Sui Testnet",
+      decimals: 9,
+      logoUrl: "/chains/sui/sui.png",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://suiscan.xyz/testnet",
     historyApi: { type: "none" },
   },
 
@@ -342,8 +408,18 @@ export function getNetworkForToken(token: {
   isSui?: boolean;
   isBitcoin?: boolean;
 }): NetworkConfig | null {
-  if (token.isSolana === true) return NETWORK_REGISTRY.solana;
-  if (token.isSui === true) return NETWORK_REGISTRY.sui;
+  if (token.isSolana === true) {
+    if (token.isTestnet)
+      return (
+        (token.chainId ? getNetworkByChainId(token.chainId) : null) ??
+        NETWORK_REGISTRY["solana-devnet"]
+      );
+    return NETWORK_REGISTRY.solana;
+  }
+  if (token.isSui === true)
+    return token.isTestnet
+      ? NETWORK_REGISTRY["sui-testnet"]
+      : NETWORK_REGISTRY.sui;
   if (token.isBitcoin === true) return NETWORK_REGISTRY.bitcoin;
   if (token.isNative) return NETWORK_REGISTRY.octra;
   if (token.chainId) {
@@ -401,21 +477,32 @@ export function filterTokensByNetwork<
     return forUsd ? tokens.filter((t) => !t.isTestnet) : tokens;
   const meta = NETWORK_REGISTRY[networkId];
   if (!meta) {
-    // User-added custom EVM chains use the `user_<chainId>` setting id.
+    // User-added custom chains use the `user_<chainId>` setting id (any VM —
+    // EVM, Solana-VM, Sui-VM). Match purely by the (real or synthetic) chainId
+    // so the network's own native/tokens show and OCT never leaks in.
     if (networkId.startsWith("user_")) {
       const cid = parseInt(networkId.slice(5), 10);
-      if (cid)
-        return tokens.filter((t) => t.isEVM && t.chainId === cid) as any;
+      if (cid) return tokens.filter((t) => t.chainId === cid) as any;
     }
     return tokens;
   }
   if (meta.id === "solana") {
     return tokens.filter(
-      (t) => t.isSolana === true || t.chainId === 1151111081099710,
+      (t) =>
+        (t.isSolana === true || t.chainId === 1151111081099710) &&
+        !t.isTestnet,
     ) as any;
   }
+  // Test networks (Solana Devnet/Testnet, Sui Testnet): match strictly by the
+  // network's own chainId so sibling test clusters never bleed together.
+  if (
+    meta.isTestnet &&
+    (meta.addressType === "solana" || meta.addressType === "sui")
+  ) {
+    return tokens.filter((t) => t.chainId === meta.chainId) as any;
+  }
   if (meta.id === "sui") {
-    return tokens.filter((t) => t.isSui === true) as any;
+    return tokens.filter((t) => t.isSui === true && !t.isTestnet) as any;
   }
   if (meta.id === "bitcoin") {
     return tokens.filter((t) => t.isBitcoin === true) as any;

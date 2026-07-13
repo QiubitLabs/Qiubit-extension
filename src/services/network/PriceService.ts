@@ -62,6 +62,9 @@ const DEFAULT_OCT_ID =
     ? import.meta.env.VITE_COINGECKO_OCT_ID
     : "octra";
 
+// Wrapped Octra (ERC-20 on Ethereum) — always priced 1:1 with OCT.
+const WOCT_CONTRACT = "0x4647e1fe715c9e23959022c2416c71867f5a6e80";
+
 
 const VS_CURRENCIES =
   typeof import.meta !== "undefined" &&
@@ -728,11 +731,28 @@ export async function getMultiplePricesByContractsMultiChain(
   const results = new Map<string, { price: number; change24h: number }>();
   if (tokens.length === 0) return results;
 
+  // wOCT is Wrapped Octra, pegged 1:1 to OCT everywhere (portfolio AND swap).
+  // Its own thin on-chain pool returns a depegged DexScreener price (e.g. ~$0.05
+  // vs OCT's ~$0.018), so we resolve it from OCT directly and never route it
+  // through the pool lookup.
+  const woctToken = tokens.find(
+    (t) => t.contractAddress.toLowerCase() === WOCT_CONTRACT,
+  );
+  if (woctToken) {
+    const oct = await getTokenPrice("OCT");
+    if (oct) {
+      const pegged = { price: oct.price, change24h: oct.change24h };
+      results.set(woctToken.symbol, pegged);
+      results.set(woctToken.symbol.toUpperCase(), pegged);
+    }
+  }
+
   const byPlatform = new Map<
     string,
     Array<{ symbol: string; contractAddress: string }>
   >();
   for (const t of tokens) {
+    if (t.contractAddress.toLowerCase() === WOCT_CONTRACT) continue; // pegged above
     const platform = COINGECKO_PLATFORM[t.chainId];
     if (
       !platform ||

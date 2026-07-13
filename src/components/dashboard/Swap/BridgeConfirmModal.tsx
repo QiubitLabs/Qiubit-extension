@@ -12,7 +12,7 @@ import { OctraFeeSheet } from "../../shared/OctraFeeSheet/OctraFeeSheet";
 
 const ETH_BRIDGE = "0xE7eD69b852fd2a1406080B26A37e8E04e7dA4caE";
 
-const OCTRA_LOGO = "/qiubit-icon.svg";
+const OCTRA_LOGO = "/octra-icon.svg";
 const ETH_LOGO =
   "https://static.debank.com/image/chain/logo_url/eth/42ba589cd077e7bdd97db6480b0ff61d.png";
 

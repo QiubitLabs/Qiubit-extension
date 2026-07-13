@@ -307,7 +307,7 @@ export function AddressDrawer({
               <AddressSection
                 label="Octra Network"
                 address={octraAddress}
-                logoUrl="/qiubit-icon.svg"
+                logoUrl="/octra-icon.svg"
                 hasCopied={hasCopiedOctra}
                 onCopy={(addr) => handleCopy(addr, "octra")}
                 onShowQR={handleShowQR}

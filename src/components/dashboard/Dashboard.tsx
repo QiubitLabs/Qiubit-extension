@@ -23,6 +23,10 @@ import {
 import { AddressDrawer } from "./modals/AddressDrawer/AddressDrawer";
 
 import { AddWalletModal } from "./AddWalletModal";
+import {
+  WalletSwitchMigrationModal,
+  type MigrationConnection,
+} from "./modals/WalletSwitch/WalletSwitchMigrationModal";
 import { AccountPage } from "./modals/AccountModal/AccountPage";
 import { getRpcClient } from "../../services/network/RpcService";
 import { ErrorBoundary } from "../shared/ErrorBoundary";
@@ -36,7 +40,44 @@ import { TokenDetailView } from "./TokenDetail";
 
 import { NFTGallery } from "./NFT";
 import { Token, Wallet } from "../../types";
-import { NETWORK_REGISTRY } from "../../constants/networks/registry";
+import { resolveNetwork } from "../../services/network/NetworkResolver";
+
+/** Fire a POPUP_REQUEST to the background service worker. */
+function popupRequest(action: string, data?: unknown): Promise<any> {
+  return new Promise((resolve) => {
+    try {
+      chrome.runtime.sendMessage(
+        { type: "POPUP_REQUEST", action, data },
+        (resp) => {
+          void chrome.runtime.lastError; // swallow "no receiver" noise
+          resolve(resp);
+        },
+      );
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+/** Origin of the tab the user is currently viewing (the page behind the popup). */
+function getActiveTabOrigin(): Promise<string | null> {
+  return new Promise((resolve) => {
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        void chrome.runtime.lastError;
+        const url = tabs?.[0]?.url;
+        if (!url) return resolve(null);
+        try {
+          resolve(new URL(url).origin);
+        } catch {
+          resolve(null);
+        }
+      });
+    } catch {
+      resolve(null);
+    }
+  });
+}
 
 export function Dashboard({
   showToast,
@@ -74,6 +115,72 @@ export function Dashboard({
   const [view, setViewLocal] = useState<DashboardView>("home");
   const [showAddressDrawer, setShowAddressDrawer] = useState(false);
   const [showAddWallet, setShowAddWallet] = useState(false);
+
+  // dApp connection migration prompt shown after switching the active wallet
+  // while sites are still connected to the previous one.
+  const [migrationPrompt, setMigrationPrompt] = useState<{
+    targetAddress: string;
+    targetName: string;
+    connections: MigrationConnection[];
+  } | null>(null);
+
+  const handleSwitchWallet = async (index: number) => {
+    const target = wallets[index];
+    await setActiveWallet(index);
+    if (!target?.address) return;
+    try {
+      // Only prompt for the site the user is actually looking at (the active
+      // tab). Other connected tabs/sites are left untouched — switching the
+      // account should follow the page in front of the user, not every dApp.
+      const [activeOrigin, resp] = await Promise.all([
+        getActiveTabOrigin(),
+        popupRequest("getConnections"),
+      ]);
+      if (!activeOrigin) return;
+      const list: any[] = Array.isArray(resp?.result) ? resp.result : [];
+      const conn = list.find(
+        (c) => c?.connected && c?.origin === activeOrigin && c?.address,
+      );
+      // Active site isn't connected, or already shows this wallet → nothing.
+      if (!conn || conn.address === target.address) return;
+
+      // EIP-2255 per-origin model (OKX/MetaMask 2026): if the new wallet is
+      // already authorized for this site, switch it silently; otherwise prompt
+      // the user to grant it (connect) first.
+      const authorized: string[] = Array.isArray(conn.authorizedAddresses)
+        ? conn.authorizedAddresses
+        : conn.address
+          ? [conn.address]
+          : [];
+
+      if (authorized.includes(target.address)) {
+        await popupRequest("migrateConnections", {
+          address: target.address,
+          origins: [activeOrigin],
+        });
+      } else {
+        setMigrationPrompt({
+          targetAddress: target.address,
+          targetName: target.name || `Wallet ${index + 1}`,
+          connections: [
+            { origin: conn.origin, title: conn.title, favicon: conn.favicon },
+          ],
+        });
+      }
+    } catch {
+      /* connection lookup is best-effort */
+    }
+  };
+
+  const handleConfirmMigration = async () => {
+    if (!migrationPrompt) return;
+    await popupRequest("migrateConnections", {
+      address: migrationPrompt.targetAddress,
+      origins: migrationPrompt.connections.map((c) => c.origin),
+    });
+    setMigrationPrompt(null);
+    showToast("Site connected to this wallet", "success");
+  };
 
   const { hasCopied, copy } = useClipboard(2000, {
     onSuccess: () => showToast("Address copied", "success"),
@@ -141,10 +248,12 @@ export function Dashboard({
   const handleCopyAddress = () => {
     if (!wallet?.address) return;
     const networkSetting = settings?.network || "all";
-    const netConfig = NETWORK_REGISTRY[networkSetting];
+    // resolveNetwork also covers custom user-added chains (user_<chainId>),
+    // so copying on a custom SVM/Sui/EVM network picks the right address.
+    const netConfig = resolveNetwork(networkSetting);
     let address = wallet.address;
-    if (netConfig?.addressType === "evm" && derivedEvmAddress) {
-      address = derivedEvmAddress;
+    if (netConfig?.addressType === "evm" && (wallet.evmAddress || derivedEvmAddress)) {
+      address = wallet.evmAddress || derivedEvmAddress!;
     } else if (netConfig?.addressType === "solana" && wallet.solanaAddress) {
       address = wallet.solanaAddress;
     } else if (netConfig?.addressType === "sui" && wallet.suiAddress) {
@@ -153,6 +262,17 @@ export function Dashboard({
       address = wallet.bitcoinAddress;
     }
     copy(address);
+  };
+
+  // Header address action: on a specific network copy that chain's address
+  // directly; on "all" keep the existing drawer listing every chain's address.
+  const handleHeaderAddressAction = () => {
+    const networkSetting = settings?.network || "all";
+    if (networkSetting === "all") {
+      setShowAddressDrawer(true);
+      return;
+    }
+    handleCopyAddress();
   };
 
   const handleBack = () => {
@@ -264,16 +384,25 @@ export function Dashboard({
           activeWalletIndex={activeWalletIndex}
           isRefreshing={isRefreshing}
           activeWalletTokens={tokens}
-          onSwitchWallet={setActiveWallet}
+          onSwitchWallet={handleSwitchWallet}
           onAddWallet={() => setShowAddWallet(true)}
           onRenameWallet={handleOpenRename}
           onRefresh={() => refreshBalance("both", { force: true })}
           onOpenSettings={() => setView("settings")}
-          onShowAddresses={() => setShowAddressDrawer(true)}
+          onShowAddresses={handleHeaderAddressAction}
           onOpenAccount={() => setViewLocal("account" as any)}
           networkSetting={settings?.network || "all"}
         />
       )}
+
+      {/* dApp connection migration prompt after wallet switch */}
+      <WalletSwitchMigrationModal
+        isOpen={!!migrationPrompt}
+        targetWalletName={migrationPrompt?.targetName || ""}
+        connections={migrationPrompt?.connections || []}
+        onConfirm={handleConfirmMigration}
+        onCancel={() => setMigrationPrompt(null)}
+      />
 
       {/* Rename Wallet Modal */}
       {showRenameModal && (

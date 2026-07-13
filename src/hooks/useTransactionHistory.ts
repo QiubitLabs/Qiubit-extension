@@ -20,6 +20,14 @@ const INCREMENTAL_TX_CHECK = 10; // tx refs checked on each periodic/manual refr
 const DISPLAY_PAGE = 25; // items shown per page
 const LOAD_MORE_FETCH = 50; // extra refs requested when user needs more beyond storage
 
+/**
+ * No-server mode: build history purely from locally-recorded user actions
+ * (send / swap / bridge / dApp transactions) — zero network calls for history.
+ * Incoming/received transactions are not shown. Flip to false to re-enable
+ * on-chain history sync (fetchAndMerge + Octra mempool staging).
+ */
+const HISTORY_LOCAL_ONLY = true;
+
 async function getStagedTxsCached(rpcClient: any): Promise<any[]> {
   if (stagedTxCache && Date.now() - stagedTxCache.ts < STAGED_TTL) {
     return stagedTxCache.data;
@@ -79,7 +87,10 @@ export function useTransactionHistory(
         storedCountRef.current = stored.length;
 
         let pendingTxs: Transaction[] = [];
-        if (network === "octra" || network === "mainnet" || network === "all") {
+        if (
+          !HISTORY_LOCAL_ONLY &&
+          (network === "octra" || network === "mainnet" || network === "all")
+        ) {
           try {
             const stagingTxs = await getStagedTxsCached(rpcClient);
             if (stagingTxs?.length) {
@@ -395,13 +406,14 @@ export function useTransactionHistory(
 
       const promise = (async () => {
         try {
-          const hasStorage =
-            (await loadTxHistoryAsync(network, addr, 1)).length > 0;
-          const fetchLimit = hasStorage
-            ? INCREMENTAL_TX_CHECK
-            : INITIAL_TX_FETCH;
-
-          await fetchAndMerge(fetchLimit);
+          if (!HISTORY_LOCAL_ONLY) {
+            const hasStorage =
+              (await loadTxHistoryAsync(network, addr, 1)).length > 0;
+            const fetchLimit = hasStorage
+              ? INCREMENTAL_TX_CHECK
+              : INITIAL_TX_FETCH;
+            await fetchAndMerge(fetchLimit);
+          }
           await renderDisplay(displayLimitRef.current);
           lastTxRefreshAt.current.set(addr, Date.now());
         } finally {
@@ -427,6 +439,7 @@ export function useTransactionHistory(
 
     try {
       if (
+        !HISTORY_LOCAL_ONLY &&
         newLimit > storedCountRef.current &&
         storedCountRef.current < totalOnChainRef.current
       ) {
@@ -455,9 +468,30 @@ export function useTransactionHistory(
     );
 
     let cancelled = false;
+    let lastPendingVerify = 0;
     const updateFromStorage = async () => {
+      // Skip the periodic storage read while the view is hidden (popup blurred
+      // or tab in background) — nothing is on screen to update.
+      if (document.hidden) return;
       try {
         const stored = await loadTxHistoryAsync(network, wallet.address, 1000);
+
+        // Local-only history never re-reads the chain, so landed transactions
+        // would show "Pending" forever. Verify each pending hash on its own
+        // chain (throttled — one targeted RPC per pending tx every ~15s).
+        const pendings = stored.filter((t: any) => t.status === "pending");
+        if (pendings.length > 0 && Date.now() - lastPendingVerify > 15_000) {
+          lastPendingVerify = Date.now();
+          const { verifyPendingTransactions } = await import(
+            "../utils/pendingTxVerifier"
+          );
+          void verifyPendingTransactions(
+            pendings as any[],
+            wallet.address,
+            wallet.evmAddress,
+          ).catch(() => {});
+        }
+
         if (!cancelled) {
           const sorted = stored.sort(
             (a, b) => Number(b.timestamp) - Number(a.timestamp),

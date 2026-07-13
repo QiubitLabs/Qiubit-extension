@@ -201,6 +201,9 @@ export async function handleSolanaSendTransaction(
       "solanaSendTransaction",
       {
         transaction: params.transaction || params,
+        // Forward send options — carries the target cluster
+        // (e.g. "solana:devnet") from Wallet Standard callers.
+        options: params.options,
         publicKey: connection!.address,
         chain: "solana",
       },

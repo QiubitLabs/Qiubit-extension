@@ -11,10 +11,8 @@ import {
 import { AddTokenModal } from "./AddTokenModal";
 import "./AddTokenModal.css";
 import { Wallet, Token } from "../../../types";
-import {
-  filterTokensByNetwork,
-  NETWORK_REGISTRY,
-} from "../../../constants/networks/registry";
+import { filterTokensByNetwork } from "../../../constants/networks/registry";
+import { resolveNetwork } from "../../../services/network/NetworkResolver";
 
 interface HomeViewProps {
   wallet: Wallet;
@@ -99,11 +97,16 @@ export function HomeView({
   }, [allTokens]);
 
   const tokens = useMemo(() => {
-    const netConfig = NETWORK_REGISTRY[networkSetting];
+    // resolveNetwork (not NETWORK_REGISTRY) so custom user-added chains
+    // (user_<chainId>) resolve too — otherwise their native token fell back to
+    // OCT and the chain's real native never showed on Home.
+    const netConfig = resolveNetwork(networkSetting);
     const isEvm = netConfig?.isEVM === true;
-    const isSolana = netConfig?.id === "solana";
-    const isSui = netConfig?.id === "sui";
-    const isBitcoin = netConfig?.id === "bitcoin";
+    // Detect by addressType (not a hardcoded id) so custom Solana-VM / Sui-VM
+    // networks (id `user_<chainId>`) get their native token too.
+    const isSolana = netConfig?.addressType === "solana";
+    const isSui = netConfig?.addressType === "sui";
+    const isBitcoin = netConfig?.addressType === "bitcoin";
 
     const nativeToken: Token =
       isEvm && netConfig.nativeToken
@@ -155,6 +158,8 @@ export function HomeView({
                   )?.balance || "0.0000",
                 isNative: false,
                 isSui: true,
+                chainId: netConfig.chainId!,
+                isTestnet: netConfig.isTestnet,
                 logoUrl: netConfig.nativeToken.logoUrl,
                 decimals: netConfig.nativeToken.decimals,
               }
@@ -171,6 +176,8 @@ export function HomeView({
                     )?.balance || "0.0000",
                   isNative: false,
                   isBitcoin: true,
+                  chainId: netConfig.chainId!,
+                  isTestnet: netConfig.isTestnet,
                   logoUrl: netConfig.nativeToken.logoUrl,
                   decimals: netConfig.nativeToken.decimals,
                 }
@@ -202,10 +209,55 @@ export function HomeView({
       return hasNative ? mappedTokens : [octNativeToken, ...mappedTokens];
     }
 
-    const filtered = filterTokensByNetwork(
+    let filtered = filterTokensByNetwork(
       mappedTokens,
       networkSetting,
     ) as Token[];
+
+    // Hard guard: OCT (the Octra-native token, isNative===true) must only ever
+    // appear on the Octra network or the "all" view — never on EVM / Solana /
+    // Sui / testnet / custom networks. Chain natives (ETH, SOL, SUI, custom) are
+    // isNative:false, so they are untouched.
+    if (networkSetting !== "octra") {
+      filtered = filtered.filter(
+        (t) => !(t.isNative === true || (t.symbol || "").toUpperCase() === "OCT"),
+      );
+    }
+
+    // Dedupe by asset identity (vm + symbol + contract). Stale snapshot entries
+    // or double-injection can yield the same asset twice; entries carrying a
+    // chainId win over chainId-less twins, and distinct chainIds (mainnet vs
+    // testnet) stay separate assets.
+    {
+      const groups = new Map<string, Token[]>();
+      for (const t of filtered) {
+        const vm = t.isSolana
+          ? "sol"
+          : t.isSui
+            ? "sui"
+            : t.isBitcoin
+              ? "btc"
+              : t.isEVM
+                ? "evm"
+                : "octra";
+        const key = `${vm}:${(t.symbol || "").toUpperCase()}:${(t.contractAddress || "").toLowerCase()}`;
+        const arr = groups.get(key);
+        if (arr) arr.push(t);
+        else groups.set(key, [t]);
+      }
+      const deduped: Token[] = [];
+      for (const list of groups.values()) {
+        const withChain = list.filter((t) => t.chainId != null);
+        if (withChain.length === 0) {
+          deduped.push(list[0]);
+          continue;
+        }
+        const byChain = new Map<number, Token>();
+        for (const t of withChain) byChain.set(t.chainId!, t);
+        deduped.push(...byChain.values());
+      }
+      filtered = deduped;
+    }
 
     if (isEvm && netConfig?.nativeToken) {
       const hasEvmNative = filtered.some(
@@ -330,7 +382,18 @@ export function HomeView({
         return popularSymbols.includes(upperSymbol);
       });
 
+    // Octra's own tokens are pinned to the top regardless of fiat value:
+    // OCT (native) first, then wOCT (wrapped), then everything else by USD desc.
+    const rank = (t: Token & { price?: number }): number => {
+      const sym = (t.symbol || "").toUpperCase();
+      if (t.isNative || sym === "OCT") return 0;
+      if (sym === "WOCT") return 1;
+      return 2;
+    };
     return mapped.sort((a, b) => {
+      const ra = rank(a);
+      const rb = rank(b);
+      if (ra !== rb) return ra - rb;
       const balA =
         typeof a.balance === "string" ? parseFloat(a.balance) : a.balance || 0;
       const balB =
@@ -342,10 +405,15 @@ export function HomeView({
   }, [tokens, priceMap]);
 
   const { mainTokens, lowValueTokens } = useMemo(() => {
-    const netConfig = NETWORK_REGISTRY[networkSetting];
-    const isEvm = netConfig?.isEVM === true;
-    const nativeSymbol =
-      isEvm && netConfig?.nativeToken ? netConfig.nativeToken.symbol : "OCT";
+    const netConfig = resolveNetwork(networkSetting);
+    // Native symbol of the active network, any VM (EVM/Solana/Sui/Bitcoin/
+    // custom) — not just EVM, otherwise SUI/SOL natives fell into "low assets".
+    const nativeSymbol = netConfig?.nativeToken?.symbol ?? "OCT";
+
+    // Testnets and custom chains have no market prices at all, so the
+    // price-based "low assets" split is meaningless there — show everything.
+    const noPriceNetwork =
+      netConfig?.isTestnet === true || networkSetting.startsWith("user_");
 
     const main: (Token & { price: number; change24h: number })[] = [];
     const low: (Token & { price: number; change24h: number })[] = [];
@@ -361,7 +429,7 @@ export function HomeView({
 
       // OCS-01 tokens have no market price but are the user's own Octra tokens,
       // so keep them in the main list rather than the collapsed low-value area.
-      if (isNativeToken || hasPrice || t.isOCS01) {
+      if (noPriceNetwork || isNativeToken || hasPrice || t.isOCS01) {
         main.push(t);
       } else {
         low.push(t);

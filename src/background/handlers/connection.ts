@@ -6,6 +6,7 @@ import {
   saveConnections,
   getChainIdForNetworkSetting,
   isEvmNetworkSetting,
+  isNonEvmUserChain,
   networkIdForSetting,
   requireConnectedWallet,
   broadcastToTabs,
@@ -29,6 +30,12 @@ export async function handleConnect(
   if (!networkSetting) {
     const active = await getActiveNetwork();
     networkSetting = isEvmNetworkSetting(active) ? active : "ethereum";
+    // Custom Solana-VM / Sui-VM networks share the user_<id> setting form but
+    // are NOT Ethereum chains — an EVM dApp connect must not bind to them.
+    if (networkSetting.startsWith("user_")) {
+      const cid = parseInt(networkSetting.slice(5), 10);
+      if (await isNonEvmUserChain(cid)) networkSetting = "ethereum";
+    }
   }
   const activeChainId = getChainIdForNetworkSetting(networkSetting);
   const activeNetworkId = networkIdForSetting(networkSetting);
@@ -58,6 +65,12 @@ export async function handleConnect(
           existing.chainId = activeChainId;
           existing.networkId = activeNetworkId;
           existing.networkSetting = networkSetting;
+          existing.authorizedAddresses = Array.from(
+            new Set([
+              ...(existing.authorizedAddresses ?? [existing.address]),
+              fresh.address,
+            ]),
+          );
           dappConnections.set(origin, existing);
           await saveConnections();
         }
@@ -134,6 +147,7 @@ export async function handleConnect(
       : 1;
   const freshNetworkId = networkIdForSetting(freshNetworkSetting);
 
+  const prior = dappConnections.get(origin);
   const connection = {
     origin,
     title: title || "",
@@ -145,6 +159,9 @@ export async function handleConnect(
     networkId: freshNetworkId,
     chainId: freshChainId,
     networkSetting: freshNetworkSetting,
+    authorizedAddresses: Array.from(
+      new Set([...(prior?.authorizedAddresses ?? []), wallet.address]),
+    ),
   };
   dappConnections.set(origin, connection);
   await saveConnections();

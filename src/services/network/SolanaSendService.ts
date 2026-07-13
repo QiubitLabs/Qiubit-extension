@@ -10,8 +10,23 @@
 
 import type { Token } from "../../types";
 import { getSolanaEndpoints } from "./SolanaRpcService";
+import { getUserNetworkByChainId } from "./UserNetworkService";
 
-const SOLANA_RPC_URLS = getSolanaEndpoints();
+/**
+ * RPC endpoints for the chain a token lives on: custom SVM networks use their
+ * own RPC, the Devnet/Testnet sentinels use their cluster, else mainnet.
+ */
+function endpointsForToken(token: Token): string[] {
+  if (token.chainId) {
+    const custom = getUserNetworkByChainId(token.chainId);
+    if (custom?.rpcUrls?.[0]) return [custom.rpcUrls[0]];
+    if (token.chainId === 1151111081099720) return getSolanaEndpoints("devnet");
+    if (token.chainId === 1151111081099721)
+      return getSolanaEndpoints("testnet");
+  }
+  if (token.isTestnet) return getSolanaEndpoints("devnet");
+  return getSolanaEndpoints("mainnet");
+}
 
 const TOKEN_PROGRAM = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 const TOKEN_2022_PROGRAM = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -24,10 +39,10 @@ export function toRawAmount(amount: string, decimals: number): bigint {
   return BigInt(whole || "0") * 10n ** BigInt(decimals) + BigInt(fracPadded || "0");
 }
 
-async function getConnection() {
+async function getConnection(urls: string[]) {
   const { Connection } = await import("@solana/web3.js");
   let lastErr: unknown;
-  for (const url of SOLANA_RPC_URLS) {
+  for (const url of urls) {
     try {
       const conn = new Connection(url, "confirmed");
       await conn.getLatestBlockhash();
@@ -49,7 +64,7 @@ export async function sendSolanaTransaction(params: {
   const web3 = await import("@solana/web3.js");
   const { Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } = web3;
 
-  const connection = await getConnection();
+  const connection = await getConnection(endpointsForToken(token));
   const seedBytes = new Uint8Array(Buffer.from(privateKeyHex, "hex"));
   const keypair = Keypair.fromSeed(seedBytes);
   const fromPubkey = keypair.publicKey;

@@ -172,11 +172,27 @@ export function TokenSelectorModal({
     );
   });
 
+  // USD value of a holding = balance * price. Tokens with a balance but no
+  // known price get value 0 and fall back to the raw-balance tiebreaker below.
+  const usdValueOf = (t: any): number => {
+    const bal = parseFloat(t.balance || "0");
+    if (!(bal > 0)) return 0;
+    const info = tokenPrices.get((t.symbol || "").toUpperCase());
+    return info && info.price > 0 ? bal * info.price : 0;
+  };
+
+  // Sort by holding value (nominal USD) descending, so the tokens the user
+  // owns most of surface first. Falls back to raw balance, then symbol.
   const sortedList = [...finalList].sort((a, b) => {
+    const ua = usdValueOf(a),
+      ub = usdValueOf(b);
+    if (ua !== ub) return ub - ua;
     const ba = parseFloat(a.balance || "0"),
       bb = parseFloat(b.balance || "0");
-    if (ba > 0 && bb === 0) return -1;
-    if (bb > 0 && ba === 0) return 1;
+    const aHas = ba > 0,
+      bHas = bb > 0;
+    if (aHas !== bHas) return aHas ? -1 : 1;
+    if (aHas && bHas && ba !== bb) return bb - ba;
     return a.symbol.localeCompare(b.symbol);
   });
 

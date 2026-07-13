@@ -9,6 +9,13 @@ export interface DappConnection {
   networkId: string;
   chainId: number;
   networkSetting: string;
+  /**
+   * Octra addresses this origin has authorized (EIP-2255 style per-site
+   * permission set). Switching the active wallet auto-propagates to a site
+   * only when the new wallet is already in this set; otherwise the user is
+   * prompted to grant it. Absent on legacy connections → treat `[address]`.
+   */
+  authorizedAddresses?: string[];
 }
 
 export interface DappApproval {

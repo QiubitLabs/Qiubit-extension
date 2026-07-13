@@ -16,7 +16,10 @@
 
 import { Token } from "../types";
 
-const SCHEMA_VERSION = 2;
+// v4: the Sui-testnet sentinel chainId changed (the old ...001 sat above
+// Number.MAX_SAFE_INTEGER and silently rounded to the mainnet id, corrupting
+// stored tokens). v3: Solana/Sui natives gained chainId + isTestnet.
+const SCHEMA_VERSION = 4;
 const KEY_PREFIX = "w_snap_";
 
 export interface WalletSnapshot {

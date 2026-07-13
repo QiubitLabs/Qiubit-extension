@@ -18,7 +18,7 @@ export const QiubitLogo: React.FC<IconProps> = ({
   className = "",
 }) => (
   <img
-    src="/icon.svg"
+    src="/qiubit-icon.svg"
     alt="Qiubit"
     width={size}
     height={size}

@@ -113,6 +113,7 @@ export function suiSignTransaction(
 const SUI_RPC_URLS = [
   "https://fullnode.mainnet.sui.io",
   "https://sui-rpc.publicnode.com",
+  "https://rpc-mainnet.suiscan.xyz",
 ];
 
 /**
@@ -122,10 +123,22 @@ const SUI_RPC_URLS = [
 export async function suiSignAndExecute(
   txInput: number[] | Uint8Array | string | Record<string, number>,
   privateKeyHex: string,
+  chain?: string,
 ): Promise<any> {
+  // Wallet Standard chain id ("sui:testnet"/"sui:devnet") routes execution to
+  // that cluster's fullnode instead of mainnet.
+  const urls = chain?.includes("testnet")
+    ? [
+        "https://sui-testnet-rpc.publicnode.com",
+        "https://rpc-testnet.suiscan.xyz",
+        "https://fullnode.testnet.sui.io",
+      ]
+    : chain?.includes("devnet")
+      ? ["https://fullnode.devnet.sui.io"]
+      : SUI_RPC_URLS;
   const { signature, bytes } = suiSignTransaction(txInput, privateKeyHex);
   let lastErr: unknown;
-  for (const url of SUI_RPC_URLS) {
+  for (const url of urls) {
     try {
       const resp = await fetch(url, {
         method: "POST",

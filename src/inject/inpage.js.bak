@@ -923,7 +923,9 @@
             version: '1.0.0',
             supportedTransactionVersions: ['legacy', 0],
             signAndSendTransaction: async ({ transaction, account, chain, options }) => {
-                const sig = await solanaProvider.sendTransaction(transaction, options);
+                // Thread the target cluster through so devnet/testnet dApps
+                // broadcast to their own cluster instead of mainnet.
+                const sig = await solanaProvider.sendTransaction(transaction, { ...(options || {}), chain });
                 // Signature must be raw bytes (base58 string → bytes).
                 return [{ signature: toUint8(typeof sig === 'string' ? sig : sig?.signature ?? sig) }];
             },
@@ -1137,7 +1139,7 @@
         'sui:signAndExecuteTransaction': {
             version: '2.0.0',
             signAndExecuteTransaction: async ({ transaction, account, chain }) => {
-                return await suiProvider.signAndExecuteTransaction(transaction);
+                return await suiProvider.signAndExecuteTransaction(transaction, { chain });
             },
         },
         // Legacy *Block features: older @mysten/dapp-kit / wallet-adapter
@@ -1156,7 +1158,7 @@
         'sui:signAndExecuteTransactionBlock': {
             version: '1.0.0',
             signAndExecuteTransactionBlock: async ({ transactionBlock, account, chain, options }) => {
-                return await suiProvider.signAndExecuteTransaction(transactionBlock, options || {});
+                return await suiProvider.signAndExecuteTransaction(transactionBlock, { ...(options || {}), chain });
             },
         },
         'sui:reportTransactionEffects': {

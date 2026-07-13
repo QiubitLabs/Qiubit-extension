@@ -286,6 +286,19 @@ export function isEvmNetworkSetting(networkSetting: string): boolean {
   );
 }
 
+/**
+ * True when the given chainId belongs to a user-added network whose VM is NOT
+ * EVM (Solana-VM / Sui-VM). Those share the `user_<id>` setting form but must
+ * never be treated as an Ethereum chain by the EVM dApp flows.
+ */
+export async function isNonEvmUserChain(
+  chainIdDecimal: number,
+): Promise<boolean> {
+  const nets = await getUserNetworksFromStorage();
+  const found = nets.find((n: any) => n.chainIdDecimal === chainIdDecimal);
+  return !!found?.vm && found.vm !== "evm";
+}
+
 export function getChainIdForNetworkSetting(
   networkSetting: string | undefined,
 ): number {

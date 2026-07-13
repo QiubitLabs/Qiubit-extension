@@ -8,6 +8,7 @@ import { Token, Wallet } from "../../../types";
 import { formatAmount } from "../../../utils/crypto";
 import {
   getMultipleTokenPrices,
+  getMultiplePricesByContractsMultiChain,
   seedTokenPrice,
   formatUsd,
 } from "../../../services/network/PriceService";
@@ -16,6 +17,7 @@ import {
   fetchTokenMetadata,
 } from "../../../services/features/CustomTokenService";
 import { saveEvmTxHistory, saveTxHistorySecure } from "../../../utils/storage";
+import { cleanErrorMessage } from "../../../utils/errorMessages";
 import {
   fetchGasOptions,
   gweiToWei,
@@ -259,22 +261,93 @@ export function SwapTab({
     toChain.chainId,
   ]);
 
+  const allTokensRef = useRef<Token[]>(allTokens);
+  allTokensRef.current = allTokens;
+
   useEffect(() => {
-    const symbols = new Set<string>();
-    if (fromToken?.symbol) symbols.add(fromToken.symbol.toUpperCase());
-    if (toToken?.symbol) symbols.add(toToken.symbol.toUpperCase());
-    if (fromChain?.symbol) symbols.add(fromChain.symbol.toUpperCase());
-    if (toChain?.symbol) symbols.add(toChain.symbol.toUpperCase());
-    const uniqueSymbols = Array.from(symbols);
-    if (uniqueSymbols.length === 0) return;
-    getMultipleTokenPrices(uniqueSymbols).then((prices) => {
+    // Price everything the swap UI shows in USD: natives by symbol, ERC-20s by
+    // contract via DexScreener. wOCT stays pegged 1:1 to OCT inside that helper
+    // (its thin pool is depegged, ~$0.05 vs OCT's ~$0.018), so it shows the
+    // correct value with no transient. When the token selector is open we also
+    // price every token it lists so each row shows a USD value, not just the
+    // active from/to pair.
+    const nativeSymbols = new Set<string>();
+    const erc20 = new Map<
+      string,
+      { symbol: string; contractAddress: string; chainId: number }
+    >();
+
+    const NATIVE_MARKERS = new Set([
+      "",
+      "0x0000000000000000000000000000000000000000",
+      "sui",
+      "bitcoin",
+      "solana",
+      "11111111111111111111111111111111",
+    ]);
+
+    const consider = (t: any) => {
+      if (!t?.symbol) return;
+      const sym = String(t.symbol).toUpperCase();
+      const contract = (t.contractAddress || "").toLowerCase();
+      const isNative =
+        t.isNative === true ||
+        NATIVE_MARKERS.has(contract) ||
+        contract.includes("::sui::sui");
+      if (isNative) {
+        nativeSymbols.add(sym);
+      } else if (t.chainId) {
+        erc20.set(`${t.chainId}:${contract}`, {
+          symbol: sym,
+          contractAddress: t.contractAddress,
+          chainId: t.chainId,
+        });
+      }
+    };
+
+    consider(fromToken);
+    consider(toToken);
+    if (fromChain?.symbol) nativeSymbols.add(fromChain.symbol.toUpperCase());
+    if (toChain?.symbol) nativeSymbols.add(toChain.symbol.toUpperCase());
+    if (showTokenSelector) {
+      for (const t of allTokensRef.current ?? []) consider(t);
+    }
+
+    if (nativeSymbols.size === 0 && erc20.size === 0) return;
+
+    let cancelled = false;
+    const merge = (m: Map<string, { price: number; change24h: number }>) => {
+      if (cancelled || m.size === 0) return;
       setTokenPrices((prev) => {
-        const newPrices = new Map(prev);
-        prices.forEach((val, key) => newPrices.set(key, val));
-        return newPrices;
+        const next = new Map(prev);
+        m.forEach((val, key) => next.set(key.toUpperCase(), val));
+        return next;
       });
-    });
-  }, [fromToken?.symbol, toToken?.symbol, fromChain?.id, toChain?.id]);
+    };
+
+    if (nativeSymbols.size > 0) {
+      getMultipleTokenPrices(Array.from(nativeSymbols))
+        .then(merge)
+        .catch(() => {});
+    }
+    if (erc20.size > 0) {
+      getMultiplePricesByContractsMultiChain(Array.from(erc20.values()))
+        .then(merge)
+        .catch(() => {});
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    fromToken?.symbol,
+    fromToken?.contractAddress,
+    toToken?.symbol,
+    toToken?.contractAddress,
+    fromChain?.id,
+    toChain?.id,
+    showTokenSelector,
+  ]);
 
   const userBalance = useMemo(() => {
     if (fromChain.id === "octra") {
@@ -537,6 +610,7 @@ export function SwapTab({
       return;
     }
 
+
     let fromAddr = wallet.evmAddress;
     if (fromChain.id === "solana") {
       fromAddr = wallet.solanaAddress;
@@ -623,7 +697,7 @@ export function SwapTab({
       );
     } catch (e: any) {
       if (requestId !== quoteRequestId.current) return;
-      setQuoteError(e.message || "Failed to fetch quote.");
+      setQuoteError(cleanErrorMessage(e, "Failed to fetch quote."));
       setQuote(null);
       setToAmount("");
     } finally {
@@ -783,10 +857,86 @@ export function SwapTab({
     setTxHash("");
 
     try {
-      if (fromChain.id === "sui" || fromChain.id === "bitcoin") {
+      if (fromChain.id === "bitcoin") {
         throw new Error(
-          `Cross-chain swaps starting from ${fromChain.name} are currently supported in receive mode. Please swap from an EVM network or Solana to receive ${fromChain.name} assets.`,
+          `Cross-chain swaps starting from ${fromChain.name} are currently supported in receive mode. Please swap from an EVM network, Solana, or Sui to receive ${fromChain.name} assets.`,
         );
+      }
+
+      if (fromChain.id === "sui") {
+        setExecStatus("Submitting swap to Sui network...");
+        const txData = quote.transactionRequest?.data;
+        if (!txData)
+          throw new Error("No transaction request returned from LI.FI.");
+
+        const suiPrivateKeyHex = wallet.suiPrivateKeyHex;
+        if (!suiPrivateKeyHex)
+          throw new Error("Sui private key not found in wallet.");
+
+        const { suiSignAndExecute } = await import(
+          "../../../services/network/SuiSignService"
+        );
+        setExecStatus("Signing and broadcasting on Sui...");
+        const result = await suiSignAndExecute(txData, suiPrivateKeyHex);
+        const digest =
+          result?.digest || result?.effects?.transactionDigest || "";
+        if (!digest)
+          throw new Error("Sui transaction did not return a digest.");
+
+        setTxHash(digest);
+        setSwapStep("waiting");
+        saveTxHistorySecure(
+          [
+            {
+              hash: digest,
+              type: "out",
+              amount: parseFloat(fromAmount) || 0,
+              symbol: fromToken.symbol,
+              token: fromToken.symbol,
+              address: "",
+              timestamp: Date.now(),
+              status: "pending",
+              networkId: "sui",
+            },
+          ],
+          "sui",
+          wallet.address,
+        );
+        setExecStatus(
+          "Sui transaction submitted! Tracking cross-chain execution...",
+        );
+
+        let completed = false;
+        for (let i = 0; i < 60; i++) {
+          await new Promise((r) => setTimeout(r, 6000));
+          try {
+            const _lifiKey =
+              (import.meta.env.VITE_LIFI_API_KEY as string) || "";
+            const statusResp = await fetch(
+              `https://li.quest/v1/status?txHash=${digest}&fromChain=${fromChain.chainId}&toChain=${toChain.chainId}`,
+              _lifiKey ? { headers: { "x-lifi-api-key": _lifiKey } } : {},
+            );
+            const statusData = await statusResp.json();
+            const stat = statusData.status;
+            setLifiStatus(stat);
+            if (stat === "DONE") {
+              setSwapStep("success");
+              completed = true;
+              onRefresh();
+              break;
+            } else if (stat === "FAILED") {
+              throw new Error("Bridge execution failed on destination chain.");
+            }
+          } catch {}
+        }
+
+        if (!completed) {
+          setExecStatus(
+            "Transaction executing safely on Sui. Please verify inside Suiscan.",
+          );
+          setSwapStep("success");
+        }
+        return;
       }
 
       if (fromChain.id === "solana") {
@@ -838,6 +988,23 @@ export function SwapTab({
 
         setTxHash(signature);
         setSwapStep("waiting");
+        saveTxHistorySecure(
+          [
+            {
+              hash: signature,
+              type: "out",
+              amount: parseFloat(fromAmount) || 0,
+              symbol: fromToken.symbol,
+              token: fromToken.symbol,
+              address: "",
+              timestamp: Date.now(),
+              status: "pending",
+              networkId: "solana",
+            },
+          ],
+          "solana",
+          wallet.address,
+        );
         setExecStatus(
           "Solana transaction submitted! Tracking cross-chain execution...",
         );

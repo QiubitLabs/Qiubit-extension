@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => {
       viteStaticCopy({
         targets: [
           { src: 'manifest.json', dest: '.' },
-          { src: 'public/icon.svg', dest: '.' },
-          { src: 'public/qiubit-icon.svg', dest: '.' }
+          { src: 'public/qiubit-icon.svg', dest: '.' },
+          { src: 'public/octra-icon.svg', dest: '.' }
         ]
       })
     ],
@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => {
           popup: resolve(__dirname, 'index.html'),
           background: resolve(__dirname, 'src/background/index.ts'),
           contentScript: resolve(__dirname, 'src/inject/contentScript.js'),
-          inpage: resolve(__dirname, 'src/inject/inpage.js')
+          inpage: resolve(__dirname, 'src/inject/inpage/index.ts')
         },
         output: {
           entryFileNames: (chunkInfo) => {

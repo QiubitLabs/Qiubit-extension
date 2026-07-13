@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { ChevronLeftIcon } from "../../shared/Icons";
+import { ChevronLeftIcon, PlusIcon } from "../../shared/Icons";
 import { Settings } from "../../../types";
 import { NETWORK_REGISTRY } from "../../../constants/networks/registry";
 import {
@@ -13,6 +13,8 @@ import {
   removeUserNetwork,
   type UserNetwork,
 } from "../../../services/network/UserNetworkService";
+import { AddCustomNetworkModal } from "./AddCustomNetworkModal";
+import "./AddCustomNetworkModal.css";
 import "./NetworkSwitcher.css";
 
 interface NetworkSwitcherProps {
@@ -34,9 +36,14 @@ export function NetworkSwitcher({
 
   const [userNetworks, setUserNetworks] = useState<UserNetwork[]>([]);
   const [filter, setFilter] = useState<"all" | "mainnet" | "testnet">("all");
+  const [showAddNetwork, setShowAddNetwork] = useState(false);
+
+  const reloadUserNetworks = () => {
+    getUserNetworks().then(setUserNetworks);
+  };
 
   useEffect(() => {
-    getUserNetworks().then(setUserNetworks);
+    reloadUserNetworks();
   }, []);
 
   const handleNetworkSwitch = (network: string) => {
@@ -97,7 +104,22 @@ export function NetworkSwitcher({
           </button>
           <span className="text-lg font-semibold">Network</span>
         </div>
+        <button
+          className="header-icon-btn"
+          onClick={() => setShowAddNetwork(true)}
+          aria-label="Add custom network"
+          title="Add custom network"
+        >
+          <PlusIcon size={20} />
+        </button>
       </header>
+
+      {showAddNetwork && (
+        <AddCustomNetworkModal
+          onClose={() => setShowAddNetwork(false)}
+          onAdded={reloadUserNetworks}
+        />
+      )}
 
       <div className="wallet-content">
         {/* Sleek Segmented Control Filter Tabs */}

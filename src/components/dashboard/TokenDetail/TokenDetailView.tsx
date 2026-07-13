@@ -239,6 +239,12 @@ export function TokenDetailView({
 
   useEffect(() => {
     const fetchPrice = async () => {
+      // Testnet coins have no market — fetching by symbol would attach the
+      // MAINNET price (e.g. testnet SUI showing $0.67). Show no price instead.
+      if (token.isTestnet) {
+        setPriceData(null);
+        return;
+      }
       if (
         token.isEVM &&
         token.contractAddress &&
@@ -350,8 +356,11 @@ export function TokenDetailView({
           <div className="td-header-symbol">{token.symbol}</div>
           {token.isTestnet && <span className="td-testnet-badge">testnet</span>}
           {token.contractAddress &&
-            token.contractAddress !==
-              "0x0000000000000000000000000000000000000000" && (
+            // Internal native-coin sentinels are not real contract addresses —
+            // showing/copying them ("sui", "bitcoin", …) is meaningless.
+            !["0x0000000000000000000000000000000000000000", "sui", "bitcoin", "solana"].includes(
+              token.contractAddress.toLowerCase(),
+            ) && (
               <div
                 className="td-header-address-row"
                 onClick={handleCopyAddress}

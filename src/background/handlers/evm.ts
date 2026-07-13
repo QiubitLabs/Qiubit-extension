@@ -146,7 +146,10 @@ export async function handleEvmRpcPassthrough(
   let rpcUrl = getPrimaryRpc(chainId);
   if (!rpcUrl) {
     const userNets = await getUserNetworksFromStorage();
-    const userNet = userNets.find((n: any) => n.chainIdDecimal === chainId);
+    const userNet = userNets.find(
+      (n: any) =>
+        n.chainIdDecimal === chainId && (!n.vm || n.vm === "evm"),
+    );
     const candidateUrl = userNet?.rpcUrls?.[0];
     if (!candidateUrl) {
       return {
@@ -267,7 +270,9 @@ export async function handleSwitchEthereumChain(
     const found = userNets.find(
       (n: any) => n.chainIdDecimal === chainIdDecimal,
     );
-    if (found) networkSetting = `user_${chainIdDecimal}`;
+    // Custom Solana-VM / Sui-VM networks are not switchable Ethereum chains.
+    if (found && (!found.vm || found.vm === "evm"))
+      networkSetting = `user_${chainIdDecimal}`;
   }
   if (!networkSetting) {
     return {

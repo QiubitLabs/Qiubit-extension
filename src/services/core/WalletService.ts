@@ -127,19 +127,21 @@ class WalletServiceImpl {
         walletAddressOrObject &&
         typeof walletAddressOrObject === "object"
       ) {
-        const cid = token.chainId;
-        if (cid === 1151111081099710) {
+        // Pick the address by VM flags, not hardcoded mainnet chainIds —
+        // otherwise testnet/devnet and custom SVM/Sui tokens fell through to
+        // the EVM address and the wrong chain entirely.
+        if (token.isSolana) {
           walletAddress =
             walletAddressOrObject.solanaAddress ||
             walletAddressOrObject.address;
-        } else if (cid === 9270000000000000) {
+        } else if (token.isSui) {
           walletAddress =
             walletAddressOrObject.suiAddress || walletAddressOrObject.address;
-        } else if (cid === 20000000000001) {
+        } else if (token.isBitcoin) {
           walletAddress =
             walletAddressOrObject.bitcoinAddress ||
             walletAddressOrObject.address;
-        } else if (cid === 9048201) {
+        } else if (token.isNative || token.chainId === 9048201) {
           walletAddress = walletAddressOrObject.address;
         } else {
           walletAddress =
@@ -149,13 +151,28 @@ class WalletServiceImpl {
         walletAddress = "";
       }
 
-      if (token.chainId === 9270000000000000 && walletAddress) {
-        const { suiRpc } = await import("../network/SuiRpcService");
+      if (token.isSui && walletAddress) {
+        const { suiRpc, SUI_TESTNET_RPCS, SUI_MAINNET_RPCS } = await import(
+          "../network/SuiRpcService"
+        );
+        const { getUserNetworkByChainId } = await import(
+          "../network/UserNetworkService"
+        );
+        // Route to the token's own cluster: custom Sui-VM → its RPC,
+        // testnet sentinel → testnet fullnodes, else mainnet.
+        const customRpc = token.chainId
+          ? getUserNetworkByChainId(token.chainId)?.rpcUrls?.[0]
+          : undefined;
+        const urls = customRpc
+          ? [customRpc]
+          : token.chainId === 9270000000000002 || token.isTestnet
+            ? SUI_TESTNET_RPCS
+            : SUI_MAINNET_RPCS;
         const coinType =
           token.contractAddress === "sui" || !token.contractAddress
             ? "0x2::sui::SUI"
             : token.contractAddress;
-        const rawBal = await suiRpc.getBalance(walletAddress, coinType);
+        const rawBal = await suiRpc.getBalance(walletAddress, coinType, urls);
         if (coinType !== "0x2::sui::SUI") {
           const dec = token.decimals ?? 9;
           return parseFloat(rawBal) / Math.pow(10, dec);
@@ -163,25 +180,33 @@ class WalletServiceImpl {
         return parseFloat(rawBal);
       }
 
-      if (
-        token.chainId === 1151111081099710 &&
-        walletAddress &&
-        token.contractAddress &&
-        token.contractAddress !== "solana"
-      ) {
+      if (token.isSolana && walletAddress) {
         const { solanaRpc } = await import("../network/SolanaRpcService");
-        const rawBal = await solanaRpc.getSplBalance(
-          walletAddress,
-          token.contractAddress,
-        );
+        if (token.contractAddress && token.contractAddress !== "solana") {
+          const rawBal = await solanaRpc.getSplBalance(
+            walletAddress,
+            token.contractAddress,
+          );
+          return parseFloat(rawBal);
+        }
+        // Native SOL on the token's own cluster (mainnet/devnet/testnet).
+        const cluster =
+          token.chainId === 1151111081099720
+            ? ("devnet" as const)
+            : token.chainId === 1151111081099721
+              ? ("testnet" as const)
+              : ("mainnet" as const);
+        const rawBal = await solanaRpc.getBalance(walletAddress, cluster);
         return parseFloat(rawBal);
       }
 
       const isEvmChain =
-        token.chainId !== 9048201 &&
-        token.chainId !== 1151111081099710 &&
-        token.chainId !== 9270000000000000 &&
-        token.chainId !== 20000000000001;
+        token.isEVM === true ||
+        (!token.isNative &&
+          !token.isSolana &&
+          !token.isSui &&
+          !token.isBitcoin &&
+          token.chainId !== 9048201);
 
       if (!isEvmChain) {
         return typeof token.balance === "string"

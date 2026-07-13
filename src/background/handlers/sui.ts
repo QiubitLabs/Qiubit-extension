@@ -150,7 +150,9 @@ export async function handleSuiSignTransaction(
       origin,
       "suiSignTransaction",
       {
-        transaction: params.transaction || params,
+        // inpage sends { txBlock, address } — unwrap to the raw tx bytes so
+        // the signer never receives the envelope object.
+        transaction: params.transaction || params.txBlock || params,
         address: connection!.address,
         chain: "sui",
       },
@@ -180,7 +182,10 @@ export async function handleSuiSignAndExecuteTransaction(
       origin,
       "suiSignAndExecuteTransaction",
       {
-        transaction: params.transaction || params,
+        // inpage sends { txBlock, options, address } — unwrap the tx bytes and
+        // forward options (carries the target chain, e.g. "sui:testnet").
+        transaction: params.transaction || params.txBlock || params,
+        options: params.options,
         address: connection!.address,
         chain: "sui",
       },

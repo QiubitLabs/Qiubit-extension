@@ -14,22 +14,63 @@ import { NETWORK_REGISTRY } from "../constants/networks/registry";
 import { getUserNetworksSync } from "../services/network/UserNetworkService";
 import { getCustomTokens } from "../services/features/CustomTokenService";
 import { getRpcList } from "../config/rpcEndpoints";
-import { solanaRpc } from "../services/network/SolanaRpcService";
-import { suiRpc } from "../services/network/SuiRpcService";
+import {
+  solanaRpc,
+  type SolanaCluster,
+} from "../services/network/SolanaRpcService";
+import { suiRpc, SUI_TESTNET_RPCS } from "../services/network/SuiRpcService";
 import { bitcoinRpc } from "../services/network/BitcoinRpcService";
+import { fetchNativeBalanceMoralis } from "../services/network/MoralisEvmService";
 
 /**
- * Fetch Solana balance using SolanaRpcService
+ * Fetch Solana balance using SolanaRpcService (mainnet or devnet cluster).
  */
-async function fetchSolanaBalance(solanaAddress: string): Promise<string> {
-  return solanaRpc.getBalance(solanaAddress);
+async function fetchSolanaBalance(
+  solanaAddress: string,
+  cluster: SolanaCluster = "mainnet",
+): Promise<string> {
+  return solanaRpc.getBalance(solanaAddress, cluster);
 }
 
 /**
- * Fetch Sui balance using SuiRpcService
+ * Fetch Sui balance using SuiRpcService (mainnet fallback list by default;
+ * pass another endpoint list for testnet or a custom network's RPC).
  */
-async function fetchSuiBalance(suiAddress: string): Promise<string> {
-  return suiRpc.getBalance(suiAddress);
+async function fetchSuiBalance(
+  suiAddress: string,
+  rpcUrls?: string | string[],
+): Promise<string> {
+  return suiRpc.getBalance(suiAddress, "0x2::sui::SUI", rpcUrls);
+}
+
+/**
+ * Fetch native SOL-style balance from a custom Solana-VM RPC endpoint (a
+ * user-added SVM network), hitting only that RPC — never mainnet/Moralis.
+ */
+async function fetchSolanaBalanceCustom(
+  address: string,
+  rpcUrl: string,
+): Promise<string> {
+  try {
+    const resp = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getBalance",
+        params: [address],
+      }),
+    });
+    if (!resp.ok) return "0";
+    const data = await resp.json();
+    if (data?.result?.value != null) {
+      return (Number(data.result.value) / 1e9).toFixed(6);
+    }
+    return "0";
+  } catch {
+    return "0";
+  }
 }
 
 /**
@@ -118,8 +159,8 @@ function buildDefaultTokens(wallet: Wallet): Token[] {
     }
   }
 
-  // Native token for each user-added custom EVM chain (Pharos, testnets, …)
-  if (wallet.evmAddress) {
+  // Native token for each user-added custom network (EVM / Solana-VM / Sui-VM).
+  {
     const builtinChainIds = new Set(
       Object.values(NETWORK_REGISTRY)
         .map((n) => n.chainId)
@@ -127,20 +168,42 @@ function buildDefaultTokens(wallet: Wallet): Token[] {
     );
     for (const un of getUserNetworksSync()) {
       if (builtinChainIds.has(un.chainIdDecimal)) continue;
-      tokens.push({
-        symbol: un.nativeCurrency?.symbol || "ETH",
+      const vm = un.vm ?? "evm";
+      const owner =
+        vm === "svm"
+          ? wallet.solanaAddress
+          : vm === "suivm"
+            ? wallet.suiAddress
+            : wallet.evmAddress;
+      if (!owner) continue;
+      const isTestnet =
+        /test|devnet|sepolia|goerli|mumbai|fuji|chapel/i.test(un.chainName) ||
+        undefined;
+      // Custom networks: only use an icon the user/RPC actually provided —
+      // otherwise leave it unset so the UI shows the token-symbol initial.
+      const logoUrl = un.iconUrls?.[0];
+      const common = {
+        symbol: un.nativeCurrency?.symbol || "?",
         name: un.nativeCurrency?.name || un.chainName,
         balance: "0",
-        isNative: false,
-        isEVM: true,
-        vm: "evm",
+        isNative: false as const,
         chainId: un.chainIdDecimal,
-        decimals: un.nativeCurrency?.decimals ?? 18,
-        logoUrl: un.iconUrls?.[0] ?? "/eth-icon.svg",
-        isTestnet:
-          /test|sepolia|goerli|mumbai|fuji|chapel/i.test(un.chainName) ||
-          undefined,
-      });
+        decimals: un.nativeCurrency?.decimals ?? (vm === "evm" ? 18 : 9),
+        logoUrl,
+        isTestnet,
+      };
+      if (vm === "svm") {
+        tokens.push({ ...common, isSolana: true, vm: "solana" });
+      } else if (vm === "suivm") {
+        tokens.push({
+          ...common,
+          isSui: true,
+          vm: "sui",
+          contractAddress: "sui",
+        });
+      } else {
+        tokens.push({ ...common, isEVM: true, vm: "evm" });
+      }
     }
   }
 
@@ -430,6 +493,25 @@ export function useWalletData({
             const evmChainId = EVM_NETWORKS[evmNetworkName]?.chainId ?? 1;
             const defaultConfigs = getEvmTokensForNetwork(evmNetworkName);
 
+            // ---- Lazy balance fetching (only fetch what's on screen) ----
+            // When the user has picked a single network, fetch only that
+            // network's chain family instead of every supported chain each
+            // cycle. "all" and any unknown/custom (user_*) network fall back to
+            // fetching everything, preserving prior behavior.
+            const isAllNetworks = network === "all";
+            const isSpecificRegistry = !isAllNetworks && !!networkMeta;
+            const fetchAllChains = isAllNetworks || !isSpecificRegistry;
+            const activeIsEvm = networkMeta?.isEVM === true;
+            const fetchActiveEvm = fetchAllChains || activeIsEvm;
+            const fetchSolanaChain =
+              fetchAllChains ||
+              network === "solana" ||
+              network === "solana-devnet" ||
+              network === "solana-testnet";
+            const fetchSuiChain =
+              fetchAllChains || network === "sui" || network === "sui-testnet";
+            const fetchBitcoinChain = fetchAllChains || network === "bitcoin";
+
             const allUserCustomTokens = await getCustomTokens(address).catch(
               () => [],
             );
@@ -714,19 +796,35 @@ export function useWalletData({
             ];
 
             const activeEvmNativePromise = (async () => {
-              if (!evmAddress || address !== activeAddressRef.current) return;
+              if (
+                !evmAddress ||
+                !fetchActiveEvm ||
+                address !== activeAddressRef.current
+              )
+                return;
               const ethKey = `${evmChainId}:${evmAddress.toLowerCase()}:native`;
               try {
                 const ethVal = await evmBalanceCache.swr(
                   ethKey,
                   async () => {
-                    const wei = await withEvmFallbackForNetwork(
-                      evmNetworkName,
-                      (p) => p.getBalance(evmAddress),
-                    );
-                    return parseFloat(
-                      parseFloat(ethers.formatEther(wei)).toFixed(8),
-                    ).toString();
+                    // RPC pool first (per-IP, scales across users); Moralis
+                    // (shared key) only as a fallback when every RPC fails.
+                    try {
+                      const wei = await withEvmFallbackForNetwork(
+                        evmNetworkName,
+                        (p) => p.getBalance(evmAddress),
+                      );
+                      return parseFloat(
+                        parseFloat(ethers.formatEther(wei)).toFixed(8),
+                      ).toString();
+                    } catch (e) {
+                      const viaMoralis = await fetchNativeBalanceMoralis(
+                        evmAddress,
+                        evmChainId,
+                      );
+                      if (viaMoralis !== null) return viaMoralis;
+                      throw e;
+                    }
                   },
                   opts.force,
                 );
@@ -768,7 +866,7 @@ export function useWalletData({
               );
             };
             const activeEvmErc20Promises =
-              evmAddress && evmErc20Configs.length > 0
+              fetchActiveEvm && evmAddress && evmErc20Configs.length > 0
                 ? [
                     (async () => {
                       if (address !== activeAddressRef.current) return;
@@ -818,19 +916,24 @@ export function useWalletData({
             const allSupportedChainIds = [
               1, 56, 137, 8453, 42161, 143, 999, 11155111,
             ];
-            const otherChainNativePromises = evmAddress
-              ? allSupportedChainIds
-                  .filter(
+            const otherChainNativePromises = (
+              fetchAllChains && evmAddress
+                ? allSupportedChainIds.filter(
                     (id) => id !== evmChainId && getRpcList(id).length > 0,
                   )
+                : []
+            )
                   .map(async (chainId) => {
-                    if (address !== activeAddressRef.current) return;
+                    if (!evmAddress || address !== activeAddressRef.current)
+                      return;
                     const rpcs = getRpcList(chainId);
                     const cacheKey = `${chainId}:${evmAddress.toLowerCase()}:native`;
                     try {
                       const val = await evmBalanceCache.swr(
                         cacheKey,
                         async () => {
+                          // RPC pool first (per-IP); Moralis (shared key) only
+                          // if every RPC endpoint fails.
                           let lastErr: unknown;
                           for (const rpcUrl of rpcs) {
                             try {
@@ -845,6 +948,11 @@ export function useWalletData({
                               lastErr = e;
                             }
                           }
+                          const viaMoralis = await fetchNativeBalanceMoralis(
+                            evmAddress,
+                            chainId,
+                          );
+                          if (viaMoralis !== null) return viaMoralis;
                           throw lastErr;
                         },
                         opts.force,
@@ -869,8 +977,7 @@ export function useWalletData({
                         { balance: cached },
                       );
                     }
-                  })
-              : [];
+                  });
 
             const otherChainTokensByChain = new Map<
               number,
@@ -883,7 +990,7 @@ export function useWalletData({
               otherChainTokensByChain.set(ct.chainId, arr);
             }
             const otherChainErc20Promises: Promise<void>[] = [];
-            if (evmAddress) {
+            if (fetchAllChains && evmAddress) {
               otherChainTokensByChain.forEach((tokens, chainId) => {
                 const rpcs = getRpcList(chainId);
                 if (!rpcs.length) return;
@@ -951,6 +1058,7 @@ export function useWalletData({
 
             const solanaPromise = (async () => {
               if (
+                !fetchSolanaChain ||
                 !currentWallet.solanaAddress ||
                 address !== activeAddressRef.current
               )
@@ -969,7 +1077,11 @@ export function useWalletData({
                   );
                   if (address === activeAddressRef.current) {
                     updateSingleToken(
-                      (t) => t.isSolana === true && !t.contractAddress,
+                      (t) =>
+                        t.isSolana === true &&
+                        !t.contractAddress &&
+                        !t.isTestnet &&
+                        t.chainId === 1151111081099710,
                       { balance: solanaBalanceStr },
                     );
                   }
@@ -977,12 +1089,48 @@ export function useWalletData({
                   if (address === activeAddressRef.current) {
                     const cached = evmBalanceCache.getAny(solKey) ?? "0";
                     updateSingleToken(
-                      (t) => t.isSolana === true && !t.contractAddress,
+                      (t) =>
+                        t.isSolana === true &&
+                        !t.contractAddress &&
+                        !t.isTestnet &&
+                        t.chainId === 1151111081099710,
                       { balance: cached },
                     );
                   }
                 }
               })();
+
+              // Solana Devnet + Testnet native SOL balances (matched by each
+              // cluster's sentinel chainId so they never overwrite each other).
+              const solClusters: Array<{
+                cluster: "devnet" | "testnet";
+                chainId: number;
+              }> = [
+                { cluster: "devnet", chainId: 1151111081099720 },
+                { cluster: "testnet", chainId: 1151111081099721 },
+              ];
+              const devnetP = Promise.allSettled(
+                solClusters.map(async ({ cluster, chainId }) => {
+                  try {
+                    const bal = await evmBalanceCache.swr(
+                      `solana-${cluster}:${solAddr.toLowerCase()}:native`,
+                      async () => fetchSolanaBalance(solAddr, cluster),
+                      opts.force,
+                    );
+                    if (address === activeAddressRef.current) {
+                      updateSingleToken(
+                        (t) =>
+                          t.isSolana === true &&
+                          !t.contractAddress &&
+                          t.chainId === chainId,
+                        { balance: bal },
+                      );
+                    }
+                  } catch {
+                    /* test-cluster balance best-effort */
+                  }
+                }),
+              );
 
               const customSols = tokensRef.current.filter(
                 (t) =>
@@ -1026,11 +1174,12 @@ export function useWalletData({
                 }
               })();
 
-              await Promise.allSettled([nativeP, splAllP]);
+              await Promise.allSettled([nativeP, devnetP, splAllP]);
             })();
 
             const suiPromise = (async () => {
               if (
+                !fetchSuiChain ||
                 !currentWallet.suiAddress ||
                 address !== activeAddressRef.current
               )
@@ -1049,7 +1198,11 @@ export function useWalletData({
                   );
                   if (address === activeAddressRef.current) {
                     updateSingleToken(
-                      (t) => t.isSui === true && t.contractAddress === "sui",
+                      (t) =>
+                        t.isSui === true &&
+                        t.contractAddress === "sui" &&
+                        !t.isTestnet &&
+                        t.chainId === 9270000000000000,
                       { balance: suiBalanceStr },
                     );
                   }
@@ -1057,10 +1210,37 @@ export function useWalletData({
                   if (address === activeAddressRef.current) {
                     const cached = evmBalanceCache.getAny(suiKey) ?? "0";
                     updateSingleToken(
-                      (t) => t.isSui === true && t.contractAddress === "sui",
+                      (t) =>
+                        t.isSui === true &&
+                        t.contractAddress === "sui" &&
+                        !t.isTestnet &&
+                        t.chainId === 9270000000000000,
                       { balance: cached },
                     );
                   }
+                }
+              })();
+
+              // Sui Testnet native SUI balance.
+              const suiTestnetKey = `sui-testnet:${suiAddr.toLowerCase()}:native`;
+              const testnetP = (async () => {
+                try {
+                  const bal = await evmBalanceCache.swr(
+                    suiTestnetKey,
+                    async () => fetchSuiBalance(suiAddr, SUI_TESTNET_RPCS),
+                    opts.force,
+                  );
+                  if (address === activeAddressRef.current) {
+                    updateSingleToken(
+                      (t) =>
+                        t.isSui === true &&
+                        t.contractAddress === "sui" &&
+                        t.chainId === 9270000000000002,
+                      { balance: bal },
+                    );
+                  }
+                } catch {
+                  /* testnet balance best-effort */
                 }
               })();
 
@@ -1112,11 +1292,12 @@ export function useWalletData({
                 }
               })();
 
-              await Promise.allSettled([nativeP, coinAllP]);
+              await Promise.allSettled([nativeP, testnetP, coinAllP]);
             })();
 
             const bitcoinPromise = (async () => {
               if (
+                !fetchBitcoinChain ||
                 !currentWallet.bitcoinAddress ||
                 address !== activeAddressRef.current
               )
@@ -1146,8 +1327,61 @@ export function useWalletData({
               }
             })();
 
+            // Custom networks (EVM / Solana-VM / Sui-VM) — native balance from
+            // their own RPC endpoint. The built-in active/other-chain fetchers
+            // only know registry chains, so custom chains are fetched here.
+            // Lazy: only when "all" view or that network is active.
+            const builtinChainIdSet = new Set(
+              Object.values(NETWORK_REGISTRY)
+                .map((n) => n.chainId)
+                .filter(Boolean),
+            );
+            const customVmPromises = getUserNetworksSync()
+              .filter(
+                (un) =>
+                  !!un.rpcUrls?.[0] &&
+                  !builtinChainIdSet.has(un.chainIdDecimal) &&
+                  (fetchAllChains || network === `user_${un.chainIdDecimal}`),
+              )
+              .map(async (un) => {
+                if (address !== activeAddressRef.current) return;
+                const rpc = un.rpcUrls[0];
+                const vm = un.vm ?? "evm";
+                try {
+                  let bal = "0";
+                  if (vm === "evm" && evmAddress) {
+                    const provider = new ethers.JsonRpcProvider(rpc);
+                    const wei = await provider.getBalance(evmAddress);
+                    const dec = un.nativeCurrency?.decimals ?? 18;
+                    bal = parseFloat(
+                      Number(ethers.formatUnits(wei, dec)).toFixed(8),
+                    ).toString();
+                  } else if (vm === "svm" && currentWallet.solanaAddress) {
+                    bal = await fetchSolanaBalanceCustom(
+                      currentWallet.solanaAddress,
+                      rpc,
+                    );
+                  } else if (vm === "suivm" && currentWallet.suiAddress) {
+                    bal = await fetchSuiBalance(currentWallet.suiAddress, rpc);
+                  }
+                  if (address === activeAddressRef.current) {
+                    updateSingleToken(
+                      (t) => t.chainId === un.chainIdDecimal,
+                      { balance: bal },
+                    );
+                  }
+                } catch {
+                  /* custom-network balance best-effort */
+                }
+              });
+
             const discoveryPromise = (async () => {
-              if (!evmAddress || address !== activeAddressRef.current) return;
+              if (
+                !fetchAllChains ||
+                !evmAddress ||
+                address !== activeAddressRef.current
+              )
+                return;
               try {
                 const allDiscovered = await discoverAllChainTokens(
                   evmAddress,
@@ -1181,6 +1415,7 @@ export function useWalletData({
               solanaPromise,
               suiPromise,
               bitcoinPromise,
+              ...customVmPromises,
               discoveryPromise,
             ]);
           }
@@ -1311,6 +1546,82 @@ export function useWalletData({
 
       const ev = e as CustomEvent<{ key: string; value: string }>;
       const { key, value } = ev.detail;
+
+      // Non-EVM cache keys (solana*/sui*/bitcoin:<addr>:…). Without this, an
+      // SWR background revalidation for those chains only landed in the cache
+      // — never in the UI — so a once-cached "0" balance looked stuck at zero
+      // until a forced refresh.
+      if (isMounted.current && wallet?.address && !key.includes(":erc20:")) {
+        const address = wallet.address;
+        const applyByPredicate = (pred: (t: Token) => boolean) => {
+          setTokens((prev) => {
+            const idx = prev.findIndex(
+              (t) => t.ownerAddress === address && pred(t),
+            );
+            if (idx < 0 || prev[idx].balance === value) return prev;
+            const next = [...prev];
+            next[idx] = { ...next[idx], balance: value };
+            return next;
+          });
+        };
+        const [prefix] = key.split(":");
+        if (prefix === "solana" && key.endsWith(":native")) {
+          applyByPredicate(
+            (t) =>
+              t.isSolana === true &&
+              !t.contractAddress &&
+              t.chainId === 1151111081099710,
+          );
+          return;
+        }
+        if (prefix === "solana-devnet" || prefix === "solana-testnet") {
+          const cid =
+            prefix === "solana-devnet" ? 1151111081099720 : 1151111081099721;
+          applyByPredicate(
+            (t) =>
+              t.isSolana === true && !t.contractAddress && t.chainId === cid,
+          );
+          return;
+        }
+        if (prefix === "sui" && key.endsWith(":native")) {
+          applyByPredicate(
+            (t) =>
+              t.isSui === true &&
+              t.contractAddress === "sui" &&
+              t.chainId === 9270000000000000,
+          );
+          return;
+        }
+        if (prefix === "sui-testnet") {
+          applyByPredicate(
+            (t) =>
+              t.isSui === true &&
+              t.contractAddress === "sui" &&
+              t.chainId === 9270000000000002,
+          );
+          return;
+        }
+        if (prefix === "bitcoin") {
+          applyByPredicate((t) => t.isBitcoin === true);
+          return;
+        }
+        const splitSpl = key.split(":spl:");
+        if (splitSpl.length === 2) {
+          const mint = splitSpl[1];
+          applyByPredicate(
+            (t) => t.isSolana === true && t.contractAddress === mint,
+          );
+          return;
+        }
+        const splitCoin = key.split(":coin:");
+        if (splitCoin.length === 2) {
+          const coinType = splitCoin[1];
+          applyByPredicate(
+            (t) => t.isSui === true && t.contractAddress === coinType,
+          );
+          return;
+        }
+      }
 
       if (isMounted.current && wallet?.evmAddress && wallet?.address) {
         const lowerEvm = wallet.evmAddress.toLowerCase();

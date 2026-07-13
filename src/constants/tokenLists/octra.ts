@@ -5,7 +5,7 @@ export const OCT_TOKEN = {
   name: "Octra (Native)",
   decimals: 6,
   contractAddress: "0x0000000000000000000000000000000000000000",
-  logoUrl: "/qiubit-icon.svg",
+  logoUrl: "/octra-icon.svg",
   chainId: OCTRA_CHAIN_ID,
 };
 
@@ -14,7 +14,7 @@ export const WOCT_TOKEN = {
   name: "Wrapped Octra",
   decimals: 6,
   contractAddress: "0x4647e1fE715c9e23959022C2416C71867F5a6E80",
-  logoUrl: "/qiubit-icon.svg",
+  logoUrl: "/octra-icon.svg",
   chainId: 1,
 };
 

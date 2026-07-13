@@ -25,46 +25,89 @@ const SuiCoinMetadataResponseSchema = z.object({
   id: z.union([z.number(), z.string()]).optional(),
 });
 
+/** Public Sui Mainnet fullnodes, tried in order. */
+export const SUI_MAINNET_RPCS = [
+  "https://fullnode.mainnet.sui.io",
+  "https://sui-rpc.publicnode.com",
+  "https://rpc-mainnet.suiscan.xyz",
+];
+
+/**
+ * Public Sui Testnet fullnodes, tried in order. The official
+ * fullnode.testnet.sui.io is frequently unreachable, so the reliable public
+ * providers go first and the official node is the last resort.
+ */
+export const SUI_TESTNET_RPCS = [
+  "https://sui-testnet-rpc.publicnode.com",
+  "https://rpc-testnet.suiscan.xyz",
+  "https://fullnode.testnet.sui.io",
+];
+
+/** @deprecated single endpoint — prefer SUI_TESTNET_RPCS (fallback list). */
+export const SUI_TESTNET_RPC = SUI_TESTNET_RPCS[0];
+
 export class SuiRpcService {
   private rpcUrl: string;
 
-  constructor(rpcUrl: string = "https://fullnode.mainnet.sui.io") {
+  constructor(rpcUrl: string = SUI_MAINNET_RPCS[0]) {
     this.rpcUrl = rpcUrl;
   }
 
   /**
-   * Fetch native SUI or custom SUI coin balance
+   * Fetch native SUI or custom SUI coin balance, trying each endpoint in the
+   * list until one answers. Pass a list to target another cluster
+   * (e.g. SUI_TESTNET_RPCS) or a custom network's RPC.
    */
   async getBalance(
     address: string,
     coinType: string = "0x2::sui::SUI",
+    rpcUrls?: string | string[],
   ): Promise<string> {
-    try {
-      const resp = await fetch(this.rpcUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "suix_getBalance",
-          params: [address, coinType],
-        }),
-      });
-      if (!resp.ok) return "0";
-      const data = await resp.json();
-      const parsed = SuiBalanceResponseSchema.safeParse(data);
-      if (parsed.success && parsed.data.result) {
-        const total = parsed.data.result.totalBalance;
-        if (coinType === "0x2::sui::SUI") {
-          return (parseFloat(total) / 1e9).toFixed(6);
+    const urls =
+      typeof rpcUrls === "string"
+        ? [rpcUrls]
+        : (rpcUrls ??
+          (this.rpcUrl === SUI_MAINNET_RPCS[0]
+            ? SUI_MAINNET_RPCS
+            : [this.rpcUrl, ...SUI_MAINNET_RPCS]));
+    let lastErr: unknown = null;
+    for (const url of urls) {
+      try {
+        // Per-endpoint timeout so a dead node fails over fast instead of
+        // hanging the whole balance cycle.
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(6000),
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "suix_getBalance",
+            params: [address, coinType],
+          }),
+        });
+        if (!resp.ok) {
+          lastErr = new Error(`Sui RPC HTTP ${resp.status} (${url})`);
+          continue;
         }
-        return total;
+        const data = await resp.json();
+        const parsed = SuiBalanceResponseSchema.safeParse(data);
+        if (parsed.success && parsed.data.result) {
+          const total = parsed.data.result.totalBalance;
+          if (coinType === "0x2::sui::SUI") {
+            return (parseFloat(total) / 1e9).toFixed(6);
+          }
+          return total;
+        }
+        // A well-formed "no balance" answer is authoritative — don't fail over.
+        if (parsed.success) return "0";
+        lastErr = new Error(`Sui RPC malformed response (${url})`);
+      } catch (e) {
+        lastErr = e;
       }
-      return "0";
-    } catch (e) {
-      console.error("[SuiRpcService] Failed to fetch SUI balance:", e);
-      return "0";
     }
+    console.error("[SuiRpcService] All SUI balance endpoints failed:", lastErr);
+    return "0";
   }
 
   /**

@@ -68,7 +68,7 @@ export const ETHEREUM_TOKENS = [
     name: "Wrapped Octra",
     decimals: 6,
     contractAddress: "0x4647e1fE715c9e23959022C2416C71867F5a6E80",
-    logoUrl: "/qiubit-icon.svg",
+    logoUrl: "/octra-icon.svg",
     chainId: 1,
   },
 ];

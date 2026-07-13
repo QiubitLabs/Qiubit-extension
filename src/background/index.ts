@@ -450,14 +450,11 @@ async function handleKeyringAction(
         chrome.runtime
           .sendMessage({ type: "KEYRING_STATE_CHANGED" })
           .catch(() => {});
-        {
-          const newEvmAddr = keyringService.getEvmAddress(payload.address);
-          const newSolAddr = keyringService.getSolanaAddress(payload.address);
-          const newSuiAddr = keyringService.getSuiAddress(payload.address);
-          if (newEvmAddr) broadcastToTabs("accountsChanged", [newEvmAddr]);
-          if (newSolAddr) broadcastToTabs("solana:accountChanged", newSolAddr);
-          if (newSuiAddr) broadcastToTabs("sui:accountChanged", newSuiAddr);
-        }
+        // Switching the active wallet no longer auto-propagates to connected
+        // dApps. Professional wallets ask first: the popup detects connected
+        // sites and, on user confirmation, calls the "migrateConnections"
+        // popup action which re-points each origin and emits accountsChanged
+        // scoped per origin. Declining leaves each dApp on its old account.
         break;
       case "removeKey":
         keyringService.removeKey(payload.address);
@@ -602,6 +599,48 @@ async function handlePopupRequest(message: any) {
       dappConnections.delete(data.origin);
       await saveConnections();
       return { result: true };
+    case "migrateConnections": {
+      // Re-point connected dApps to a newly selected wallet and notify them.
+      // data.address = new active wallet's Octra address.
+      // data.origins = optional subset; defaults to all connected origins.
+      const octraAddr = data?.address as string | undefined;
+      if (!octraAddr) return { error: "Missing target wallet address" };
+      const targetOrigins: string[] = Array.isArray(data?.origins)
+        ? data.origins
+        : Array.from(dappConnections.keys());
+
+      const newEvm = keyringService.getEvmAddress(octraAddr);
+      const newSol = keyringService.getSolanaAddress(octraAddr);
+      const newSui = keyringService.getSuiAddress(octraAddr);
+      const migrated: string[] = [];
+
+      for (const origin of targetOrigins) {
+        const conn = dappConnections.get(origin);
+        if (!conn?.connected) continue;
+
+        // Grant the new wallet permission for this origin (EIP-2255 style) and
+        // point the exposed account at it.
+        conn.authorizedAddresses = Array.from(
+          new Set([
+            ...(conn.authorizedAddresses ?? [conn.address]),
+            octraAddr,
+          ]),
+        );
+        conn.address = octraAddr;
+        conn.evmAddress = newEvm ?? null;
+        dappConnections.set(origin, conn);
+
+        const displayAddr =
+          conn.networkSetting === "octra" ? octraAddr : newEvm || octraAddr;
+        broadcastToTabs("accountsChanged", [displayAddr], origin);
+        if (newSol) broadcastToTabs("solana:accountChanged", newSol, origin);
+        if (newSui) broadcastToTabs("sui:accountChanged", newSui, origin);
+        migrated.push(origin);
+      }
+
+      if (migrated.length) await saveConnections();
+      return { result: { migrated } };
+    }
     default:
       return { error: "Unknown action" };
   }

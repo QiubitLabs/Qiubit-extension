@@ -16,7 +16,7 @@ export const ETHEREUM_NETWORK: EvmNetworkConfig = {
       name: "Wrapped Octra (ETH)",
       decimals: 6,
       contractAddress: "0x4647e1fE715c9e23959022C2416C71867F5a6E80",
-      logoUrl: "/qiubit-icon.svg",
+      logoUrl: "/octra-icon.svg",
     },
     {
       symbol: "USDC",

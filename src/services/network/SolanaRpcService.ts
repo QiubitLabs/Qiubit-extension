@@ -50,8 +50,28 @@ const SolanaAccountInfoResponseSchema = z.object({
  * configured, then reliable public nodes. api.mainnet-beta.solana.com is LAST
  * because it is heavily rate-limited (the cause of flaky timeouts).
  */
-export function getSolanaEndpoints(): string[] {
+export type SolanaCluster = "mainnet" | "devnet" | "testnet";
+
+const ANKR_KEY = (import.meta.env?.VITE_ANKR_API_KEY as string) || "";
+const HELIUS_KEY = (import.meta.env?.VITE_HELIUS_API_KEY as string) || "";
+
+/** Devnet endpoints — Helius (keyed) first, then public fallbacks. */
+const SOLANA_DEVNET_ENDPOINTS = [
+  ...(HELIUS_KEY ? [`https://devnet.helius-rpc.com/?api-key=${HELIUS_KEY}`] : []),
+  "https://api.devnet.solana.com",
+  ...(ANKR_KEY ? [`https://rpc.ankr.com/solana_devnet/${ANKR_KEY}`] : []),
+];
+
+/** Public Solana Testnet endpoints. */
+const SOLANA_TESTNET_ENDPOINTS = ["https://api.testnet.solana.com"];
+
+export function getSolanaEndpoints(cluster: SolanaCluster = "mainnet"): string[] {
+  if (cluster === "devnet") return [...SOLANA_DEVNET_ENDPOINTS];
+  if (cluster === "testnet") return [...SOLANA_TESTNET_ENDPOINTS];
   const list: string[] = [];
+  // Helius (keyed, reliable) is the primary mainnet endpoint.
+  if (HELIUS_KEY)
+    list.push(`https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`);
   try {
     const infura = InfuraProvider.getRpcUrl(1151111081099710);
     if (infura) list.push(infura);
@@ -78,39 +98,44 @@ export class SolanaRpcService {
   /**
    * Fetch native SOL balance using Moralis Solana Wallet API (with RPC fallback)
    */
-  async getBalance(address: string): Promise<string> {
-    try {
-      const key = (import.meta.env.VITE_MORALIS_API_KEY as string) || "";
-      if (key) {
-        const resp = await fetch(
-          `https://solana-gateway.moralis.io/account/mainnet/${address}/balance`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Api-Key": key,
+  async getBalance(
+    address: string,
+    cluster: SolanaCluster = "mainnet",
+  ): Promise<string> {
+    // Moralis only serves mainnet; devnet goes straight to public RPC.
+    if (cluster === "mainnet") {
+      try {
+        const key = (import.meta.env.VITE_MORALIS_API_KEY as string) || "";
+        if (key) {
+          const resp = await fetch(
+            `https://solana-gateway.moralis.io/account/mainnet/${address}/balance`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Api-Key": key,
+              },
             },
-          },
-        );
-        if (resp.ok) {
-          const data = await resp.json();
-          if (data && typeof data.solana === "string") {
-            return parseFloat(data.solana).toFixed(6);
+          );
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && typeof data.solana === "string") {
+              return parseFloat(data.solana).toFixed(6);
+            }
           }
         }
+      } catch (e) {
+        console.warn(
+          "[SolanaRpcService] Moralis balance fetch failed, falling back to RPC:",
+          e,
+        );
       }
-    } catch (e) {
-      console.warn(
-        "[SolanaRpcService] Moralis balance fetch failed, falling back to RPC:",
-        e,
-      );
     }
 
-    const urls = [
-      this.rpcUrl,
-      "https://solana.drpc.org",
-      "https://api.mainnet-beta.solana.com",
-    ];
+    const urls =
+      cluster !== "mainnet"
+        ? getSolanaEndpoints(cluster)
+        : [this.rpcUrl, "https://solana.drpc.org", "https://api.mainnet-beta.solana.com"];
     let lastErr: unknown;
     for (const url of urls) {
       try {

@@ -93,7 +93,7 @@ export function SettingsMenu({
                 }}
               >
                 <img
-                  src="/icon.svg"
+                  src="/qiubit-icon.svg"
                   alt="Wallet Icon"
                   style={{
                     width: "100%",

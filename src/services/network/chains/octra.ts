@@ -25,7 +25,7 @@ export function buildWoctToken(ownerAddress: string, balance = "0") {
     isNative: false,
     isEVM: true,
     chainId: 1,
-    logoUrl: "/qiubit-icon.svg",
+    logoUrl: "/octra-icon.svg",
     decimals: 6,
     contractAddress: WOCT_ADDR,
     ownerAddress,

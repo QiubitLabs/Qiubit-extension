@@ -36,7 +36,7 @@ const KNOWN_TOKENS: Record<string, TokenInfo> = {
 const preloadQiubitLogo = (): void => {
   if (typeof window !== "undefined") {
     const img = new Image();
-    img.src = "/qiubit-icon.svg";
+    img.src = "/octra-icon.svg";
   }
 };
 
@@ -227,7 +227,7 @@ export function TokenIcon({
           }}
         >
           <img
-            src="/qiubit-icon.svg"
+            src="/octra-icon.svg"
             alt={symbol}
             width={size}
             height={size}

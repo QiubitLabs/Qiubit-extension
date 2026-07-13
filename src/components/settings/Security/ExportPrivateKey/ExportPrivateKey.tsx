@@ -378,7 +378,7 @@ export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
             <PrivateKeySection
               label="Octra Network"
               privateKey={wallet.privateKeyB64}
-              logoUrl="/qiubit-icon.svg"
+              logoUrl="/octra-icon.svg"
               formatLabel="Octra - Base64"
             />
 

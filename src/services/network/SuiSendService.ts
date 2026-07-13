@@ -14,6 +14,14 @@ import type { Token } from "../../types";
 const SUI_RPC_URLS = [
   "https://fullnode.mainnet.sui.io",
   "https://sui-rpc.publicnode.com",
+  "https://rpc-mainnet.suiscan.xyz",
+];
+
+// Reliable providers first — the official testnet fullnode is often down.
+const SUI_TESTNET_RPC_URLS = [
+  "https://sui-testnet-rpc.publicnode.com",
+  "https://rpc-testnet.suiscan.xyz",
+  "https://fullnode.testnet.sui.io",
 ];
 
 const SUI_COIN_TYPE = "0x2::sui::SUI";
@@ -28,9 +36,13 @@ function toRawAmount(amount: string, decimals: number): bigint {
   );
 }
 
-async function rpcCall(method: string, params: unknown[]): Promise<any> {
+async function rpcCall(
+  method: string,
+  params: unknown[],
+  urls: string[] = SUI_RPC_URLS,
+): Promise<any> {
   let lastErr: unknown;
-  for (const url of SUI_RPC_URLS) {
+  for (const url of urls) {
     try {
       const resp = await fetch(url, {
         method: "POST",
@@ -54,8 +66,16 @@ interface SuiCoin {
   balance: string;
 }
 
-async function getCoins(owner: string, coinType: string): Promise<SuiCoin[]> {
-  const result = await rpcCall("suix_getCoins", [owner, coinType, null, 100]);
+async function getCoins(
+  owner: string,
+  coinType: string,
+  urls: string[] = SUI_RPC_URLS,
+): Promise<SuiCoin[]> {
+  const result = await rpcCall(
+    "suix_getCoins",
+    [owner, coinType, null, 100],
+    urls,
+  );
   return (result?.data ?? []) as SuiCoin[];
 }
 
@@ -96,14 +116,28 @@ function signTxBytes(txBytesB64: string, privateKeyHex: string): string {
   return Buffer.from(serialized).toString("base64");
 }
 
-export async function sendSuiTransaction(params: {
-  privateKeyHex: string;
+/**
+ * EXACT fee estimate via sui_dryRunTransactionBlock: builds the same pay tx
+ * the send flow would (recipient = sender — the fee is identical regardless of
+ * recipient) and returns the net gas cost in whole SUI:
+ * computationCost + storageCost − storageRebate. Throws when the tx can't be
+ * built (e.g. insufficient coins) — callers fall back to a formula estimate.
+ */
+export async function estimateSuiFee(params: {
   sender: string;
-  recipient: string;
   amount: string;
   token: Token;
-}): Promise<string> {
-  const { privateKeyHex, sender, recipient, amount, token } = params;
+}): Promise<number> {
+  const { sender, amount, token } = params;
+  const { getUserNetworkByChainId } = await import("./UserNetworkService");
+  const customRpc = token.chainId
+    ? getUserNetworkByChainId(token.chainId)?.rpcUrls?.[0]
+    : undefined;
+  const urls = customRpc
+    ? [customRpc]
+    : token.isTestnet
+      ? SUI_TESTNET_RPC_URLS
+      : SUI_RPC_URLS;
 
   const isNativeSui =
     token.isNative === true ||
@@ -114,7 +148,68 @@ export async function sendSuiTransaction(params: {
   const decimals = isNativeSui ? 9 : (token.decimals ?? 9);
   const rawAmount = toRawAmount(amount, decimals);
 
-  const coins = await getCoins(sender, coinType);
+  const coins = await getCoins(sender, coinType, urls);
+  if (coins.length === 0) throw new Error("No coins to estimate with.");
+
+  let txBytes: string;
+  if (isNativeSui) {
+    const inputCoins = selectCoins(coins, rawAmount + GAS_BUDGET);
+    const result = await rpcCall(
+      "unsafe_paySui",
+      [sender, inputCoins, [sender], [rawAmount.toString()], GAS_BUDGET.toString()],
+      urls,
+    );
+    txBytes = result.txBytes;
+  } else {
+    const inputCoins = selectCoins(coins, rawAmount);
+    const result = await rpcCall(
+      "unsafe_pay",
+      [sender, inputCoins, [sender], [rawAmount.toString()], null, GAS_BUDGET.toString()],
+      urls,
+    );
+    txBytes = result.txBytes;
+  }
+
+  const dry = await rpcCall("sui_dryRunTransactionBlock", [txBytes], urls);
+  const gas = dry?.effects?.gasUsed;
+  if (!gas) throw new Error("Dry run returned no gas data.");
+  const net =
+    Number(gas.computationCost ?? 0) +
+    Number(gas.storageCost ?? 0) -
+    Number(gas.storageRebate ?? 0);
+  return Math.max(net, Number(gas.computationCost ?? 0)) / 1e9;
+}
+
+export async function sendSuiTransaction(params: {
+  privateKeyHex: string;
+  sender: string;
+  recipient: string;
+  amount: string;
+  token: Token;
+}): Promise<string> {
+  const { privateKeyHex, sender, recipient, amount, token } = params;
+  // Custom Sui-VM networks route to their own RPC; the built-in testnet uses
+  // the public testnet fullnode; everything else goes to mainnet.
+  const { getUserNetworkByChainId } = await import("./UserNetworkService");
+  const customRpc = token.chainId
+    ? getUserNetworkByChainId(token.chainId)?.rpcUrls?.[0]
+    : undefined;
+  const urls = customRpc
+    ? [customRpc]
+    : token.isTestnet
+      ? SUI_TESTNET_RPC_URLS
+      : SUI_RPC_URLS;
+
+  const isNativeSui =
+    token.isNative === true ||
+    !token.contractAddress ||
+    token.contractAddress === "sui" ||
+    token.contractAddress === SUI_COIN_TYPE;
+  const coinType = isNativeSui ? SUI_COIN_TYPE : token.contractAddress!;
+  const decimals = isNativeSui ? 9 : (token.decimals ?? 9);
+  const rawAmount = toRawAmount(amount, decimals);
+
+  const coins = await getCoins(sender, coinType, urls);
   if (coins.length === 0)
     throw new Error(`No ${token.symbol} coins found for this address.`);
 
@@ -122,35 +217,42 @@ export async function sendSuiTransaction(params: {
   if (isNativeSui) {
     // Selected coins must also fund gas, which unsafe_paySui draws from them
     const inputCoins = selectCoins(coins, rawAmount + GAS_BUDGET);
-    const result = await rpcCall("unsafe_paySui", [
-      sender,
-      inputCoins,
-      [recipient],
-      [rawAmount.toString()],
-      GAS_BUDGET.toString(),
-    ]);
+    const result = await rpcCall(
+      "unsafe_paySui",
+      [
+        sender,
+        inputCoins,
+        [recipient],
+        [rawAmount.toString()],
+        GAS_BUDGET.toString(),
+      ],
+      urls,
+    );
     txBytes = result.txBytes;
   } else {
     const inputCoins = selectCoins(coins, rawAmount);
     // Gas coin left null so the node picks a SUI coin owned by the sender
-    const result = await rpcCall("unsafe_pay", [
-      sender,
-      inputCoins,
-      [recipient],
-      [rawAmount.toString()],
-      null,
-      GAS_BUDGET.toString(),
-    ]);
+    const result = await rpcCall(
+      "unsafe_pay",
+      [
+        sender,
+        inputCoins,
+        [recipient],
+        [rawAmount.toString()],
+        null,
+        GAS_BUDGET.toString(),
+      ],
+      urls,
+    );
     txBytes = result.txBytes;
   }
 
   const signature = signTxBytes(txBytes, privateKeyHex);
-  const execResult = await rpcCall("sui_executeTransactionBlock", [
-    txBytes,
-    [signature],
-    { showEffects: true },
-    "WaitForLocalExecution",
-  ]);
+  const execResult = await rpcCall(
+    "sui_executeTransactionBlock",
+    [txBytes, [signature], { showEffects: true }, "WaitForLocalExecution"],
+    urls,
+  );
 
   const status = execResult?.effects?.status;
   if (status && status.status !== "success") {

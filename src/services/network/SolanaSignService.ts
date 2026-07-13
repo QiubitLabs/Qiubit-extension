@@ -56,10 +56,10 @@ export function solanaSignMessage(
   return bytesToBase64(sig);
 }
 
-async function connect() {
+async function connect(cluster: "mainnet" | "devnet" | "testnet" = "mainnet") {
   const { Connection } = await import("@solana/web3.js");
   const { getSolanaEndpoints } = await import("./SolanaRpcService");
-  const urls = getSolanaEndpoints();
+  const urls = getSolanaEndpoints(cluster);
   let lastErr: unknown;
   for (const url of urls) {
     try {
@@ -100,13 +100,22 @@ export async function solanaSignTransaction(
   }
 }
 
-/** Sign then broadcast; returns the transaction signature string. */
+/**
+ * Sign then broadcast; returns the transaction signature string.
+ * `chain` accepts a Wallet Standard id ("solana:devnet") or bare cluster name.
+ */
 export async function solanaSendTransaction(
   txInput: number[] | Uint8Array | string | Record<string, number>,
   privateKeyHex: string,
+  chain?: string,
 ): Promise<string> {
+  const cluster = chain?.includes("devnet")
+    ? ("devnet" as const)
+    : chain?.includes("testnet")
+      ? ("testnet" as const)
+      : ("mainnet" as const);
   const signedB64 = await solanaSignTransaction(txInput, privateKeyHex);
-  const conn = await connect();
+  const conn = await connect(cluster);
   const raw = toBytes(signedB64);
   return conn.sendRawTransaction(raw, {
     skipPreflight: false,

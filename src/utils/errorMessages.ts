@@ -141,3 +141,25 @@ export function formatError(
     stack: error?.stack,
   };
 }
+
+/**
+ * Strip ethers/RPC noise (the "(request=… version=…)" tails), collapse
+ * whitespace, and cap length so a raw error never renders as a wall of text.
+ * Prefers a mapped friendly message when one exists, otherwise returns the
+ * cleaned raw text (more specific but bounded).
+ */
+export function cleanErrorMessage(
+  error: unknown,
+  fallback = "Something went wrong. Please try again.",
+  max = 140,
+): string {
+  const raw = error instanceof Error ? error.message : String(error ?? "");
+  const friendly = getFriendlyErrorMessage(raw);
+  if (friendly && friendly !== ERROR_MESSAGES.default) return friendly;
+  const clean = raw
+    .replace(/\(.*\)/gs, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+  return clean || fallback;
+}

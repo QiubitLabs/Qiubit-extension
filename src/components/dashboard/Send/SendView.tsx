@@ -33,11 +33,14 @@ import {
 import {
   isEvmNetwork,
   getNetworkByChainId,
-  getNetworkForToken,
 } from "../../../constants/networks/registry";
+import { resolveNetworkForToken } from "../../../services/network/NetworkResolver";
 import { getTokenPrice } from "../../../services/network/PriceService";
 import { sendSolanaTransaction } from "../../../services/network/SolanaSendService";
-import { sendSuiTransaction } from "../../../services/network/SuiSendService";
+import {
+  sendSuiTransaction,
+  estimateSuiFee,
+} from "../../../services/network/SuiSendService";
 import { sendBitcoinTransaction } from "../../../services/network/BitcoinSendService";
 import { notificationService } from "../../../services/core/NotificationService";
 import { SendConfirmModal } from "./SendConfirmModal";
@@ -130,6 +133,36 @@ export function SendView({
   const [feeSpeed, setFeeSpeed] = useState<
     "slow" | "normal" | "fast" | "custom"
   >("normal");
+
+  // Sui: once an amount is typed, replace the reference-gas-price formula with
+  // the EXACT fee from sui_dryRunTransactionBlock on the real pay transaction
+  // (debounced; recipient-independent). Falls back silently to the formula
+  // estimate when the dry run can't be built (e.g. insufficient coins).
+  useEffect(() => {
+    if (!selectedToken?.isSui || !wallet?.suiAddress) return;
+    const amt = parseFloat(amount);
+    if (!Number.isFinite(amt) || amt <= 0) return;
+    let active = true;
+    const timer = setTimeout(async () => {
+      try {
+        const exact = await estimateSuiFee({
+          sender: wallet.suiAddress!,
+          amount,
+          token: selectedToken,
+        });
+        if (active && exact > 0) {
+          const v = parseFloat(exact.toFixed(6));
+          setFeeEstimates({ low: v, medium: v, high: v });
+        }
+      } catch {
+        /* keep the formula estimate */
+      }
+    }, 600);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [amount, selectedToken, wallet?.suiAddress]);
   const [customFeeGwei, setCustomFeeGwei] = useState("10");
   const [showFeePopup, setShowFeePopup] = useState(false);
   const [evmGasOpts, setEvmGasOpts] = useState<GasOptions | null>(null);
@@ -333,11 +366,54 @@ export function SendView({
           token,
         );
         setTokenBalance(freshBal);
-        setFeeEstimates({
-          low: 0.0035,
-          medium: 0.0035,
-          high: 0.005,
-        });
+        // Real fee from the live reference gas price (MIST per gas unit):
+        // a simple pay tx burns ~1000 computation units plus ~1M MIST net
+        // storage — matches observed on-chain fees (~0.002 SUI), instead of
+        // the old hardcoded 0.0035/0.005 placeholders.
+        try {
+          const { SUI_MAINNET_RPCS, SUI_TESTNET_RPCS } = await import(
+            "../../../services/network/SuiRpcService"
+          );
+          const urls = token.isTestnet ? SUI_TESTNET_RPCS : SUI_MAINNET_RPCS;
+          let rgp: number | null = null;
+          for (const url of urls) {
+            try {
+              const resp = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: AbortSignal.timeout(5000),
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: 1,
+                  method: "suix_getReferenceGasPrice",
+                  params: [],
+                }),
+              });
+              const data = await resp.json();
+              const v = Number(data?.result);
+              if (Number.isFinite(v) && v > 0) {
+                rgp = v;
+                break;
+              }
+            } catch {
+              /* try next endpoint */
+            }
+          }
+          if (rgp) {
+            const COMPUTATION_UNITS = 1000; // simple transfer bucket
+            const STORAGE_MIST = 1_000_000; // net storage after rebate (~1M)
+            const est = (rgp * COMPUTATION_UNITS + STORAGE_MIST) / 1e9;
+            setFeeEstimates({
+              low: parseFloat(est.toFixed(6)),
+              medium: parseFloat(est.toFixed(6)),
+              high: parseFloat((est * 1.5).toFixed(6)),
+            });
+          } else {
+            setFeeEstimates({ low: 0.002, medium: 0.002, high: 0.003 });
+          }
+        } catch {
+          setFeeEstimates({ low: 0.002, medium: 0.002, high: 0.003 });
+        }
       } else if (token.isBitcoin) {
         const freshBal = await WalletService.getSingleTokenBalance(
           wallet,
@@ -566,7 +642,11 @@ export function SendView({
   const handleConfirmSend = async () => {
     if (!selectedToken) return;
 
-    const network = getNetworkForToken(selectedToken);
+    // resolveNetworkForToken (unlike getNetworkForToken) also resolves
+    // manually-added custom EVM chains by chainId, so a native send on an
+    // unregistered chain (e.g. Pharos / an L2 testnet) targets that chain's
+    // RPC instead of silently falling back to Ethereum mainnet.
+    const network = resolveNetworkForToken(selectedToken);
 
     setStep("sending");
     setError("");
@@ -763,7 +843,10 @@ export function SendView({
             networkId: txNetId,
           },
         ]).catch(() => {});
-      } else if (!selectedToken.isSui && !selectedToken.isBitcoin) {
+      } else {
+        // All non-EVM sends (Octra, Solana, Sui, Bitcoin) → local history so
+        // they show under local-only history mode. Keyed by (network, octra addr)
+        // to match the History view's read path.
         const tokenNetId = network?.id || "mainnet";
         addToTxHistory(
           [

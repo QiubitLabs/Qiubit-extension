@@ -4,6 +4,7 @@ import { CheckIcon } from "../../../shared/Icons";
 import { Wallet, Token } from "../../../../types";
 import { getRpcClient } from "../../../../services/network/RpcService";
 import { keyringService } from "../../../../services/core/KeyringService";
+import { cleanErrorMessage } from "../../../../utils/errorMessages";
 import { createTransaction } from "../../../../utils/crypto/transaction";
 import {
   getEvmRpcUrl,
@@ -589,6 +590,31 @@ export function OctraBridgeView({
 
       const lockHash = result.txHash;
       setLockTxHash(lockHash);
+      // Record the lock in the main transaction history (local-only mode
+      // shows nothing that isn't recorded; the pending verifier confirms it).
+      try {
+        const { saveTxHistorySecure } = await import("../../../../utils/storage");
+        void saveTxHistorySecure(
+          [
+            {
+              hash: lockHash,
+              type: "out",
+              amount: parseFloat(fromAmount) || 0,
+              symbol: "OCT",
+              token: "OCT",
+              address: recip,
+              timestamp: Date.now(),
+              status: "pending",
+              networkId: "octra",
+              description: "Bridge OCT to wOCT (lock)",
+            } as any,
+          ],
+          "octra",
+          address,
+        );
+      } catch {
+        /* history is best-effort */
+      }
       setBridgeStatus(
         `OCT locked! Tx: ${lockHash.slice(0, 14)}... — waiting for confirmation`,
       );
@@ -639,7 +665,7 @@ export function OctraBridgeView({
       setBridgeStep(3);
       setBridgeStatus("Bridge ready! Claim your wOCT on Ethereum.");
     } catch (e: any) {
-      setBridgeError(e.message || "Bridge failed");
+      setBridgeError(cleanErrorMessage(e, "Bridge failed"));
       setBridgeStep(0);
       setBridgeStatus("");
     }
@@ -815,6 +841,30 @@ export function OctraBridgeView({
       setBridgeStatus(
         `Claim submitted (tx: ${tx.hash.slice(0, 12)}...). Waiting...`,
       );
+      try {
+        const { saveEvmTxHistory } = await import("../../../../utils/storage");
+        const evmAddr =
+          wallet.evmAddress || keyringService.getEvmAddress(address);
+        if (evmAddr) {
+          void saveEvmTxHistory("ethereum", evmAddr, [
+            {
+              hash: tx.hash,
+              type: "in",
+              amount: parseFloat(pendingClaim.amount || fromAmount) || 0,
+              symbol: "WOCT",
+              token: "WOCT",
+              address: ETH_BRIDGE,
+              timestamp: Date.now(),
+              status: "pending",
+              contractAddress: ETH_BRIDGE,
+              networkId: "ethereum",
+              description: "Bridge OCT to wOCT (claim)",
+            } as any,
+          ]).catch(() => {});
+        }
+      } catch {
+        /* history is best-effort */
+      }
       await tx.wait();
 
       setIsClaimSubmitting(false);
@@ -931,6 +981,30 @@ export function OctraBridgeView({
       setBridgeStatus(
         `Burn submitted (tx: ${burnTx.hash.slice(0, 10)}...). Sending to ${recip.slice(0, 10)}... on Octra`,
       );
+      try {
+        const { saveEvmTxHistory } = await import("../../../../utils/storage");
+        const evmAddr =
+          wallet.evmAddress || keyringService.getEvmAddress(address);
+        if (evmAddr) {
+          void saveEvmTxHistory("ethereum", evmAddr, [
+            {
+              hash: burnTx.hash,
+              type: "out",
+              amount: parseFloat(fromAmount) || 0,
+              symbol: "WOCT",
+              token: "WOCT",
+              address: recip,
+              timestamp: Date.now(),
+              status: "pending",
+              contractAddress: ETH_BRIDGE,
+              networkId: "ethereum",
+              description: "Bridge wOCT to OCT (burn)",
+            } as any,
+          ]).catch(() => {});
+        }
+      } catch {
+        /* history is best-effort */
+      }
       await burnTx.wait();
 
       setBridgeStep(3);
@@ -1213,7 +1287,7 @@ export function OctraBridgeView({
                 <img
                   src={
                     completedInfo.dir === "o2e"
-                      ? "/qiubit-icon.svg"
+                      ? "/octra-icon.svg"
                       : "/eth-icon.svg"
                   }
                   alt=""
@@ -1229,7 +1303,7 @@ export function OctraBridgeView({
                   src={
                     completedInfo.dir === "o2e"
                       ? "/eth-icon.svg"
-                      : "/qiubit-icon.svg"
+                      : "/octra-icon.svg"
                   }
                   alt=""
                   style={{ width: 14, height: 14, borderRadius: "50%" }}
@@ -1326,7 +1400,7 @@ export function OctraBridgeView({
                   <span>Dari</span>
                   <img
                     src={
-                      bridgeDir === "o2e" ? "/qiubit-icon.svg" : "/eth-icon.svg"
+                      bridgeDir === "o2e" ? "/octra-icon.svg" : "/eth-icon.svg"
                     }
                     alt=""
                     className="inline-chain-icon"
@@ -1365,7 +1439,7 @@ export function OctraBridgeView({
                   <img
                     src={
                       bridgeDir === "o2e"
-                        ? "/qiubit-icon.svg"
+                        ? "/octra-icon.svg"
                         : "/chains/ethereum/woct.svg"
                     }
                     alt={fromSymbol}
@@ -1422,7 +1496,7 @@ export function OctraBridgeView({
                   <span>Ke</span>
                   <img
                     src={
-                      bridgeDir === "o2e" ? "/eth-icon.svg" : "/qiubit-icon.svg"
+                      bridgeDir === "o2e" ? "/eth-icon.svg" : "/octra-icon.svg"
                     }
                     alt=""
                     className="inline-chain-icon"
@@ -1462,7 +1536,7 @@ export function OctraBridgeView({
                     src={
                       bridgeDir === "o2e"
                         ? "/chains/ethereum/woct.svg"
-                        : "/qiubit-icon.svg"
+                        : "/octra-icon.svg"
                     }
                     alt={toSymbol}
                     width={24}

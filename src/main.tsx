@@ -11,6 +11,7 @@ import "./styles/Forms.css";
 import "./styles/Modals.css";
 import App from "./App";
 import { ErrorBoundary } from "./components/shared/ErrorBoundary";
+import { syncUserNetworksToLocalStorage } from "./services/network/UserNetworkService";
 
 import { Buffer } from "buffer";
 
@@ -26,6 +27,12 @@ window.Buffer = Buffer;
 if (typeof global === "undefined") {
   window.global = window;
 }
+
+// Mirror user-added networks from chrome.storage into the sync localStorage
+// cache so resolveNetworkByChainId() sees custom chains in every context —
+// including the dApp approval window (which otherwise showed "Chain <id>" and
+// "ETH" instead of the network's real name and native token).
+void syncUserNetworksToLocalStorage().catch(() => {});
 
 const root = document.getElementById("root");
 

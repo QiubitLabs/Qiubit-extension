@@ -48,11 +48,28 @@ export function resolveNetworkForToken(token: {
   isNative?: boolean;
   chainId?: number;
   isTestnet?: boolean;
+  isSolana?: boolean;
+  isSui?: boolean;
+  isBitcoin?: boolean;
 }): NetworkConfig | null {
-  if (token.isNative || (!token.isEVM && !token.chainId))
-    return NETWORK_REGISTRY.octra;
-  if (token.chainId)
-    return resolveNetworkByChainId(token.chainId) ?? NETWORK_REGISTRY.ethereum;
+  if (token.isNative) return NETWORK_REGISTRY.octra;
+  // Non-EVM chain flags first — a Solana/Sui/Bitcoin token must never fall
+  // through to Octra (it used to when it carried no chainId, which made e.g.
+  // testnet SUI render with the Octra logo in the token detail view).
+  if (token.chainId) {
+    const byId = resolveNetworkByChainId(token.chainId);
+    if (byId) return byId;
+  }
+  if (token.isSolana)
+    return token.isTestnet
+      ? NETWORK_REGISTRY["solana-devnet"]
+      : NETWORK_REGISTRY.solana;
+  if (token.isSui)
+    return token.isTestnet
+      ? NETWORK_REGISTRY["sui-testnet"]
+      : NETWORK_REGISTRY.sui;
+  if (token.isBitcoin) return NETWORK_REGISTRY.bitcoin;
+  if (!token.isEVM && !token.chainId) return NETWORK_REGISTRY.octra;
   if (token.isTestnet) return NETWORK_REGISTRY.sepolia;
   return NETWORK_REGISTRY.ethereum;
 }
