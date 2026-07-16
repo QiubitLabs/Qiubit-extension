@@ -15,9 +15,11 @@ const TEST_PAYLOAD = {
 describe("HMAC integrity — hard fail", () => {
   it("throws when HMAC is tampered (v4)", async () => {
     const encrypted = await encryptDataSecure(TEST_PAYLOAD, PASSWORD);
+    // Flip the first char to one guaranteed to differ, otherwise a real HMAC
+    // starting with "X" (1/64 chance) would make this "tamper" a no-op.
     const tampered = {
       ...encrypted,
-      hmac: "X" + encrypted.hmac.slice(1),
+      hmac: (encrypted.hmac[0] === "X" ? "Y" : "X") + encrypted.hmac.slice(1),
     };
 
     await expect(decryptDataSecure(tampered as any, PASSWORD)).rejects.toThrow(

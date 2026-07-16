@@ -58,7 +58,7 @@ export function StealthView({
           <div className="token-items-grid">
             {displayTokens.map((token: any) => (
               <button
-                key={token.symbol}
+                key={`${token.symbol}-${token.chainId ?? '0'}-${token.contractAddress || 'native'}`}
                 className="token-select-item"
                 onClick={() => onTokenSelect(token)}
               >

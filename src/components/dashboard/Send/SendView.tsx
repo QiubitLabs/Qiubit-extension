@@ -14,8 +14,9 @@ import {
 } from "../../../utils/storage";
 import { keyringService } from "../../../services/core/KeyringService";
 import { WalletService } from "../../../services/core/WalletService";
+import { evmBalanceCache } from "../../../utils/evmBalanceCache";
 import { ocs01Manager } from "../../../services/features/OCS01TokenService";
-import { getFriendlyErrorMessage } from "../../../utils/errorMessages";
+import { getFriendlyErrorMessage, cleanErrorMessage } from "../../../utils/errorMessages";
 import { ChevronLeftIcon, AlertIcon } from "../../shared/Icons";
 import { TokenIcon } from "../../shared/TokenIcon";
 import { TokenSelectView } from "../TokenSelect/TokenSelectView";
@@ -29,6 +30,7 @@ import {
   fetchGasOptions,
   GasOptions,
   gweiToWei,
+  getBalanceRpcList,
 } from "../../../utils/evmProvider";
 import {
   isEvmNetwork,
@@ -42,6 +44,11 @@ import {
   estimateSuiFee,
 } from "../../../services/network/SuiSendService";
 import { sendBitcoinTransaction } from "../../../services/network/BitcoinSendService";
+import {
+  looksLikeName,
+  resolveRecipientName,
+  type ResolvableChain,
+} from "../../../services/network/NameResolutionService";
 import { notificationService } from "../../../services/core/NotificationService";
 import { SendConfirmModal } from "./SendConfirmModal";
 import { SendStatusModal } from "./SendStatusModal";
@@ -67,7 +74,7 @@ interface SendViewProps {
   balance: number;
   nonce: number;
   onBack: () => void;
-  onRefresh: (mode?: "public" | "private" | "both") => void;
+  onRefresh: (mode?: "public" | "private" | "both", opts?: { force?: boolean }) => void;
   settings: any;
   onLock: () => void;
   initialToken?: Token | null;
@@ -118,9 +125,14 @@ export function SendView({
     return hasNative ? tokensFromParent : [nativeToken, ...tokensFromParent];
   });
   const [recipient, setRecipient] = useState("");
+  // Name resolution (ENS / SNS / SuiNS): resolved for the CURRENT input only
+  const [resolvedName, setResolvedName] = useState<{
+    name: string;
+    address: string;
+  } | null>(null);
+  const [isResolvingName, setIsResolvingName] = useState(false);
   const [bookEntries, setBookEntries] = useState<AddressEntry[]>([]);
   const [amount, setAmount] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [txHash, setTxHash] = useState("");
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
@@ -167,6 +179,24 @@ export function SendView({
   const [showFeePopup, setShowFeePopup] = useState(false);
   const [evmGasOpts, setEvmGasOpts] = useState<GasOptions | null>(null);
   const [ethPriceUsd, setEthPriceUsd] = useState<number | null>(null);
+  // USD price of the token being sent (null = unknown/testnet)
+  const [sendTokenPriceUsd, setSendTokenPriceUsd] = useState<number | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setSendTokenPriceUsd(null);
+    if (!selectedToken || selectedToken.isTestnet) return;
+    let cancelled = false;
+    getTokenPrice(selectedToken.symbol)
+      .then((p) => {
+        if (!cancelled && p && p.price > 0) setSendTokenPriceUsd(p.price);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedToken?.symbol, selectedToken?.isTestnet]);
 
   const [txStatus, setTxStatus] = useState<
     "pending" | "confirmed" | "failed" | "timeout" | null
@@ -220,11 +250,24 @@ export function SendView({
       fee = feeEstimates.medium;
     }
   }
-  const isErc20Token =
-    selectedToken?.isEVM === true && !isNativeEvmToken(selectedToken);
-  const total = isErc20Token
-    ? parseFloat(amount || "0")
-    : parseFloat(amount || "0") + fee;
+  // Fees are paid in the chain's NATIVE coin. Only when the coin being sent
+  // IS that native coin does the fee come out of the same balance — ERC-20,
+  // SPL and non-native Sui coins pay fees from a separate native balance.
+  const sendsNativeCoin =
+    selectedToken?.isNative === true ||
+    (selectedToken?.isEVM === true && isNativeEvmToken(selectedToken)) ||
+    (selectedToken?.isSolana === true &&
+      (!selectedToken.contractAddress ||
+        selectedToken.contractAddress === "solana")) ||
+    (selectedToken?.isSui === true &&
+      (!selectedToken.contractAddress ||
+        selectedToken.contractAddress === "sui" ||
+        selectedToken.contractAddress === "0x2::sui::SUI")) ||
+    selectedToken?.isBitcoin === true;
+
+  const total = sendsNativeCoin
+    ? parseFloat(amount || "0") + fee
+    : parseFloat(amount || "0");
 
   const isAddressValid = (addr: string) => {
     if (!addr) return false;
@@ -244,9 +287,51 @@ export function SendView({
       : isValidAddress(addr);
   };
 
+  // Which name service applies to the selected token's chain
+  const nameChain: ResolvableChain | null = selectedToken?.isEVM
+    ? "evm"
+    : selectedToken?.isSolana
+      ? "solana"
+      : selectedToken?.isSui
+        ? "sui"
+        : null;
+  const recipientIsName = looksLikeName(recipient, nameChain);
+
+  // Debounced name resolution — the result is only kept while it still
+  // matches what's in the input.
+  useEffect(() => {
+    setResolvedName(null);
+    if (!recipientIsName || !nameChain) {
+      setIsResolvingName(false);
+      return;
+    }
+    const name = recipient.trim().toLowerCase();
+    setIsResolvingName(true);
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const address = await resolveRecipientName(name, nameChain);
+      if (cancelled) return;
+      setIsResolvingName(false);
+      if (address) setResolvedName({ name, address });
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      setIsResolvingName(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipient, nameChain]);
+
+  // The address transactions are actually sent to: the resolved name's
+  // address when the input is a name, otherwise the raw input.
+  const effectiveRecipient =
+    resolvedName && resolvedName.name === recipient.trim().toLowerCase()
+      ? resolvedName.address
+      : recipient;
+
   const isValid =
     recipient &&
-    isAddressValid(recipient) &&
+    isAddressValid(effectiveRecipient) &&
     amount &&
     parseFloat(amount) > 0 &&
     total <= tokenBalance;
@@ -257,6 +342,63 @@ export function SendView({
     remainingBalance < 0.001 &&
     remainingBalance >= 0;
 
+  const updateGlobalTokenBalance = (token: Token, bal: number) => {
+    try {
+      const address = wallet.address;
+      const evmAddress = wallet.evmAddress || address;
+      const solanaAddress = wallet.solanaAddress || address;
+      const suiAddress = wallet.suiAddress || address;
+      const bitcoinAddress = wallet.bitcoinAddress || address;
+
+      let key = "";
+      if (token.isEVM) {
+        const chainId = token.chainId ?? 1;
+        const contract = token.contractAddress;
+        key = `${chainId}:${evmAddress.toLowerCase()}:${contract ? `erc20:${contract.toLowerCase()}` : "native"}`;
+      } else if (token.isSolana) {
+        const contract = token.contractAddress;
+        const prefix = token.isTestnet ? "solana-testnet" : "solana";
+        key = contract && contract !== "solana"
+          ? `${prefix}:${solanaAddress}:spl:${contract}`
+          : `${prefix}:${solanaAddress}:native`;
+      } else if (token.isSui) {
+        const contract = token.contractAddress;
+        const prefix = token.isTestnet ? "sui-testnet" : "sui";
+        key = contract && contract !== "sui"
+          ? `${prefix}:${suiAddress}:coin:${contract}`
+          : `${prefix}:${suiAddress}:native`;
+      } else if (token.isBitcoin) {
+        key = `bitcoin:${bitcoinAddress}:native`;
+      } else if (token.isOCS01 || token.contractAddress) {
+        const contract = token.contractAddress;
+        const chainId = token.chainId ?? 9048201;
+        key = `${chainId}:${address.toLowerCase()}:${contract ? `erc20:${contract.toLowerCase()}` : "native"}`;
+      }
+
+      if (key) {
+        evmBalanceCache.set(key, bal.toString());
+      }
+    } catch (e) {
+      console.warn("Failed to update global token balance cache", e);
+    }
+  };
+
+  const refreshAndCachePostTxBalance = async () => {
+    if (!selectedToken) return;
+    try {
+      const freshBal = await WalletService.getSingleTokenBalance(
+        wallet,
+        selectedToken,
+        undefined,
+        { preferPrivate: true },
+      );
+      updateGlobalTokenBalance(selectedToken, freshBal);
+    } catch (e) {
+      console.warn("Failed to update post-tx balance cache", e);
+    }
+    onRefresh("public", { force: true });
+  };
+
   const handleFastRefresh = async () => {
     if (!selectedToken || isLoadingBalance) return;
     setIsLoadingBalance(true);
@@ -264,6 +406,8 @@ export function SendView({
       const freshBal = await WalletService.getSingleTokenBalance(
         wallet,
         selectedToken,
+        undefined,
+        { preferPrivate: true }, // Send flow: Infura-first for low latency
       );
       setTokenBalance(freshBal);
     } catch (e) {
@@ -286,8 +430,12 @@ export function SendView({
         const freshBal = await WalletService.getSingleTokenBalance(
           wallet,
           token,
+          undefined,
+          { preferPrivate: true }, // Send flow: Infura-first for low latency
         );
         setTokenBalance(freshBal);
+        setIsLoadingBalance(false);
+        updateGlobalTokenBalance(token, freshBal);
 
         const fees = await rpcClient.getFeeEstimate(1);
         setFeeEstimates({
@@ -299,8 +447,12 @@ export function SendView({
         const freshBal = await WalletService.getSingleTokenBalance(
           wallet,
           token,
+          undefined,
+          { preferPrivate: true }, // Send flow: Infura-first for low latency
         );
         setTokenBalance(freshBal);
+        setIsLoadingBalance(false);
+        updateGlobalTokenBalance(token, freshBal);
 
         try {
           const isNativeEth = isNativeEvmToken(token);
@@ -311,7 +463,9 @@ export function SendView({
             fetchGasOptions(
               {},
               isNativeEth ? 21_000n : 65_000n,
-              settings?.network || "all",
+              // Estimate on the TOKEN's chain — the global network setting can
+              // be "all", which would silently price gas on Ethereum instead.
+              resolveNetworkForToken(token)?.id ?? settings?.network ?? "all",
             ),
             getTokenPrice(nativeGasSymbol),
           ]);
@@ -341,6 +495,8 @@ export function SendView({
         const dec = token.decimals ?? 6;
         const normalized = b / Math.pow(10, dec);
         setTokenBalance(normalized);
+        setIsLoadingBalance(false);
+        updateGlobalTokenBalance(token, normalized);
         await savePublicCache(cacheKey, normalized.toString());
 
         const fees = await rpcClient.getFeeEstimate(1);
@@ -353,8 +509,12 @@ export function SendView({
         const freshBal = await WalletService.getSingleTokenBalance(
           wallet,
           token,
+          undefined,
+          { preferPrivate: true }, // Send flow: Infura-first for low latency
         );
         setTokenBalance(freshBal);
+        setIsLoadingBalance(false);
+        updateGlobalTokenBalance(token, freshBal);
         setFeeEstimates({
           low: 0.000005,
           medium: 0.000005,
@@ -364,8 +524,12 @@ export function SendView({
         const freshBal = await WalletService.getSingleTokenBalance(
           wallet,
           token,
+          undefined,
+          { preferPrivate: true }, // Send flow: Infura-first for low latency
         );
         setTokenBalance(freshBal);
+        setIsLoadingBalance(false);
+        updateGlobalTokenBalance(token, freshBal);
         // Real fee from the live reference gas price (MIST per gas unit):
         // a simple pay tx burns ~1000 computation units plus ~1M MIST net
         // storage — matches observed on-chain fees (~0.002 SUI), instead of
@@ -418,8 +582,12 @@ export function SendView({
         const freshBal = await WalletService.getSingleTokenBalance(
           wallet,
           token,
+          undefined,
+          { preferPrivate: true }, // Send flow: Infura-first for low latency
         );
         setTokenBalance(freshBal);
+        setIsLoadingBalance(false);
+        updateGlobalTokenBalance(token, freshBal);
         try {
           const res = await fetch(
             "https://mempool.space/api/v1/fees/recommended",
@@ -481,9 +649,11 @@ export function SendView({
   }, [amount, selectedToken]);
 
   const handleSendClick = () => {
-    if (!isAddressValid(recipient)) {
+    if (!isAddressValid(effectiveRecipient)) {
       setError(
-        `Invalid ${selectedToken?.isEVM ? "EVM" : selectedToken?.isSolana ? "Solana" : selectedToken?.isSui ? "Sui" : selectedToken?.isBitcoin ? "Bitcoin" : "Octra"} address`,
+        recipientIsName
+          ? "Name could not be resolved to an address"
+          : `Invalid ${selectedToken?.isEVM ? "EVM" : selectedToken?.isSolana ? "Solana" : selectedToken?.isSui ? "Sui" : selectedToken?.isBitcoin ? "Bitcoin" : "Octra"} address`,
       );
       return;
     }
@@ -530,7 +700,7 @@ export function SendView({
             selectedToken?.symbol ?? "OCT",
             amount,
           );
-          onRefresh("public"); // Refresh only public balance when confirmed
+          refreshAndCachePostTxBalance(); // Refresh only public balance when confirmed
           return;
         }
         next(false);
@@ -580,7 +750,7 @@ export function SendView({
               },
             ]);
           }
-          if (confirmed) onRefresh("public");
+          if (confirmed) refreshAndCachePostTxBalance();
           return;
         }
       } catch {
@@ -623,7 +793,7 @@ export function SendView({
               setTxStatus("failed");
             } else {
               setTxStatus("confirmed");
-              onRefresh("public");
+              refreshAndCachePostTxBalance();
             }
             return;
           }
@@ -641,6 +811,10 @@ export function SendView({
 
   const handleConfirmSend = async () => {
     if (!selectedToken) return;
+
+    // Shadow the raw input with the name-resolved address so every chain
+    // path below sends to the real address, not the typed ENS/SNS/SuiNS name.
+    const recipient = effectiveRecipient;
 
     // resolveNetworkForToken (unlike getNetworkForToken) also resolves
     // manually-added custom EVM chains by chainId, so a native send on an
@@ -716,11 +890,40 @@ export function SendView({
           txRequest.maxPriorityFeePerGas = tier.maxPriorityFeePerGas;
         }
 
-        const txResponse = await keyringService.signAndSendEvm(
-          evmAddr,
-          txRequest,
-          rpcUrl,
-        );
+        const chainId = network?.chainId;
+        const rpcUrls: string[] = [];
+        if (chainId) {
+          rpcUrls.push(...getBalanceRpcList(chainId));
+        }
+        if (!rpcUrls.includes(rpcUrl)) {
+          rpcUrls.unshift(rpcUrl);
+        }
+
+        let txResponse: any = null;
+        let lastError: any = null;
+
+        for (const url of rpcUrls) {
+          try {
+            txResponse = await keyringService.signAndSendEvm(
+              evmAddr,
+              txRequest,
+              url,
+            );
+            lastError = null;
+            break;
+          } catch (e: any) {
+            lastError = e;
+          }
+        }
+
+        if (lastError) {
+          throw lastError;
+        }
+
+        if (!txResponse) {
+          throw new Error("Failed to sign and send transaction on all available RPCs.");
+        }
+
         txHash = txResponse.hash;
       } else if (selectedToken.isSolana) {
         const solanaPrivateKeyHex = wallet.solanaPrivateKeyHex;
@@ -769,7 +972,7 @@ export function SendView({
             to: recipient,
             amount: parseFloat(amount),
             nonce: nextNonce,
-            message: message ? message.slice(0, 1024) : null,
+            message: null,
             fee: fee,
           });
 
@@ -894,7 +1097,7 @@ export function SendView({
         pollTransactionStatus(txHash); // Octra network
       }
 
-      onRefresh("public");
+      refreshAndCachePostTxBalance();
     } catch (err: any) {
       console.error("Transaction error:", err);
       if (err.message && err.message.includes("Keyring is locked") && onLock) {
@@ -919,11 +1122,21 @@ export function SendView({
         selectedToken?.chainId || network?.id,
       );
 
+      const cleanTechnical = cleanErrorMessage(rawTechnical);
+
       if (
+        friendly === "An unexpected error occurred. Please try again." &&
+        cleanTechnical &&
+        cleanTechnical !== "Something went wrong. Please try again."
+      ) {
+        setError(cleanTechnical);
+      } else if (
         friendly === "An unexpected error occurred. Please try again." &&
         rawTechnical
       ) {
-        setError(`${friendly} (${rawTechnical})`);
+        // Strip ethers noise if we still fall back to rawTechnical
+        const simpleRaw = rawTechnical.replace(/\(.*\)/gs, "").trim().slice(0, 120);
+        setError(`${friendly} (${simpleRaw})`);
       } else {
         setError(friendly);
       }
@@ -936,7 +1149,6 @@ export function SendView({
     setSelectedToken(null);
     setRecipient("");
     setAmount("");
-    setMessage("");
     setStep("select");
     setError("");
     setTxHash("");
@@ -1014,6 +1226,18 @@ export function SendView({
               <span className="text-lg font-bold block">
                 {isLoadingBalance ? "..." : formatAmount(tokenBalance, 6)}{" "}
                 {selectedToken?.symbol}
+                {sendTokenPriceUsd != null && !isLoadingBalance && (
+                  <span
+                    className="text-xs text-tertiary"
+                    style={{ marginLeft: "6px", fontWeight: 500 }}
+                  >
+                    ≈ $
+                    {(tokenBalance * sendTokenPriceUsd).toLocaleString(
+                      "en-US",
+                      { maximumFractionDigits: 2 },
+                    )}
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -1034,48 +1258,102 @@ export function SendView({
               <button
                 className="send-max-btn"
                 onClick={() =>
-                  setAmount(Math.max(0, tokenBalance - fee).toFixed(6))
+                  // The fee is paid in the NATIVE coin — only subtract it
+                  // when that's also the coin being sent.
+                  setAmount(
+                    (sendsNativeCoin
+                      ? Math.max(0, tokenBalance - fee)
+                      : tokenBalance
+                    ).toFixed(6),
+                  )
                 }
               >
                 MAX
               </button>
             </div>
+            {sendTokenPriceUsd != null && parseFloat(amount) > 0 && (
+              <p className="form-hint" style={{ marginTop: "6px" }}>
+                ≈ $
+                {(parseFloat(amount) * sendTokenPriceUsd).toLocaleString(
+                  "en-US",
+                  { maximumFractionDigits: 2 },
+                )}{" "}
+                USD
+              </p>
+            )}
           </div>
 
           <div className="form-group">
             <label className="form-label">Recipient Address</label>
-            <input
-              type="text"
-              className={`input input-mono ${recipient && !isAddressValid(recipient) ? "input-error" : ""}`}
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              placeholder={
-                selectedToken?.isEVM
-                  ? "0x..."
-                  : selectedToken?.isSolana
-                    ? "Solana address..."
-                    : selectedToken?.isSui
-                      ? "Sui address..."
-                      : selectedToken?.isBitcoin
-                        ? "Bitcoin address..."
-                        : "oct..."
-              }
-            />
-            {recipient && !isAddressValid(recipient) && (
-              <p className="form-error">
-                Invalid{" "}
-                {selectedToken?.isEVM
-                  ? "EVM"
-                  : selectedToken?.isSolana
-                    ? "Solana"
-                    : selectedToken?.isSui
-                      ? "Sui"
-                      : selectedToken?.isBitcoin
-                        ? "Bitcoin"
-                        : "Octra"}{" "}
-                address
-              </p>
+            <div className="relative">
+              <input
+                type="text"
+                className={`input input-mono ${recipient && !isAddressValid(effectiveRecipient) && !isResolvingName ? "input-error" : ""}`}
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                placeholder={
+                  selectedToken?.isEVM
+                    ? "0x... or name.eth"
+                    : selectedToken?.isSolana
+                      ? "Solana address or name.sol"
+                      : selectedToken?.isSui
+                        ? "Sui address or name.sui"
+                        : selectedToken?.isBitcoin
+                          ? "Bitcoin address..."
+                          : "oct..."
+                }
+                style={{ paddingRight: "70px" }}
+              />
+              {!recipient && (
+                <button
+                  className="send-max-btn"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      if (text) setRecipient(text.trim());
+                    } catch {
+                      /* clipboard permission denied — ignore */
+                    }
+                  }}
+                >
+                  PASTE
+                </button>
+              )}
+            </div>
+            {isResolvingName && (
+              <p className="form-hint">Resolving name…</p>
             )}
+            {!isResolvingName &&
+              resolvedName &&
+              resolvedName.name === recipient.trim().toLowerCase() && (
+                <p
+                  className="form-hint"
+                  style={{ color: "var(--accent-primary)" }}
+                >
+                  {resolvedName.name} →{" "}
+                  {resolvedName.address.slice(0, 8)}…
+                  {resolvedName.address.slice(-6)}
+                </p>
+              )}
+            {recipient &&
+              !isResolvingName &&
+              !isAddressValid(effectiveRecipient) && (
+                <p className="form-error">
+                  {recipientIsName
+                    ? "Name not found"
+                    : `Invalid ${
+                        selectedToken?.isEVM
+                          ? "EVM"
+                          : selectedToken?.isSolana
+                            ? "Solana"
+                            : selectedToken?.isSui
+                              ? "Sui"
+                              : selectedToken?.isBitcoin
+                                ? "Bitcoin"
+                                : "Octra"
+                      } address`}
+                </p>
+              )}
             {bookEntries.length > 0 && !recipient && (
               <div
                 style={{
@@ -1135,24 +1413,6 @@ export function SendView({
             )}
           </div>
 
-          {!selectedToken?.isEVM && (
-            <div className="form-group mb-lg">
-              <label className="form-label flex items-center justify-between">
-                <span>Send Message</span>
-                <span className="text-tertiary font-normal text-xs">
-                  (Optional)
-                </span>
-              </label>
-              <input
-                type="text"
-                className="input"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Add a note to your transaction..."
-              />
-            </div>
-          )}
-
           {/* Low Balance Warning */}
           {hasLowBalance && (
             <div
@@ -1190,7 +1450,7 @@ export function SendView({
           selectedToken={selectedToken}
           amount={amount}
           wallet={wallet}
-          recipient={recipient}
+          recipient={effectiveRecipient}
           fee={fee}
           ethPriceUsd={ethPriceUsd}
           feeSpeed={feeSpeed}
@@ -1223,7 +1483,7 @@ export function SendView({
             settings={settings}
             amount={amount}
             selectedToken={selectedToken}
-            recipient={recipient}
+            recipient={effectiveRecipient}
             senderAddr={wallet?.evmAddress || wallet?.address || ""}
             onCloseSending={() => {
               setStep("form");
@@ -1238,7 +1498,6 @@ export function SendView({
               setStep("form");
               setRecipient("");
               setAmount("");
-              setMessage("");
               setTxStatus(null);
               setTxHash("");
             }}

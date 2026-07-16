@@ -19,9 +19,11 @@ import {
   CopyIcon,
   AnimatedLockIcon,
   AlertIcon,
-  QiubitLogo,
 } from "../shared/Icons";
+import { OnboardingLottie } from "./OnboardingLottie";
+import { FeedbackLottie } from "../shared/FeedbackLottie";
 import { StepHeader } from "./StepHeader/StepHeader";
+import { version as pkgVersion } from "../../../package.json";
 import { calculatePasswordStrength } from "../../utils/validation";
 import { Wallet } from "../../types";
 
@@ -47,9 +49,7 @@ function SuccessSplash({ onFinish }: SuccessSplashProps) {
     <div className={`success-splash ${phase}`}>
       <div className="success-content">
         <div className="success-icon-container">
-          <div className="success-static-check">
-            <CheckIcon size={48} />
-          </div>
+          <FeedbackLottie kind="success" size={140} />
         </div>
         <h2 className="success-title">Wallet Ready!</h2>
         <p className="success-message">Redirecting to dashboard...</p>
@@ -69,10 +69,14 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   return (
     <div className="onboarding-container welcome-centered animate-fade-in">
-      <div className="onboarding-header animate-fade-in-scale">
-        <div className="onboarding-logo">
-          <QiubitLogo size={100} />
+      <div className="onboarding-header">
+        <div className="onboarding-lottie-wrap">
+          <OnboardingLottie size={250} />
         </div>
+        <h1 className="welcome-hero-title">Welcome to Qiubit Wallet</h1>
+        <p className="welcome-hero-subtitle">
+          Your multichain gateway to Octra &amp; beyond
+        </p>
       </div>
 
       <div className="onboarding-content">
@@ -110,7 +114,12 @@ export function WelcomeScreen({
       </div>
 
       <div className="onboarding-footer">
-        <p>Support Octra Network</p>
+        <p>
+          Qiubit Wallet v
+          {typeof chrome !== "undefined" && chrome.runtime?.getManifest
+            ? chrome.runtime.getManifest().version
+            : pkgVersion}
+        </p>
       </div>
     </div>
   );
@@ -135,6 +144,9 @@ export function CreateWalletScreen({
   const [wallet, setWallet] = useState<Wallet | null>(null);
 
   const [showMnemonic, setShowMnemonic] = useState(false);
+  // The user must have SEEN the seed at least once before confirming they
+  // saved it — otherwise they can "confirm" a phrase they never looked at.
+  const [hasRevealedSeed, setHasRevealedSeed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false); // Added missing state
 
@@ -160,6 +172,13 @@ export function CreateWalletScreen({
     }
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
+      return;
+    }
+
+    // Coming back from the seed step must NOT regenerate the wallet — the
+    // user may already have written down the first seed.
+    if (wallet) {
+      setStep(2);
       return;
     }
 
@@ -193,9 +212,19 @@ export function CreateWalletScreen({
   const handleCopyMnemonic = async () => {
     if (!wallet?.mnemonic) return;
     try {
-      await navigator.clipboard.writeText(wallet.mnemonic.join(" "));
+      const phrase = wallet.mnemonic.join(" ");
+      await navigator.clipboard.writeText(phrase);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      // Auto-clear the clipboard after 60s — other apps can read it.
+      setTimeout(async () => {
+        try {
+          const current = await navigator.clipboard.readText();
+          if (current === phrase) await navigator.clipboard.writeText("");
+        } catch {
+          /* clipboard unavailable — ignore */
+        }
+      }, 60_000);
     } catch {
       console.error("Failed to copy");
     }
@@ -438,7 +467,10 @@ export function CreateWalletScreen({
           <div className="phrase-actions">
             <button
               className={`phrase-action-btn ${showMnemonic ? "active" : ""}`}
-              onClick={() => setShowMnemonic(!showMnemonic)}
+              onClick={() => {
+                if (!showMnemonic) setHasRevealedSeed(true);
+                setShowMnemonic(!showMnemonic);
+              }}
             >
               {showMnemonic ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
               <span>{showMnemonic ? "Hide" : "Show"}</span>
@@ -452,11 +484,24 @@ export function CreateWalletScreen({
             </button>
           </div>
 
+          {copied && (
+            <p
+              className="form-hint"
+              style={{ textAlign: "center", marginBottom: "8px" }}
+            >
+              Clipboard clears automatically in 60s — other apps can read it.
+            </p>
+          )}
+
           <button
             className="btn btn-primary btn-full"
             onClick={handleProceedToVerify}
+            disabled={!hasRevealedSeed}
+            title={
+              hasRevealedSeed ? undefined : "Reveal the phrase first (Show)"
+            }
           >
-            I've Saved It, Continue
+            {hasRevealedSeed ? "I've Saved It, Continue" : "Reveal Phrase First"}
           </button>
         </div>
       )}
@@ -571,6 +616,9 @@ export function ImportWalletScreen({
 
   const passwordStrength = calculatePasswordStrength(password);
 
+  // Flow: choose method (1) → enter & validate seed/key (2) → password (3).
+  // Validating the import BEFORE asking for a password means a typo'd seed
+  // fails immediately, not after the user has already set up a password.
   const handleSetPassword = () => {
     if (password.length < 8) {
       setPasswordError("Password must be at least 8 characters");
@@ -580,7 +628,7 @@ export function ImportWalletScreen({
       setPasswordError("Passwords do not match");
       return;
     }
-    setStep(2);
+    setIsSuccess(true);
   };
 
   const handleFinalSuccess = () => {
@@ -605,7 +653,7 @@ export function ImportWalletScreen({
       }
 
       setWallet(newWallet);
-      setIsSuccess(true);
+      setStep(3);
     } catch (err: any) {
       setError(err.message || "Failed to import wallet");
     } finally {
@@ -619,14 +667,14 @@ export function ImportWalletScreen({
 
   return (
     <div className="onboarding-container animate-fade-in">
-      {/* Step 1: Set Password */}
-      {step === 1 && (
+      {/* Step 3: Set Password (the import is already validated) */}
+      {step === 3 && (
         <div className="create-password-step">
           <StepHeader
             title="Create Password"
-            currentStep={1}
+            currentStep={3}
             totalSteps={3}
-            onBack={onBack}
+            onBack={() => setStep(2)}
           />
 
           <div className="step-content">
@@ -758,14 +806,14 @@ export function ImportWalletScreen({
         </div>
       )}
 
-      {/* Step 2: Choose Import Method */}
-      {step === 2 && !importType && (
+      {/* Step 1: Choose Import Method */}
+      {step === 1 && (
         <div className="create-password-step">
           <StepHeader
             title="Import Method"
-            currentStep={2}
+            currentStep={1}
             totalSteps={3}
-            onBack={() => setStep(1)}
+            onBack={onBack}
           />
 
           <div className="step-content">
@@ -780,7 +828,10 @@ export function ImportWalletScreen({
             <div className="import-options">
               <button
                 className="onboarding-option"
-                onClick={() => setImportType("mnemonic")}
+                onClick={() => {
+                  setImportType("mnemonic");
+                  setStep(2);
+                }}
               >
                 <div className="onboarding-option-icon">
                   <ImportIcon size={24} />
@@ -799,7 +850,10 @@ export function ImportWalletScreen({
 
               <button
                 className="onboarding-option"
-                onClick={() => setImportType("privateKey")}
+                onClick={() => {
+                  setImportType("privateKey");
+                  setStep(2);
+                }}
               >
                 <div className="onboarding-option-icon">
                   <KeyIcon size={24} />
@@ -820,16 +874,20 @@ export function ImportWalletScreen({
         </div>
       )}
 
-      {/* Step 3: Enter phrase or key */}
+      {/* Step 2: Enter phrase or key (validated before the password step) */}
       {step === 2 && importType && (
         <div className="create-password-step">
           <StepHeader
             title={
               importType === "mnemonic" ? "Recovery Phrase" : "Private Key"
             }
-            currentStep={3}
+            currentStep={2}
             totalSteps={3}
-            onBack={() => setImportType(null)}
+            onBack={() => {
+              setImportType(null);
+              setError("");
+              setStep(1);
+            }}
           />
 
           <div className="step-content">
@@ -926,11 +984,7 @@ export function ImportWalletScreen({
                     : !privateKey.trim())
                 }
               >
-                {isLoading ? (
-                  <span className="loading-spinner" />
-                ) : (
-                  "Import Wallet"
-                )}
+                {isLoading ? <span className="loading-spinner" /> : "Continue"}
               </button>
             </div>
           </div>

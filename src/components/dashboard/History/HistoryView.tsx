@@ -3,6 +3,7 @@ import "./HistoryView.css";
 import "./HistoryTabs.css";
 
 import { ChevronLeftIcon } from "../../shared/Icons";
+import { FeedbackLottie } from "../../shared/FeedbackLottie";
 import { TransactionItem } from "../Transactions";
 import { TransactionDetailPage } from "../Transactions/TransactionDetailModal/TransactionDetailPage";
 import { Transaction, Settings, Token } from "../../../types";
@@ -244,10 +245,9 @@ export function HistoryView({
     const nonEvmTxList: TxWithNetwork[] = (isEvmOnly ? [] : transactions).map(
       (tx) => {
         const netId = tx.networkId || "octra";
-        let defaultToken = "OCT";
-        if (netId === "solana") defaultToken = "SOL";
-        else if (netId === "sui") defaultToken = "SUI";
-        else if (netId === "bitcoin") defaultToken = "BTC";
+        // Registry lookup covers testnets (solana-devnet, sui-testnet, …) and
+        // user-added networks, not just the hardcoded mainnet ids.
+        const defaultToken = resolveNetwork(netId)?.nativeToken?.symbol ?? "OCT";
         return {
           ...tx,
           _network: netId,
@@ -342,10 +342,9 @@ export function HistoryView({
   }, [allTransactions]);
 
   const getNetworkMeta = (netId: string) => {
-    if (netId === "octra") return { label: "Octra", color: "#00D4FF" };
-    if (netId === "solana") return { label: "Solana", color: "#14F195" };
-    if (netId === "sui") return { label: "Sui", color: "#6FB9FF" };
-    if (netId === "bitcoin") return { label: "Bitcoin", color: "#F7931A" };
+    const cfg = resolveNetwork(netId);
+    if (cfg)
+      return { label: cfg.displayName, color: cfg.badgeColor ?? "#888" };
     const evmNet = EVM_HISTORY_NETS.find((n) => n.id === netId);
     return evmNet
       ? { label: evmNet.label, color: evmNet.color }
@@ -358,6 +357,7 @@ export function HistoryView({
         tx={selectedTx}
         network={settings?.network || "mainnet"}
         onBack={() => setSelectedTx(null)}
+        evmAddress={evmAddress}
       />
     );
   }
@@ -538,74 +538,8 @@ export function HistoryView({
         </div>
       ) : filteredTransactions.length === 0 ? (
         <div className="tx-empty py-3xl flex flex-col items-center">
-          <div
-            style={{
-              margin: "0 0 16px 0",
-              opacity: 0.8,
-              color: "var(--text-tertiary)",
-            }}
-          >
-            <svg
-              width="120"
-              height="120"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <ellipse
-                className="ghost-shadow"
-                cx="50"
-                cy="92"
-                rx="20"
-                ry="3"
-                fill="currentColor"
-                fillOpacity="0.2"
-              />
-              <g className="ghost-body">
-                <path
-                  d="M50 15C30 15 15 35 15 60V85L22 78L29 85L36 78L43 85L50 78L57 85L64 78L71 85L78 78L85 85V60C85 35 70 15 50 15Z"
-                  fill="currentColor"
-                  fillOpacity="0.05"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-                <circle
-                  cx="38"
-                  cy="45"
-                  r="4"
-                  fill="currentColor"
-                  fillOpacity="0.8"
-                />
-                <circle
-                  cx="62"
-                  cy="45"
-                  r="4"
-                  fill="currentColor"
-                  fillOpacity="0.8"
-                />
-                <ellipse
-                  cx="50"
-                  cy="58"
-                  rx="3"
-                  ry="4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M15 55C10 55 5 45 10 40"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M85 55C90 55 95 45 90 40"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </g>
-            </svg>
+          <div style={{ margin: "0 0 8px 0" }}>
+            <FeedbackLottie kind="empty" size={140} />
           </div>
           <p className="text-tertiary">
             {filter === "pending"

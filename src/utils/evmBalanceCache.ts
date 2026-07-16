@@ -112,7 +112,7 @@ class EvmBalanceCache {
 
     if (fresh !== null) return fresh;
 
-    if (this.inflight.has(key))
+    if (!force && this.inflight.has(key))
       return this.inflight.get(key) as Promise<string>;
 
     const fetchPromise = (async () => {

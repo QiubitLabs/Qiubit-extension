@@ -75,6 +75,9 @@ function syncPopupSessionState(): Promise<void> {
             action: "GET_STATE",
           },
           (response) => {
+            // Reading lastError marks the error as handled (avoids
+            // "Unchecked runtime.lastError" when the background is starting).
+            void chrome.runtime.lastError;
             if (response && response.result) {
               const state = response.result;
               _popupSessionState.isValid = state.isValid;
@@ -419,7 +422,9 @@ class SessionServiceImpl {
 
     if (typeof chrome !== "undefined" && chrome.runtime) {
       try {
-        chrome.runtime.sendMessage({ type: "SYNC_SESSION", session: null });
+        chrome.runtime
+          .sendMessage({ type: "SYNC_SESSION", session: null })
+          .catch(() => {});
       } catch (e) {
         /* ignore extension context invalidated */
       }
@@ -710,17 +715,23 @@ class SessionServiceImpl {
     }
 
     if (typeof chrome !== "undefined" && chrome.runtime) {
-      chrome.runtime.sendMessage({
-        type: "SYNC_SESSION",
-        data: { sessionKey: this._sessionKey },
-      });
+      // Fire-and-forget: without .catch() a missing receiver (popup closed)
+      // becomes an uncaught "Receiving end does not exist" promise rejection.
+      chrome.runtime
+        .sendMessage({
+          type: "SYNC_SESSION",
+          data: { sessionKey: this._sessionKey },
+        })
+        .catch(() => {});
 
       setTimeout(() => {
         try {
-          chrome.runtime.sendMessage({
-            type: "SYNC_SESSION",
-            session: sessionData,
-          });
+          chrome.runtime
+            .sendMessage({
+              type: "SYNC_SESSION",
+              session: sessionData,
+            })
+            .catch(() => {});
         } catch (_) {}
       }, 50);
     }

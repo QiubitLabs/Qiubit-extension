@@ -64,18 +64,29 @@
   gap: 14px;
   padding: 16px;
   background: var(--bg-elevated);
-  border: none;
+  border: 1px solid transparent;
   border-radius: 12px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
 }
 
 .onboarding-option:hover {
-  opacity: 0.85;
+  border-color: rgba(0, 212, 255, 0.35);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.onboarding-option:hover .onboarding-option-icon,
+.onboarding-option:hover .onboarding-option-arrow {
+  color: var(--accent-primary);
 }
 
 .onboarding-option:active {
-  opacity: 0.7;
+  transform: translateY(0);
+  opacity: 0.85;
 }
 
 .onboarding-option-icon {
@@ -90,6 +101,7 @@
 
 .onboarding-option-content {
   flex: 1;
+  text-align: left;
 }
 
 .onboarding-option-title {
@@ -254,6 +266,7 @@
   border-radius: 12px;
   width: 100%;
   box-sizing: border-box;
+  transition: filter 0.25s ease; /* smooth blur/reveal */
 }
 
 .mnemonic-word {
@@ -823,4 +836,43 @@
   flex-shrink: 0;
   margin-top: 1px;
   color: var(--accent-primary);
+}
+
+/* ===== Welcome Lottie hero ===== */
+.onboarding-lottie-wrap {
+  display: flex;
+  justify-content: center;
+  margin: -16px auto 0;
+}
+
+.onboarding-lottie svg {
+  display: block;
+}
+
+.welcome-hero-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  opacity: 0;
+  animation: welcome-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards;
+}
+
+.welcome-hero-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  opacity: 0;
+  animation: welcome-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+@keyframes welcome-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

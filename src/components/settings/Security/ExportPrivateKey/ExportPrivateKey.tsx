@@ -374,6 +374,16 @@ export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
               </p>
             </div>
 
+            {/* Recovery phrase — restores every chain's keys at once */}
+            {wallet.mnemonic && wallet.mnemonic.length > 0 && (
+              <PrivateKeySection
+                label="Recovery Phrase (Seed)"
+                privateKey={wallet.mnemonic.join(" ")}
+                logoUrl="/qiubit-icon.svg"
+                formatLabel="BIP-39 - 12 words (all chains)"
+              />
+            )}
+
             {/* Octra Network */}
             <PrivateKeySection
               label="Octra Network"

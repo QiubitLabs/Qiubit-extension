@@ -73,11 +73,11 @@ export function TokenIcon({
   const [imageError, setImageError] = useState(false);
 
   const FALLBACK_LOGOS: Record<string, string> = {
-    ETH: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27ead9083C756Cc2/logo.png",
+    ETH: "/eth-icon.svg",
     BNB: "https://static.debank.com/image/chain/logo_url/bsc/bc73fa84b7fc5337905e527dadcbc854.png",
     POL: "https://static.debank.com/image/chain/logo_url/matic/52ca152c08831e4765506c9bd75767e8.png",
-    USDT: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-    USDC: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+    USDT: "/usdt-icon.svg",
+    USDC: "/usdc-icon.svg",
     DAI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
     WBTC: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
     LINK: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x514910771AF9Ca656af840dff83E8264EcF986CA/logo.png",
@@ -95,10 +95,34 @@ export function TokenIcon({
     BTC: "/chains/bitcoin/btc.png",
     SUI: "/chains/sui/sui.png",
     SOL: "/chains/solana/sol.png",
+    // Native gas tokens of the additional EVM L1s — resolve by symbol to the
+    // chain logo so they always render (like ETH/MON above), even when no
+    // logoUrl is passed. (Robinhood & MegaETH natives are ETH; Arc native is
+    // USDC — both already covered above.)
+    PROS: "/chains/pharos/logo.svg",
+    G: "/chains/gravity/logo.svg",
+    SOMI: "/chains/somnia/logo.svg",
+    "0G": "/chains/zerog/logo.svg",
+    XPL: "/chains/plasma/logo.svg",
+    PUSD: "/usdc-icon.svg",
   };
 
   const upperSymbol = symbol.toUpperCase();
-  const resolvedUrl = logoUrl || FALLBACK_LOGOS[upperSymbol] || "";
+  let resolvedUrl = logoUrl || FALLBACK_LOGOS[upperSymbol] || "";
+
+  // Dynamic overrides to force native gas assets and standard tokens to use high-quality local SVGs
+  if (upperSymbol === "ETH") {
+    resolvedUrl = "/eth-icon.svg";
+  } else if (
+    upperSymbol === "USDC" ||
+    upperSymbol === "PUSD" ||
+    upperSymbol === "PATHUSD" ||
+    upperSymbol === "USD"
+  ) {
+    resolvedUrl = "/usdc-icon.svg";
+  } else if (upperSymbol === "USDT" || upperSymbol === "USDT0") {
+    resolvedUrl = "/usdt-icon.svg";
+  }
 
   const [srcUrl, setSrcUrl] = useState<string>(() => {
     if (resolvedUrl) return getCachedIcon(resolvedUrl) ?? resolvedUrl;

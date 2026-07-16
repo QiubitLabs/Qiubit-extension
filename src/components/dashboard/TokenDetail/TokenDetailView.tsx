@@ -626,6 +626,7 @@ export function TokenDetailView({
             tx={selectedTx}
             network="mainnet"
             onBack={() => setSelectedTx(null)}
+            evmAddress={evmAddress}
           />
         </div>
       )}

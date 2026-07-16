@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { ChevronLeftIcon, PlusIcon } from "../../shared/Icons";
+import { ChevronLeftIcon, PlusIcon, SearchIcon } from "../../shared/Icons";
 import { Settings } from "../../../types";
 import { NETWORK_REGISTRY } from "../../../constants/networks/registry";
 import {
@@ -37,6 +37,7 @@ export function NetworkSwitcher({
   const [userNetworks, setUserNetworks] = useState<UserNetwork[]>([]);
   const [filter, setFilter] = useState<"all" | "mainnet" | "testnet">("all");
   const [showAddNetwork, setShowAddNetwork] = useState(false);
+  const [search, setSearch] = useState("");
 
   const reloadUserNetworks = () => {
     getUserNetworks().then(setUserNetworks);
@@ -76,11 +77,15 @@ export function NetworkSwitcher({
     return 0;
   });
 
+  const searchLower = search.trim().toLowerCase();
+
   const filteredNetworkIds = networkIds.filter((id) => {
     const meta = NETWORK_REGISTRY[id];
-    if (filter === "mainnet") return !meta.isTestnet;
-    if (filter === "testnet") return meta.isTestnet;
-    return true;
+    if (filter === "mainnet" && meta.isTestnet) return false;
+    if (filter === "testnet" && !meta.isTestnet) return false;
+    return (
+      !searchLower || meta.displayName.toLowerCase().includes(searchLower)
+    );
   });
 
   const filteredUserNetworks = userNetworks.filter((n) => {
@@ -88,12 +93,14 @@ export function NetworkSwitcher({
       /test|sepolia|goerli|mumbai|fuji|chapel|rinkeby|ropsten/i.test(
         n.chainName,
       );
-    if (filter === "mainnet") return !isTestnet;
-    if (filter === "testnet") return isTestnet;
-    return true;
+    if (filter === "mainnet" && isTestnet) return false;
+    if (filter === "testnet" && !isTestnet) return false;
+    return !searchLower || n.chainName.toLowerCase().includes(searchLower);
   });
 
-  const showAllNetworks = filter === "all";
+  const showAllNetworks =
+    filter === "all" &&
+    (!searchLower || "all networks".includes(searchLower));
 
   return (
     <div className="animate-fade-in">
@@ -122,6 +129,17 @@ export function NetworkSwitcher({
       )}
 
       <div className="wallet-content">
+        {/* Network search */}
+        <div className="network-search-box">
+          <SearchIcon size={14} />
+          <input
+            type="text"
+            placeholder="Search network..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
         {/* Sleek Segmented Control Filter Tabs */}
         <div className="network-filter-tabs">
           <button

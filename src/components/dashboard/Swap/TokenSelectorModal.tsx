@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Token } from "../../../types";
 import { TokenIcon } from "../../shared/TokenIcon/TokenIcon";
 import { DEFAULT_TOKENS } from "../../../constants/tokenLists";
@@ -77,6 +77,27 @@ export function TokenSelectorModal({
   fixedChainId,
 }: TokenSelectorModalProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [showChainDropdown, setShowChainDropdown] = useState(false);
+  const [chainSearch, setChainSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showChainDropdown) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (!dropdownRef.current?.contains(e.target as Node)) {
+        setShowChainDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [showChainDropdown]);
+
+  const pickChain = (id: string) => {
+    setActiveChainFilter(id);
+    setShowChainDropdown(false);
+    setChainSearch("");
+  };
+
   const allDefaults: any[] = [];
   Object.keys(DEFAULT_TOKENS).forEach((cid) => {
     const chainId = Number(cid);
@@ -270,31 +291,140 @@ export function TokenSelectorModal({
         </div>
 
         {!fixedChainId && (
-          <div className="network-horizontal-scroll">
-            {networks.map((net) => {
-              const isActive = activeChainFilter === net.id;
-              if (net.id === "all") {
+          <div className="token-chain-filter-row">
+            <div className="chain-dropdown-wrap" ref={dropdownRef}>
+              <button
+                type="button"
+                className={`chain-chip chain-dropdown-trigger ${activeChainFilter !== "all" ? "active" : ""}`}
+                onClick={() => setShowChainDropdown((v) => !v)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "var(--widget-bg-secondary, #222)",
+                  border: "1px solid var(--widget-border-subtle, #333)",
+                  borderRadius: "8px",
+                  padding: "6px 12px",
+                  color: "var(--widget-text-primary, #fff)",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  gap: "6px",
+                  height: "36px",
+                  boxSizing: "border-box"
+                }}
+              >
+                <span>
+                  {activeChainFilter === "all"
+                    ? "All"
+                    : (networks.find((n) => n.id === activeChainFilter)?.name ??
+                      activeChainFilter)}
+                </span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  style={{ opacity: 0.6, flexShrink: 0 }}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {showChainDropdown && (
+                <div className="chain-dropdown-menu">
+                  <div className="chain-dropdown-search">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ opacity: 0.5 }}
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search network..."
+                      value={chainSearch}
+                      onChange={(e) => setChainSearch(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  {"all networks".includes(chainSearch.toLowerCase()) && (
+                    <button
+                      type="button"
+                      className={`chain-dropdown-item ${activeChainFilter === "all" ? "active" : ""}`}
+                      onClick={() => pickChain("all")}
+                    >
+                      All networks
+                    </button>
+                  )}
+                  {networks
+                    .filter((n) => n.id !== "all")
+                    .filter((n) =>
+                      n.name.toLowerCase().includes(chainSearch.toLowerCase())
+                    )
+                    .map((net) => (
+                      <button
+                        type="button"
+                        key={net.id}
+                        className={`chain-dropdown-item ${activeChainFilter === net.id ? "active" : ""}`}
+                        onClick={() => pickChain(net.id)}
+                      >
+                        {net.logoUrl && (
+                          <img
+                            src={net.logoUrl}
+                            alt=""
+                            style={{
+                              width: "16px",
+                              height: "16px",
+                              borderRadius: "4px",
+                              flexShrink: 0
+                            }}
+                          />
+                        )}
+                        <span>{net.name}</span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            <div className="network-horizontal-scroll">
+              {networks.map((net) => {
+                const isActive = activeChainFilter === net.id;
+                if (net.id === "all") {
+                  return (
+                    <button
+                      type="button"
+                      key={net.id}
+                      className={`network-tab-circle tab-all-label ${isActive ? "active" : ""}`}
+                      onClick={() => setActiveChainFilter(net.id)}
+                    >
+                      All
+                    </button>
+                  );
+                }
                 return (
                   <button
+                    type="button"
                     key={net.id}
-                    className={`network-tab-circle tab-all-label ${isActive ? "active" : ""}`}
+                    className={`network-tab-circle ${isActive ? "active" : ""}`}
                     onClick={() => setActiveChainFilter(net.id)}
+                    title={net.name}
                   >
-                    All
+                    <img src={net.logoUrl} alt="" className="network-tab-img" />
                   </button>
                 );
-              }
-              return (
-                <button
-                  key={net.id}
-                  className={`network-tab-circle ${isActive ? "active" : ""}`}
-                  onClick={() => setActiveChainFilter(net.id)}
-                  title={net.name}
-                >
-                  <img src={net.logoUrl} alt="" className="network-tab-img" />
-                </button>
-              );
-            })}
+              })}
+            </div>
           </div>
         )}
 

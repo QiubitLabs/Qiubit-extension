@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { PlusIcon, ChevronRightIcon } from "../../shared/Icons";
+import { FeedbackLottie } from "../../shared/FeedbackLottie";
 import "./HomeView.css";
 import { TokenItem } from "../TokenItem";
 import {
@@ -627,74 +628,8 @@ export function HomeView({
 
         {activeTab === "nft" && (
           <div className="empty-state flex flex-col items-center py-3xl">
-            <div
-              style={{
-                marginBottom: "16px",
-                opacity: 0.8,
-                color: "var(--text-tertiary)",
-              }}
-            >
-              <svg
-                width="120"
-                height="120"
-                viewBox="0 0 100 100"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <ellipse
-                  className="ghost-shadow"
-                  cx="50"
-                  cy="92"
-                  rx="20"
-                  ry="3"
-                  fill="currentColor"
-                  fillOpacity="0.2"
-                />
-                <g className="ghost-body">
-                  <path
-                    d="M50 15C30 15 15 35 15 60V85L22 78L29 85L36 78L43 85L50 78L57 85L64 78L71 85L78 78L85 85V60C85 35 70 15 50 15Z"
-                    fill="currentColor"
-                    fillOpacity="0.05"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                  />
-                  <circle
-                    cx="38"
-                    cy="45"
-                    r="4"
-                    fill="currentColor"
-                    fillOpacity="0.8"
-                  />
-                  <circle
-                    cx="62"
-                    cy="45"
-                    r="4"
-                    fill="currentColor"
-                    fillOpacity="0.8"
-                  />
-                  <ellipse
-                    cx="50"
-                    cy="58"
-                    rx="3"
-                    ry="4"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M15 55C10 55 5 45 10 40"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M85 55C90 55 95 45 90 40"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </g>
-              </svg>
+            <div style={{ marginBottom: "8px" }}>
+              <FeedbackLottie kind="empty" size={140} />
             </div>
             <p>No NFTs yet</p>
             <span className="text-tertiary text-sm">

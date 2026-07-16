@@ -9,6 +9,7 @@ import {
   OCS01UserToken,
 } from "../../../services/features/OCS01TokenService";
 import { NETWORK_REGISTRY } from "../../../constants/networks/registry";
+import { getAllNetworks } from "../../../services/network/NetworkResolver";
 import { isValidAddress } from "../../../utils/validation";
 import { TokenIcon } from "../../shared/TokenIcon";
 import { CloseIcon } from "../../shared/Icons";
@@ -26,9 +27,16 @@ interface AddTokenModalProps {
 
 type NetworkOption = { chainId: number; name: string; isOctra?: boolean };
 
-const EVM_NETWORKS: NetworkOption[] = Object.values(NETWORK_REGISTRY)
-  .filter((n) => n.isEVM && n.chainId != null)
-  .map((n) => ({ chainId: n.chainId as number, name: n.displayName }));
+/**
+ * EVM networks for auto-detect + display. Computed fresh (not a module const)
+ * so user-added custom networks are always included — a const would capture
+ * only the built-in registry at import time and miss networks added later.
+ */
+function getEvmNetworkOptions(): NetworkOption[] {
+  return Object.values(getAllNetworks())
+    .filter((n) => n.isEVM && n.chainId != null)
+    .map((n) => ({ chainId: n.chainId as number, name: n.displayName }));
+}
 
 type NetworkType = "auto" | "octra" | "evm" | "solana" | "sui";
 
@@ -182,7 +190,7 @@ export function AddTokenModal({
           throw new Error("Invalid contract address format");
         }
 
-        const promises = EVM_NETWORKS.map(async (net) => {
+        const promises = getEvmNetworkOptions().map(async (net) => {
           try {
             const meta = await fetchTokenMetadata(addr, net.chainId);
             if (meta && meta.symbol && meta.decimals) {
@@ -499,7 +507,7 @@ export function AddTokenModal({
                         ? "Sui Network"
                         : solanaPreview
                           ? "Solana Network"
-                          : EVM_NETWORKS.find(
+                          : getEvmNetworkOptions().find(
                               (n) => n.chainId === resolvedChainId,
                             )?.name || "EVM Network"}
                   </span>

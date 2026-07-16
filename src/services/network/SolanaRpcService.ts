@@ -52,15 +52,13 @@ const SolanaAccountInfoResponseSchema = z.object({
  */
 export type SolanaCluster = "mainnet" | "devnet" | "testnet";
 
-const ANKR_KEY = (import.meta.env?.VITE_ANKR_API_KEY as string) || "";
 const HELIUS_KEY = (import.meta.env?.VITE_HELIUS_API_KEY as string) || "";
 
-/** Devnet endpoints — Helius (keyed) first, then public fallbacks. */
-const SOLANA_DEVNET_ENDPOINTS = [
-  ...(HELIUS_KEY ? [`https://devnet.helius-rpc.com/?api-key=${HELIUS_KEY}`] : []),
-  "https://api.devnet.solana.com",
-  ...(ANKR_KEY ? [`https://rpc.ankr.com/solana_devnet/${ANKR_KEY}`] : []),
-];
+/**
+ * Public Solana Devnet endpoints only. Testnets/devnets deliberately skip the
+ * paid Helius/Ankr keys — those are reserved for mainnet to save quota.
+ */
+const SOLANA_DEVNET_ENDPOINTS = ["https://api.devnet.solana.com"];
 
 /** Public Solana Testnet endpoints. */
 const SOLANA_TESTNET_ENDPOINTS = ["https://api.testnet.solana.com"];

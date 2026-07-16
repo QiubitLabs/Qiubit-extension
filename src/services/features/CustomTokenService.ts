@@ -8,7 +8,7 @@
  */
 
 import { ethers } from "ethers";
-import { getRpcEndpoint } from "../../config/rpcEndpoints";
+import { getEvmRpcUrlForChain } from "../../utils/evmProvider";
 
 const STORAGE_KEY = "custom_tokens_v1";
 
@@ -132,7 +132,9 @@ export async function fetchTokenMetadata(
   }
 
   const checksummed = ethers.getAddress(contractAddress);
-  const rpcUrl = getRpcEndpoint(chainId);
+  // getEvmRpcUrlForChain resolves custom user-added chains to their own RPC
+  // (getRpcEndpoint fell back to Ethereum, so custom-network tokens failed).
+  const rpcUrl = getEvmRpcUrlForChain(chainId);
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const contract = new ethers.Contract(checksummed, ERC20_ABI, provider);
 

@@ -39,6 +39,23 @@
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Clear testnet marker next to the token symbol — testnet assets carry no
+   real value and must never be mistaken for mainnet holdings. */
+.token-testnet-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--warning, #f5a623);
+  background: rgba(245, 166, 35, 0.14);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+  border-radius: 5px;
+  padding: 1px 5px;
+  line-height: 1.4;
 }
 
 .token-item-balance-text {

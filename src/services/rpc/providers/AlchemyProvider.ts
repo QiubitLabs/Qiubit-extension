@@ -7,14 +7,23 @@ const ALCHEMY_URL =
   (e.VITE_FALLBACK_ETH_RPC_URL as string | undefined) ||
   "";
 
+// Mainnet slugs only — testnets are served by public RPCs (the rpcPool guard
+// skips every paid provider for testnet chainIds), so no "*-sepolia"/testnet
+// hosts belong here.
 const ALCHEMY_HOSTS: Record<number, string> = {
   1: "eth-mainnet",
-  11155111: "eth-sepolia",
   56: "bnb-mainnet",
   137: "polygon-mainnet",
   8453: "base-mainnet",
   42161: "arb-mainnet",
   10: "opt-mainnet",
+  // Circle Arc mainnet. Alchemy sits LAST in the RPC pool, so if our key
+  // doesn't yet cover Arc this just fails-and-falls-through to public nodes —
+  // the moment Alchemy enables Arc for our key it activates with no code
+  // change. Slug follows Alchemy's uniform "<chain>-mainnet" convention
+  // (testnet slug arc-testnet.g.alchemy.com is verified but intentionally
+  // unused — testnets stay on public RPCs).
+  5042: "arc-mainnet",
 };
 
 export const AlchemyProvider = {

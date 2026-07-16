@@ -96,6 +96,48 @@ function AppContent() {
     }
   }, [dappRequest]);
 
+  // After the current request is signed/rejected, step to the NEXT queued
+  // request instead of closing — the OKX/Rabby-style single-window queue.
+  // Closes the popup only when the queue is empty.
+  const advanceQueue = useCallback(() => {
+    setDappRequest(null);
+    setApprovalId(null);
+    try {
+      chrome.runtime.sendMessage(
+        { type: "GET_PENDING_APPROVALS" },
+        (approvals: any[]) => {
+          void chrome.runtime.lastError;
+          const next = Array.isArray(approvals) ? approvals[0] : null;
+          if (next) {
+            setApprovalId(next.id);
+            setPendingApproval({
+              origin: next.origin,
+              action: next.type,
+              params: next.params,
+              icon: next.params?.favicon || "",
+            });
+          } else {
+            window.close();
+          }
+        },
+      );
+    } catch {
+      window.close();
+    }
+  }, []);
+
+  // A new request arrived while this window is open and idle — pick it up.
+  useEffect(() => {
+    if (!isApprovalPopup.current) return;
+    const onMsg = (msg: any) => {
+      if (msg?.type === "APPROVAL_QUEUE_CHANGED" && !dappRequest) {
+        advanceQueue();
+      }
+    };
+    chrome.runtime.onMessage.addListener(onMsg);
+    return () => chrome.runtime.onMessage.removeListener(onMsg);
+  }, [dappRequest, advanceQueue]);
+
   const auth = useWalletAuth({
     settings: walletContext.settings,
     wallets: walletContext.wallets,
@@ -225,9 +267,7 @@ function AppContent() {
                 console.warn("Failed to send reject message:", err);
               }
             }
-            setDappRequest(null);
-            setApprovalId(null);
-            window.close();
+            advanceQueue();
           }}
           onApprove={async (req: any) => {
             if (approvalId) {
@@ -247,9 +287,7 @@ function AppContent() {
                 console.warn("Failed to send approve message:", err);
               }
             }
-            setDappRequest(null);
-            setApprovalId(null);
-            window.close();
+            advanceQueue();
           }}
         />
       )}

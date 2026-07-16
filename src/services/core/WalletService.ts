@@ -18,6 +18,7 @@ import { getRpcClient } from "../network/RpcService";
 import { ocs01Manager } from "../features/OCS01TokenService";
 import { ethers } from "ethers";
 import { getBalanceRpcList } from "../../utils/evmProvider";
+import { getTransactionRpcList } from "../../config/rpcEndpoints";
 
 /**
  * WalletService - Manages wallet data fetching and synchronization.
@@ -118,6 +119,14 @@ class WalletServiceImpl {
     walletAddressOrObject: string | any,
     token: Token,
     rpcUrl?: string,
+    opts?: {
+      /**
+       * Try private endpoints (Infura → dRPC → …) BEFORE public RPCs.
+       * Used by latency-sensitive flows like Send; Home keeps public-first
+       * to preserve private rate limits.
+       */
+      preferPrivate?: boolean;
+    },
   ): Promise<number> {
     try {
       let walletAddress: string;
@@ -228,7 +237,9 @@ class WalletServiceImpl {
       const rpcUrls = rpcUrl
         ? [rpcUrl]
         : token.chainId
-          ? getBalanceRpcList(token.chainId)
+          ? opts?.preferPrivate
+            ? getTransactionRpcList(token.chainId)
+            : getBalanceRpcList(token.chainId)
           : [];
       if (rpcUrls.length === 0) {
         const defaultRpc = getRpcClient().getActualRpcUrl();

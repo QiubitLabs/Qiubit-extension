@@ -62,7 +62,7 @@ export function resolveNetworkForToken(token: {
   }
   if (token.isSolana)
     return token.isTestnet
-      ? NETWORK_REGISTRY["solana-devnet"]
+      ? NETWORK_REGISTRY["solana-testnet"]
       : NETWORK_REGISTRY.solana;
   if (token.isSui)
     return token.isTestnet

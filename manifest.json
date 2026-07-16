@@ -2,8 +2,8 @@
     "manifest_version": 3,
     "name": "Qiubit Wallet",
     "short_name": "Qiubit",
-    "version": "2.1.0",
-    "description": "Secure non-custodial wallet for Octra Network. Manage assets, send transactions, and connect to dApps.",
+    "version": "2.1.1",
+    "description": "Non-custodial multichain wallet: Octra, Ethereum & EVM chains, Solana, Sui, Bitcoin. Swap, bridge & connect to dApps in one place.",
     "author": "Qiubit Labs",
     "minimum_chrome_version": "88",
     "permissions": [

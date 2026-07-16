@@ -128,20 +128,20 @@ export function SwapConfirmModal({
   const fromSymbol = fromToken?.symbol || "";
   const toSymbol = toToken?.symbol || "";
   let senderAddr = wallet?.evmAddress || wallet?.address || "";
-  if (fromChain?.id === "solana") {
+  if (fromChain?.id?.startsWith("solana")) {
     senderAddr = wallet?.solanaAddress || "";
-  } else if (fromChain?.id === "sui") {
+  } else if (fromChain?.id?.startsWith("sui")) {
     senderAddr = wallet?.suiAddress || "";
-  } else if (fromChain?.id === "bitcoin") {
+  } else if (fromChain?.id?.startsWith("bitcoin")) {
     senderAddr = wallet?.bitcoinAddress || "";
   }
 
   let destAddr = wallet?.evmAddress || wallet?.address || "";
-  if (toChain?.id === "solana") {
+  if (toChain?.id?.startsWith("solana")) {
     destAddr = wallet?.solanaAddress || "";
-  } else if (toChain?.id === "sui") {
+  } else if (toChain?.id?.startsWith("sui")) {
     destAddr = wallet?.suiAddress || "";
-  } else if (toChain?.id === "bitcoin") {
+  } else if (toChain?.id?.startsWith("bitcoin")) {
     destAddr = wallet?.bitcoinAddress || "";
   }
 
@@ -414,6 +414,8 @@ export function SwapConfirmModal({
         {hasToContract && (
           <AddressRow label="Dest contract" addr={toToken.contractAddress} />
         )}
+
+
 
         {/* Network Fee */}
         <div

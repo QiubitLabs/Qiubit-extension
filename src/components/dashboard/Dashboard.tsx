@@ -41,6 +41,7 @@ import { TokenDetailView } from "./TokenDetail";
 import { NFTGallery } from "./NFT";
 import { Token, Wallet } from "../../types";
 import { resolveNetwork } from "../../services/network/NetworkResolver";
+import { NETWORK_REGISTRY } from "../../constants/networks/registry";
 
 /** Fire a POPUP_REQUEST to the background service worker. */
 function popupRequest(action: string, data?: unknown): Promise<any> {
@@ -199,10 +200,10 @@ export function Dashboard({
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
 
-  const [sendStep, setSendStep] = useState<string>("select");
-  const hideChrome =
-    (view === "send" && (sendStep === "confirm" || sendStep === "sending")) ||
-    view === "swap";
+  // Send, Swap and Privacy are focused task flows (they carry their own back
+  // button), so hide the header + bottom nav across the whole flow. History is
+  // a browsing view and keeps the chrome so the user can navigate.
+  const hideChrome = view === "send" || view === "swap" || view === "privacy";
 
   const [derivedEvmAddress, setDerivedEvmAddress] = useState<
     string | undefined
@@ -277,7 +278,6 @@ export function Dashboard({
 
   const handleBack = () => {
     setSelectedToken(null);
-    setSendStep("select");
     setViewLocal("home");
   };
 
@@ -368,7 +368,22 @@ export function Dashboard({
   };
 
   const handleChangeView = (v: DashboardView) => {
-    setSendStep("select");
+    if (v === "swap") {
+      const currentNetwork = settings?.network || "all";
+      const isCustomNetwork =
+        currentNetwork !== "all" && !NETWORK_REGISTRY[currentNetwork];
+      if (isCustomNetwork) {
+        showToast(
+          "Swap & Bridge is not supported on custom networks. Please switch to a registered network.",
+          "error",
+        );
+        return;
+      }
+    }
+    // Opening Send from the bottom nav must always start at the token selector.
+    // Clearing any leftover selection prevents SendView's initialToken effect
+    // from jumping straight into sending the last token (e.g. OCT).
+    if (v === "send") setSelectedToken(null);
     setViewLocal(v);
   };
 
@@ -487,7 +502,6 @@ export function Dashboard({
               onRefresh={refreshBalance}
               onBack={handleBack}
               initialToken={selectedToken || undefined}
-              onStepChange={setSendStep}
             />
           )}
 

@@ -53,6 +53,18 @@ export const BALANCE_PUBLIC_RPC: Record<number, string[]> = {
   ], // Polygon (polygon-rpc.com now requires a key — dropped)
   42161: ["https://arb1.arbitrum.io/rpc"], // Arbitrum One
   56: ["https://bsc-dataseed.binance.org/"], // BNB Chain
+  8453: ["https://mainnet.base.org"], // Base — public-first so balance reads
+  //                                     never wait on keyed providers
+  5042: ["https://5042.rpc.thirdweb.com"], // Arc mainnet (native gas: USDC)
+  5042002: ["https://rpc.testnet.arc.network"], // Arc testnet
+  1672: ["https://rpc.pharos.xyz"], // Pharos
+  1625: ["https://rpc.gravity.xyz"], // Gravity
+  4663: ["https://rpc.mainnet.chain.robinhood.com"], // Robinhood
+  4326: ["https://mainnet.megaeth.com/rpc"], // MegaETH
+  4217: ["https://rpc.tempo.xyz"], // Tempo
+  5031: ["https://api.infra.mainnet.somnia.network"], // Somnia
+  16661: ["https://evmrpc.0g.ai"], // 0G
+  9745: ["https://rpc.plasma.to"], // Plasma
 };
 
 /**

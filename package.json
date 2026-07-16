@@ -1,11 +1,12 @@
 {
   "name": "qiubit-wallet",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "test": "vitest run",
@@ -17,6 +18,7 @@
     "buffer": "^6.0.3",
     "ethers": "^6.16.0",
     "framer-motion": "^12.26.2",
+    "lottie-web": "^5.13.0",
     "lucide-react": "^0.562.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",

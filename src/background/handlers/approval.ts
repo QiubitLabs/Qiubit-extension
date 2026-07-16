@@ -1,6 +1,25 @@
 import { dappApprovals } from "../store";
 import { getWalletFromStorage, getActiveNetwork } from "../helpers";
 import { keyringService } from "../../services/core/KeyringService";
+import { syncApprovalBadge } from "../badge";
+
+// The single approval window shared across a burst of requests (OKX/Rabby
+// style). New requests queue into dappApprovals and the one window steps
+// through them, instead of stacking N popups.
+let approvalWindowId: number | null = null;
+
+/** Reject every still-pending request (used when the window is closed). */
+function rejectAllPending(reason: { code: number; message: string }): void {
+  for (const [id, pending] of Array.from(dappApprovals.entries())) {
+    dappApprovals.delete(id);
+    try {
+      pending.reject(reason);
+    } catch {
+      /* ignore */
+    }
+  }
+  syncApprovalBadge();
+}
 
 export async function requestApproval(
   origin: string,
@@ -12,55 +31,63 @@ export async function requestApproval(
   const networkSetting = params?.networkSetting || (await getActiveNetwork());
 
   return new Promise((resolve, reject) => {
-    let onWindowRemovedRef: ((id: number) => void) | null = null;
-
-    const cleanAndResolve = (val: any) => {
-      if (onWindowRemovedRef)
-        chrome.windows.onRemoved.removeListener(onWindowRemovedRef);
-      resolve(val);
-    };
-    const cleanAndReject = (err: any) => {
-      if (onWindowRemovedRef)
-        chrome.windows.onRemoved.removeListener(onWindowRemovedRef);
-      reject(err);
-    };
-
     dappApprovals.set(approvalId, {
       type,
       origin,
       params: { ...params, networkSetting },
       timestamp: Date.now(),
-      resolve: cleanAndResolve,
-      reject: cleanAndReject,
+      resolve,
+      reject,
     });
+    syncApprovalBadge();
 
-    chrome.windows.create(
-      {
-        url: "index.html#/dapp/approve?id=" + approvalId,
-        type: "popup",
-        width: 360,
-        height: 600,
-      },
-      (win) => {
-        if (!win?.id) return;
-        const onWindowRemoved = (removedId: number) => {
-          if (removedId !== win.id) return;
-          if (onWindowRemovedRef)
-            chrome.windows.onRemoved.removeListener(onWindowRemovedRef);
-          const pending = dappApprovals.get(approvalId);
-          if (pending) {
-            dappApprovals.delete(approvalId);
-            pending.reject({
-              code: 4001,
-              message: "User closed the approval window",
-            });
-          }
-        };
-        onWindowRemovedRef = onWindowRemoved;
-        chrome.windows.onRemoved.addListener(onWindowRemoved);
-      },
-    );
+    // If an approval window is already open, queue into it: focus it and let
+    // the UI advance to this request after the current one is handled.
+    if (approvalWindowId !== null) {
+      chrome.windows.get(approvalWindowId, (win) => {
+        if (chrome.runtime.lastError || !win) {
+          // Stale reference — the window is gone; open a fresh one.
+          approvalWindowId = null;
+          openApprovalWindow(approvalId);
+          return;
+        }
+        chrome.windows.update(approvalWindowId!, { focused: true });
+        // Nudge the open UI to pick up the newly queued request if it's idle.
+        chrome.runtime
+          .sendMessage({ type: "APPROVAL_QUEUE_CHANGED" })
+          .catch(() => {});
+      });
+      return;
+    }
+
+    openApprovalWindow(approvalId);
   });
+}
+
+function openApprovalWindow(approvalId: string): void {
+  chrome.windows.create(
+    {
+      url: "index.html#/dapp/approve?id=" + approvalId,
+      type: "popup",
+      width: 360,
+      height: 600,
+    },
+    (win) => {
+      if (!win?.id) return;
+      approvalWindowId = win.id;
+      const onWindowRemoved = (removedId: number) => {
+        if (removedId !== approvalWindowId) return;
+        chrome.windows.onRemoved.removeListener(onWindowRemoved);
+        approvalWindowId = null;
+        // Closing the window cancels everything still waiting.
+        rejectAllPending({
+          code: 4001,
+          message: "User closed the approval window",
+        });
+      };
+      chrome.windows.onRemoved.addListener(onWindowRemoved);
+    },
+  );
 }
 
 export async function handleResolveApproval(
@@ -72,6 +99,7 @@ export async function handleResolveApproval(
   const approval = dappApprovals.get(id);
   if (!approval) return { success: false, error: "Request not found" };
   dappApprovals.delete(id);
+  syncApprovalBadge();
 
   if (decision !== "approved") {
     approval.reject({ code: 4001, message: "User rejected request" });

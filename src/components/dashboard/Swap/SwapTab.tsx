@@ -222,11 +222,18 @@ export function SwapTab({
         if (!r.ok) throw new Error("lifi_not_found");
         const d = await r.json();
         if (!d?.symbol || !d?.address) throw new Error("lifi_empty");
+        const netDef = Object.values(NETWORK_REGISTRY).find(
+          (n) => n.chainId === chainId,
+        );
+        const isEvmChain = netDef ? netDef.isEVM : true;
+        const finalAddress = isEvmChain
+          ? ethers.getAddress(d.address)
+          : d.address;
         setCustomToken({
           symbol: d.symbol,
           name: d.name || d.symbol,
           decimals: d.decimals ?? 18,
-          contractAddress: ethers.getAddress(d.address),
+          contractAddress: finalAddress,
           logoUrl: d.logoURI || null,
           chainId,
           balance: "0",
@@ -472,9 +479,9 @@ export function SwapTab({
               "0x0000000000000000000000000000000000000000" ||
             fromToken.isNative === true ||
             !fromToken.contractAddress)) ||
-        fromChain.id === "solana" ||
-        fromChain.id === "sui" ||
-        fromChain.id === "bitcoin";
+        fromChain.id?.startsWith("solana") ||
+        fromChain.id?.startsWith("sui") ||
+        fromChain.id?.startsWith("bitcoin");
 
       if (!isNative) {
         setFromAmount(parseFloat(userBalance.toFixed(6)).toString());
@@ -487,22 +494,22 @@ export function SwapTab({
           rpcClient
             .getFeeEstimate(userBalance)
             .then((fees) => {
-              const estFee = fees.medium || 0.01;
-              const maxAmt = Math.max(0, userBalance - estFee);
-              setFromAmount(parseFloat(maxAmt.toFixed(6)).toString());
+               const estFee = fees.medium || 0.01;
+               const maxAmt = Math.max(0, userBalance - estFee);
+               setFromAmount(parseFloat(maxAmt.toFixed(6)).toString());
             })
             .catch(() => {
-              const maxAmt = Math.max(0, userBalance - 0.01);
-              setFromAmount(parseFloat(maxAmt.toFixed(6)).toString());
+               const maxAmt = Math.max(0, userBalance - 0.01);
+               setFromAmount(parseFloat(maxAmt.toFixed(6)).toString());
             });
         } catch (e) {
           const maxAmt = Math.max(0, userBalance - 0.01);
           setFromAmount(parseFloat(maxAmt.toFixed(6)).toString());
         }
       } else if (
-        fromChain.id !== "solana" &&
-        fromChain.id !== "sui" &&
-        fromChain.id !== "bitcoin"
+        !fromChain.id?.startsWith("solana") &&
+        !fromChain.id?.startsWith("sui") &&
+        !fromChain.id?.startsWith("bitcoin")
       ) {
         const fallbackLimit = fromChain.id === "ethereum" ? 250_000n : 200_000n;
         fetchGasOptions({}, fallbackLimit, fromChain.id)
@@ -524,8 +531,8 @@ export function SwapTab({
           });
       } else {
         let deduction = 0.0001; // SOL default
-        if (fromChain.id === "sui") deduction = 0.01;
-        else if (fromChain.id === "bitcoin") deduction = 0.00005;
+        if (fromChain.id?.startsWith("sui")) deduction = 0.01;
+        else if (fromChain.id?.startsWith("bitcoin")) deduction = 0.00005;
         const maxAmt = Math.max(0, userBalance - deduction);
         setFromAmount(parseFloat(maxAmt.toFixed(6)).toString());
       }
@@ -561,12 +568,19 @@ export function SwapTab({
       wallet.address &&
       token.contractAddress !== "0x0000000000000000000000000000000000000000"
     ) {
-      const checksummed = ethers.getAddress(token.contractAddress);
+      const netDef = Object.values(NETWORK_REGISTRY).find(
+        (n) => n.chainId === token.chainId,
+      );
+      const isEvmChain = netDef ? netDef.isEVM : true;
+      const finalAddress = isEvmChain
+        ? ethers.getAddress(token.contractAddress)
+        : token.contractAddress;
+
       if (token.priceUSD && token.priceUSD > 0) {
-        seedTokenPrice(token.symbol, checksummed, token.priceUSD);
+        seedTokenPrice(token.symbol, finalAddress, token.priceUSD);
       }
       addCustomToken(wallet.address, {
-        contractAddress: checksummed,
+        contractAddress: finalAddress,
         symbol: token.symbol,
         name: token.name,
         decimals: token.decimals ?? 18,
@@ -596,7 +610,7 @@ export function SwapTab({
     setToAmount("");
   };
 
-  const getLiFiQuote = async () => {
+  const getLiFiQuote = async (opts?: { silent?: boolean }) => {
     if (
       fromChain.chainId === toChain.chainId &&
       fromToken.contractAddress === toToken.contractAddress
@@ -612,20 +626,20 @@ export function SwapTab({
 
 
     let fromAddr = wallet.evmAddress;
-    if (fromChain.id === "solana") {
+    if (fromChain.id?.startsWith("solana")) {
       fromAddr = wallet.solanaAddress;
-    } else if (fromChain.id === "sui") {
+    } else if (fromChain.id?.startsWith("sui")) {
       fromAddr = wallet.suiAddress;
-    } else if (fromChain.id === "bitcoin") {
+    } else if (fromChain.id?.startsWith("bitcoin")) {
       fromAddr = wallet.bitcoinAddress;
     }
 
     let toAddr = wallet.evmAddress;
-    if (toChain.id === "solana") {
+    if (toChain.id?.startsWith("solana")) {
       toAddr = wallet.solanaAddress;
-    } else if (toChain.id === "sui") {
+    } else if (toChain.id?.startsWith("sui")) {
       toAddr = wallet.suiAddress;
-    } else if (toChain.id === "bitcoin") {
+    } else if (toChain.id?.startsWith("bitcoin")) {
       toAddr = wallet.bitcoinAddress;
     }
 
@@ -638,7 +652,9 @@ export function SwapTab({
     }
 
     const requestId = ++quoteRequestId.current;
-    setIsFetchingQuote(true);
+    // Silent refreshes keep the current quote on screen instead of flashing
+    // the "Calculating best route..." notice every 30s.
+    if (!opts?.silent) setIsFetchingQuote(true);
     setQuoteError("");
     try {
       let sanitizedAmount = fromAmount.replace(/,/g, ".");
@@ -649,6 +665,16 @@ export function SwapTab({
       const rawAmt = ethers
         .parseUnits(sanitizedAmount, fromToken.decimals)
         .toString();
+      const isNonEvm =
+        fromChain.id?.startsWith("solana") ||
+        fromChain.id?.startsWith("sui") ||
+        fromChain.id?.startsWith("bitcoin") ||
+        toChain.id?.startsWith("solana") ||
+        toChain.id?.startsWith("sui") ||
+        toChain.id?.startsWith("bitcoin");
+
+      const deniedBridgesList = isNonEvm ? "allbridge,across" : "allbridge";
+
       const params = new URLSearchParams({
         fromChain: String(fromChain.chainId),
         toChain: String(toChain.chainId),
@@ -658,7 +684,11 @@ export function SwapTab({
         fromAddress: fromAddr,
         toAddress: toAddr,
         slippage: String(parseFloat(slippage) / 100),
+        allowSwitchChain: "true",
+        denyBridges: deniedBridgesList,
       });
+
+
       const lifiIntegrator =
         (import.meta.env.VITE_LIFI_INTEGRATOR_ID as string) || "";
       const lifiFeeBps = parseInt(
@@ -681,7 +711,17 @@ export function SwapTab({
       if (requestId !== quoteRequestId.current) return;
 
       if (!resp.ok || data.code || data.message) {
-        throw new Error(data.message || "No route found for this pair.");
+        // Surface the more specific reason when LI.FI filtered every route out
+        // for a single cause (e.g. amount out of range) — otherwise the caller
+        // only sees the generic "No available quotes" top-level message.
+        const filtered = data?.errors?.filteredOut;
+        const filteredReason =
+          Array.isArray(filtered) && filtered.length > 0
+            ? filtered[0]?.reason
+            : undefined;
+        throw new Error(
+          filteredReason || data.message || "No route found for this pair.",
+        );
       }
 
       const resolvedToDecimals: number =
@@ -710,7 +750,39 @@ export function SwapTab({
   useEffect(() => {
     const timer = setTimeout(getLiFiQuote, 600);
     return () => clearTimeout(timer);
-  }, [fromAmount, fromToken, toToken, fromChain, toChain, slippage, activeTab]);
+  }, [
+    fromAmount,
+    fromToken,
+    toToken,
+    fromChain,
+    toChain,
+    slippage,
+    activeTab,
+  ]);
+
+  // Auto-refresh the quote every 30s while the form is idle — routes go
+  // stale, and executing an old quote fails or fills at a worse rate.
+  // Paused while the confirm modal is open: the numbers the user is about
+  // to approve must not change under them.
+  useEffect(() => {
+    if (swapStep !== "form" || showConfirmModal) return;
+    if (!fromAmount || parseFloat(fromAmount) <= 0) return;
+    const id = setInterval(() => {
+      getLiFiQuote({ silent: true });
+    }, 30_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    swapStep,
+    showConfirmModal,
+    fromAmount,
+    fromToken,
+    toToken,
+    fromChain,
+    toChain,
+    slippage,
+    activeTab,
+  ]);
 
   // LiFi already simulated the route and returns gas cost in the quote.
   // Sum gasCosts (native smallest unit) → human native amount. Most accurate
@@ -734,11 +806,11 @@ export function SwapTab({
 
   const handleSwapClick = async () => {
     let fromAddr = wallet.evmAddress;
-    if (fromChain.id === "solana") {
+    if (fromChain.id?.startsWith("solana")) {
       fromAddr = wallet.solanaAddress;
-    } else if (fromChain.id === "sui") {
+    } else if (fromChain.id?.startsWith("sui")) {
       fromAddr = wallet.suiAddress;
-    } else if (fromChain.id === "bitcoin") {
+    } else if (fromChain.id?.startsWith("bitcoin")) {
       fromAddr = wallet.bitcoinAddress;
     }
     if (!quote || !fromAddr) return;
@@ -746,9 +818,9 @@ export function SwapTab({
     setQuoteError("");
 
     if (
-      fromChain.id === "solana" ||
-      fromChain.id === "sui" ||
-      fromChain.id === "bitcoin"
+      fromChain.id?.startsWith("solana") ||
+      fromChain.id?.startsWith("sui") ||
+      fromChain.id?.startsWith("bitcoin")
     ) {
       setIsEstimatingGas(false);
       setSwapGasOpts(null);
@@ -841,11 +913,11 @@ export function SwapTab({
 
   const executeSwap = async () => {
     let fromAddr = wallet.evmAddress;
-    if (fromChain.id === "solana") {
+    if (fromChain.id?.startsWith("solana")) {
       fromAddr = wallet.solanaAddress;
-    } else if (fromChain.id === "sui") {
+    } else if (fromChain.id?.startsWith("sui")) {
       fromAddr = wallet.suiAddress;
-    } else if (fromChain.id === "bitcoin") {
+    } else if (fromChain.id?.startsWith("bitcoin")) {
       fromAddr = wallet.bitcoinAddress;
     }
     if (!quote || !fromAddr) return;
@@ -857,13 +929,13 @@ export function SwapTab({
     setTxHash("");
 
     try {
-      if (fromChain.id === "bitcoin") {
+      if (fromChain.id?.startsWith("bitcoin")) {
         throw new Error(
           `Cross-chain swaps starting from ${fromChain.name} are currently supported in receive mode. Please swap from an EVM network, Solana, or Sui to receive ${fromChain.name} assets.`,
         );
       }
 
-      if (fromChain.id === "sui") {
+      if (fromChain.id?.startsWith("sui")) {
         setExecStatus("Submitting swap to Sui network...");
         const txData = quote.transactionRequest?.data;
         if (!txData)
@@ -877,7 +949,7 @@ export function SwapTab({
           "../../../services/network/SuiSignService"
         );
         setExecStatus("Signing and broadcasting on Sui...");
-        const result = await suiSignAndExecute(txData, suiPrivateKeyHex);
+        const result = await suiSignAndExecute(txData, suiPrivateKeyHex, fromChain.id);
         const digest =
           result?.digest || result?.effects?.transactionDigest || "";
         if (!digest)
@@ -896,10 +968,10 @@ export function SwapTab({
               address: "",
               timestamp: Date.now(),
               status: "pending",
-              networkId: "sui",
+              networkId: fromChain.id,
             },
           ],
-          "sui",
+          fromChain.id,
           wallet.address,
         );
         setExecStatus(
@@ -939,7 +1011,7 @@ export function SwapTab({
         return;
       }
 
-      if (fromChain.id === "solana") {
+      if (fromChain.id?.startsWith("solana")) {
         setExecStatus("Submitting swap to Solana network...");
         const txData = quote.transactionRequest?.data;
         if (!txData)
@@ -999,10 +1071,10 @@ export function SwapTab({
               address: "",
               timestamp: Date.now(),
               status: "pending",
-              networkId: "solana",
+              networkId: fromChain.id,
             },
           ],
-          "solana",
+          fromChain.id,
           wallet.address,
         );
         setExecStatus(
@@ -1513,6 +1585,21 @@ export function SwapTab({
             {/* Standard Slippage tolerance adjustment */}
             {!isOctraBridgeActive && (
               <div className="swap-info-grid">
+                {/* Exchange rate — the fastest sanity check on the quote */}
+                {parseFloat(fromAmount) > 0 && parseFloat(toAmount) > 0 && (
+                  <div className="info-row">
+                    <span className="info-label">Rate</span>
+                    <span className="info-value">
+                      1 {fromToken.symbol} ≈{" "}
+                      {(
+                        parseFloat(toAmount) / parseFloat(fromAmount)
+                      ).toLocaleString("en-US", {
+                        maximumSignificantDigits: 6,
+                      })}{" "}
+                      {toToken.symbol}
+                    </span>
+                  </div>
+                )}
                 <div className="info-row">
                   <span className="info-label">Slippage Tolerance</span>
                   <div className="slippage-btn-group">
@@ -1527,6 +1614,8 @@ export function SwapTab({
                     ))}
                   </div>
                 </div>
+
+
               </div>
             )}
 

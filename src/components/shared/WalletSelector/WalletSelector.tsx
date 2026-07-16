@@ -14,6 +14,7 @@ import {
   formatUsd,
 } from "../../../services/network/PriceService";
 import { filterTokensByNetwork } from "../../../constants/networks/registry";
+import { resolveNetwork } from "../../../services/network/NetworkResolver";
 import "./WalletSelector.css";
 import "./NetworkSwitcher.css";
 
@@ -81,14 +82,35 @@ export function WalletSelector({
 }: WalletSelectorProps) {
   const [copied, setCopied] = useState<number | null>(null);
 
+  // Copy the wallet's address for the ACTIVE network (matches the header copy):
+  // Solana network → Solana address, Sui → Sui, EVM/custom-EVM → 0x…, Octra →
+  // oct…. On "all" (no specific chain) copy the EVM address, the most commonly
+  // shared one, falling back to Octra if this wallet has none.
+  const copyAddressForWallet = (w: any): string => {
+    if (networkSetting === "all") return w.evmAddress || w.address;
+    const cfg = resolveNetwork(networkSetting);
+    switch (cfg?.addressType) {
+      case "evm":
+        return w.evmAddress || w.address;
+      case "solana":
+        return w.solanaAddress || w.address;
+      case "sui":
+        return w.suiAddress || w.address;
+      case "bitcoin":
+        return w.bitcoinAddress || w.address;
+      default:
+        return w.address;
+    }
+  };
+
   const handleCopy = async (
-    address: string,
+    wallet: any,
     index: number,
     e: React.MouseEvent,
   ) => {
     e.stopPropagation();
     try {
-      await navigator.clipboard.writeText(address);
+      await navigator.clipboard.writeText(copyAddressForWallet(wallet));
       setCopied(index);
       setTimeout(() => setCopied(null), 2000);
     } catch (err) {
@@ -154,7 +176,7 @@ export function WalletSelector({
               <div className="wallet-actions">
                 <button
                   className="wallet-action-btn"
-                  onClick={(e) => handleCopy(wallet.address, index, e)}
+                  onClick={(e) => handleCopy(wallet, index, e)}
                 >
                   {copied === index ? (
                     <CheckIcon size={14} />

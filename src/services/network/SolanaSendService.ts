@@ -24,7 +24,7 @@ function endpointsForToken(token: Token): string[] {
     if (token.chainId === 1151111081099721)
       return getSolanaEndpoints("testnet");
   }
-  if (token.isTestnet) return getSolanaEndpoints("devnet");
+  if (token.isTestnet) return getSolanaEndpoints("testnet");
   return getSolanaEndpoints("mainnet");
 }
 

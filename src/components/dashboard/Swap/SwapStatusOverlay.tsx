@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { CheckIcon } from "../../shared/Icons";
+import { FeedbackLottie } from "../../shared/FeedbackLottie";
 
 const OVERLAY_STYLE = {
   padding: "16px",
@@ -51,7 +52,7 @@ export function SwapStatusOverlay({
     return createPortal(
       <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
         <div className="complete-card">
-          <div className="spinner-large-container" />
+          <FeedbackLottie kind="pending" size={110} />
           <div className="complete-title">Executing Swap</div>
           <div className="complete-subtitle-amount">
             {fromAmount} {fromToken.symbol} to {toAmount || "..."}{" "}
@@ -133,9 +134,7 @@ export function SwapStatusOverlay({
       <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
         <div className="complete-card">
           <div className="success-icon-wrap">
-            <div className="success-icon-circle pop-in">
-              <CheckIcon size={24} />
-            </div>
+            <FeedbackLottie kind="swap" size={120} />
           </div>
           <div className="complete-title">Swap Complete</div>
           <div className="success-amount-display">
@@ -185,27 +184,7 @@ export function SwapStatusOverlay({
       <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
         <div className="complete-card">
           <div className="success-icon-wrap">
-            <div
-              className="success-icon-circle pop-in"
-              style={{
-                background: "var(--accent-red, #ef4444)",
-                boxShadow: "0px 8px 24px rgba(239, 68, 68, 0.1)",
-              }}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </div>
+            <FeedbackLottie kind="failed" size={120} />
           </div>
           <div
             className="complete-title"

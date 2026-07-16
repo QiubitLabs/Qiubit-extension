@@ -7,6 +7,7 @@ import {
   RefreshIcon,
   ImageIcon,
 } from "../../shared/Icons";
+import { FeedbackLottie } from "../../shared/FeedbackLottie";
 import { parseNFTMetadata } from "./nftService";
 import { truncateAddress } from "../../../utils/crypto";
 import { Wallet } from "../../../types";
@@ -97,10 +98,8 @@ export function NFTGallery({
           <p className="text-secondary">Loading NFTs...</p>
         </div>
       ) : nfts.length === 0 ? (
-        <div className="tx-empty">
-          <div className="tx-empty-icon">
-            <ImageIcon size={32} />
-          </div>
+        <div className="tx-empty flex flex-col items-center">
+          <FeedbackLottie kind="empty" size={130} />
           <p>No NFTs found</p>
           <p className="text-xs text-tertiary mt-sm">
             Your NFTs will appear here

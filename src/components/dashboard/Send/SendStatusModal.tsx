@@ -1,4 +1,5 @@
-import { CloseIcon, CheckIcon } from "../../shared/Icons";
+import { CheckIcon } from "../../shared/Icons";
+import { FeedbackLottie } from "../../shared/FeedbackLottie";
 import { getNetworkForToken } from "../../../constants/networks/registry";
 import { Token } from "../../../types";
 
@@ -60,7 +61,7 @@ export function SendStatusModal({
             alignItems: "center",
           }}
         >
-          <div className="spinner-large-container" />
+          <FeedbackLottie kind="pending" size={110} />
           <div className="complete-title">Sending Transaction</div>
           <div className="complete-subtitle-amount">
             {amount} {symbol} {recipient ? `to ${shortAddr(recipient)}` : ""}
@@ -141,23 +142,8 @@ export function SendStatusModal({
             alignItems: "center",
           }}
         >
-          <div className="success-icon-wrap" style={{ marginBottom: "12px" }}>
-            <div
-              className="success-icon-circle"
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                background: "var(--accent-emerald)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#ffffff",
-                boxShadow: "none",
-              }}
-            >
-              <CheckIcon size={24} />
-            </div>
+          <div className="success-icon-wrap" style={{ marginBottom: "4px" }}>
+            <FeedbackLottie kind="sent" size={120} />
           </div>
           <div
             className="complete-title"
@@ -418,23 +404,8 @@ export function SendStatusModal({
             alignItems: "center",
           }}
         >
-          <div className="success-icon-wrap" style={{ marginBottom: "12px" }}>
-            <div
-              className="success-icon-circle"
-              style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "50%",
-                background: "var(--accent-red, #ef4444)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#ffffff",
-                boxShadow: "none",
-              }}
-            >
-              <CloseIcon size={24} />
-            </div>
+          <div className="success-icon-wrap" style={{ marginBottom: "4px" }}>
+            <FeedbackLottie kind="failed" size={120} />
           </div>
           <div
             className="complete-title"

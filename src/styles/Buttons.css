@@ -45,6 +45,14 @@
   opacity: 0.85;
 }
 
+/* Disabled primary must not look pressable */
+.btn-primary:disabled {
+  background: var(--bg-elevated);
+  color: var(--text-disabled);
+  border: 1px solid var(--border-subtle);
+  opacity: 1;
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);

@@ -101,27 +101,6 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
     historyApi: { type: "none" },
   },
 
-  "solana-devnet": {
-    id: "solana-devnet",
-    displayName: "Solana Devnet",
-    shortName: "SOL Devnet",
-    chainId: 1151111081099720,
-    isEVM: false,
-    isTestnet: true,
-    iconUrl: "/chains/solana/logo.jpg",
-    badgeColor: "#14F195",
-    addressType: "solana",
-    nativeToken: {
-      symbol: "SOL",
-      name: "Solana Devnet",
-      decimals: 9,
-      logoUrl: "/chains/solana/sol.png",
-    },
-    erc20Tokens: [],
-    blockExplorerUrl: "https://solscan.io/?cluster=devnet",
-    historyApi: { type: "none" },
-  },
-
   "solana-testnet": {
     id: "solana-testnet",
     displayName: "Solana Testnet",
@@ -224,7 +203,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       symbol: "ETH",
       name: "Ethereum",
       decimals: 18,
-      logoUrl: "/chains/ethereum/eth.png",
+      logoUrl: "/eth-icon.svg",
     },
     erc20Tokens: ETHEREUM_ERC20_TOKENS,
     blockExplorerUrl: "https://etherscan.io",
@@ -246,7 +225,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       symbol: "ETH",
       name: "Sepolia ETH",
       decimals: 18,
-      logoUrl: "/chains/ethereum/eth.png",
+      logoUrl: "/eth-icon.svg",
     },
     erc20Tokens: [],
     blockExplorerUrl: "https://sepolia.etherscan.io",
@@ -315,7 +294,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       symbol: "ETH",
       name: "Ethereum",
       decimals: 18,
-      logoUrl: "/chains/base/eth.png",
+      logoUrl: "/eth-icon.svg",
     },
     erc20Tokens: BASE_ERC20_TOKENS,
     blockExplorerUrl: "https://basescan.org",
@@ -337,7 +316,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       symbol: "ETH",
       name: "Ethereum",
       decimals: 18,
-      logoUrl: "/chains/arbitrum/eth.png",
+      logoUrl: "/eth-icon.svg",
     },
     erc20Tokens: ARBITRUM_ERC20_TOKENS,
     blockExplorerUrl: "https://arbiscan.io",
@@ -387,6 +366,239 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
     blockExplorerUrl: "https://purrsec.com",
     historyApi: { type: "none" },
   },
+
+  // Circle Arc — an EVM L1 whose native GAS token is USDC. Per Circle's docs
+  // the native view (eth_getBalance / msg.value) uses 18 decimals (the ERC-20
+  // USDC interface uses 6), so it formats like any other 18-decimal native.
+  arc: {
+    id: "arc",
+    displayName: "Arc",
+    shortName: "Arc",
+    chainId: 5042,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(5042),
+    iconUrl: "/chains/arc/logo.svg",
+    badgeColor: "#3A5BFF",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "USDC",
+      name: "USD Coin",
+      decimals: 18,
+      // Arc has no coin of its own — the native gas token IS USDC, so the token
+      // uses the USDC icon (the network keeps the Arc logo via iconUrl above).
+      logoUrl: "/usdc-icon.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://arc-mainnet.cloud.blockscout.com",
+    historyApi: { type: "none" },
+  },
+
+  "arc-testnet": {
+    id: "arc-testnet",
+    displayName: "Arc Testnet",
+    shortName: "Arc Test",
+    chainId: 5042002,
+    isEVM: true,
+    isTestnet: true,
+    rpcUrl: getPrimaryRpc(5042002),
+    iconUrl: "/chains/arc/logo.svg",
+    badgeColor: "#3A5BFF",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "USDC",
+      name: "USD Coin",
+      decimals: 18,
+      // Arc has no coin of its own — the native gas token IS USDC, so the token
+      // uses the USDC icon (the network keeps the Arc logo via iconUrl above).
+      logoUrl: "/usdc-icon.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://testnet.arcscan.app",
+    historyApi: { type: "none" },
+  },
+
+  // ── Additional EVM L1s (LI.FI-listed). All use public RPCs only — none are
+  // offered by our keyed providers, so they fall through to PublicProvider. ──
+
+  pharos: {
+    id: "pharos",
+    displayName: "Pharos",
+    shortName: "Pharos",
+    chainId: 1672,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(1672),
+    iconUrl: "/chains/pharos/logo.svg",
+    badgeColor: "#00C2A8",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "PROS",
+      name: "Pharos",
+      decimals: 18,
+      logoUrl: "/chains/pharos/logo.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://www.pharosscan.xyz",
+    historyApi: { type: "none" },
+  },
+
+  gravity: {
+    id: "gravity",
+    displayName: "Gravity",
+    shortName: "Gravity",
+    chainId: 1625,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(1625),
+    iconUrl: "/chains/gravity/logo.svg",
+    badgeColor: "#FF4D6D",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "G",
+      name: "Gravity",
+      decimals: 18,
+      logoUrl: "/chains/gravity/logo.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://explorer.gravity.xyz",
+    historyApi: { type: "none" },
+  },
+
+  robinhood: {
+    id: "robinhood",
+    displayName: "Robinhood Chain",
+    shortName: "Robinhood",
+    chainId: 4663,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(4663),
+    iconUrl: "/chains/robinhood/logo.svg",
+    badgeColor: "#00C805",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "ETH",
+      name: "Ethereum",
+      decimals: 18,
+      logoUrl: "/eth-icon.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://robinhoodchain.blockscout.com",
+    historyApi: { type: "none" },
+  },
+
+  megaeth: {
+    id: "megaeth",
+    displayName: "MegaETH",
+    shortName: "MegaETH",
+    chainId: 4326,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(4326),
+    iconUrl: "/chains/megaeth/logo.svg",
+    badgeColor: "#6B46FF",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "ETH",
+      name: "Ethereum",
+      decimals: 18,
+      logoUrl: "/eth-icon.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://megaeth.blockscout.com",
+    historyApi: { type: "none" },
+  },
+
+  // Tempo's native gas is the PathUSD stablecoin (a TIP-20 precompile). Per
+  // Tempo docs, eth_getBalance is hard-coded to an 18-decimal representation,
+  // so formatEther works like any other 18-decimal native.
+  tempo: {
+    id: "tempo",
+    displayName: "Tempo",
+    shortName: "Tempo",
+    chainId: 4217,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(4217),
+    iconUrl: "/chains/tempo/logo.svg",
+    badgeColor: "#4F46E5",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "PUSD",
+      name: "PathUSD",
+      decimals: 18,
+      logoUrl: "/usdc-icon.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://explore.tempo.xyz",
+    historyApi: { type: "none" },
+  },
+
+  somnia: {
+    id: "somnia",
+    displayName: "Somnia",
+    shortName: "Somnia",
+    chainId: 5031,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(5031),
+    iconUrl: "/chains/somnia/logo.svg",
+    badgeColor: "#FF5CAA",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "SOMI",
+      name: "Somnia",
+      decimals: 18,
+      logoUrl: "/chains/somnia/logo.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://explorer.somnia.network",
+    historyApi: { type: "none" },
+  },
+
+  zerog: {
+    id: "zerog",
+    displayName: "0G",
+    shortName: "0G",
+    chainId: 16661,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(16661),
+    iconUrl: "/chains/zerog/logo.svg",
+    badgeColor: "#FF6B00",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "0G",
+      name: "0G",
+      decimals: 18,
+      logoUrl: "/chains/zerog/logo.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://0g.exploreme.pro",
+    historyApi: { type: "none" },
+  },
+
+  plasma: {
+    id: "plasma",
+    displayName: "Plasma",
+    shortName: "Plasma",
+    chainId: 9745,
+    isEVM: true,
+    isTestnet: false,
+    rpcUrl: getPrimaryRpc(9745),
+    iconUrl: "/chains/plasma/logo.svg",
+    badgeColor: "#00E599",
+    addressType: "evm",
+    nativeToken: {
+      symbol: "XPL",
+      name: "Plasma",
+      decimals: 18,
+      logoUrl: "/chains/plasma/logo.svg",
+    },
+    erc20Tokens: [],
+    blockExplorerUrl: "https://plasmascan.to",
+    historyApi: { type: "none" },
+  },
 };
 
 export function getNetworkConfig(networkId: string): NetworkConfig | null {
@@ -412,7 +624,7 @@ export function getNetworkForToken(token: {
     if (token.isTestnet)
       return (
         (token.chainId ? getNetworkByChainId(token.chainId) : null) ??
-        NETWORK_REGISTRY["solana-devnet"]
+        NETWORK_REGISTRY["solana-testnet"]
       );
     return NETWORK_REGISTRY.solana;
   }

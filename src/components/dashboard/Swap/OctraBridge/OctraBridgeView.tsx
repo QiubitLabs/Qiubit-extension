@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
 import { CheckIcon } from "../../../shared/Icons";
+import { FeedbackLottie } from "../../../shared/FeedbackLottie";
 import { Wallet, Token } from "../../../../types";
 import { getRpcClient } from "../../../../services/network/RpcService";
 import { keyringService } from "../../../../services/core/KeyringService";
@@ -1164,7 +1165,7 @@ export function OctraBridgeView({
           style={{ padding: "16px", background: "#0D0D0D", zIndex: 1500 }}
         >
           <div className="complete-card animate-fade-in">
-            <div className="spinner-large-container" />
+            <FeedbackLottie kind="pending" size={110} />
             <div className="complete-title">Bridging Assets</div>
             <div className="complete-subtitle-amount">
               {fromAmount} {fromSymbol} → {fromAmount} {toSymbol}
@@ -1273,9 +1274,7 @@ export function OctraBridgeView({
         >
           <div className="complete-card animate-fade-in">
             <div className="success-icon-wrap">
-              <div className="success-icon-circle">
-                <CheckIcon size={24} />
-              </div>
+              <FeedbackLottie kind="swap" size={120} />
             </div>
             <div className="complete-title">Bridge Complete</div>
             <div className="success-amount-display">
@@ -1339,27 +1338,7 @@ export function OctraBridgeView({
         >
           <div className="complete-card animate-fade-in">
             <div className="success-icon-wrap">
-              <div
-                className="success-icon-circle"
-                style={{
-                  background: "var(--accent-red, #ef4444)",
-                  boxShadow: "0px 8px 24px rgba(239, 68, 68, 0.1)",
-                }}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </div>
+              <FeedbackLottie kind="failed" size={120} />
             </div>
             <div
               className="complete-title"

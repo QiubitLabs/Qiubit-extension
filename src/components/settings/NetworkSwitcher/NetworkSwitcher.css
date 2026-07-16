@@ -423,3 +423,28 @@
   color: var(--accent-primary);
   font-weight: 600;
 }
+
+/* Network search box */
+.network-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-subtle, #2a2a2a);
+  border-radius: 10px;
+  background: var(--bg-secondary, #141414);
+  color: var(--text-tertiary);
+}
+.network-search-box input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.network-search-box input::placeholder {
+  color: var(--text-tertiary);
+}

@@ -6,6 +6,21 @@ import { PublicProvider } from "./providers/PublicProvider";
 import { AlchemyProvider } from "./providers/AlchemyProvider";
 
 /**
+ * EVM testnet chainIds. Paid/keyed providers (Infura, dRPC, ZAN, Chainstack,
+ * Alchemy) are NEVER used for these — testnets run on public RPCs only, to
+ * preserve the paid API quota for mainnet where it matters.
+ * Add new EVM testnets here.
+ */
+const EVM_TESTNET_CHAIN_IDS = new Set<number>([
+  11155111, // Ethereum Sepolia
+  5042002, //  Arc Testnet
+]);
+
+export function isEvmTestnetChainId(chainId: number): boolean {
+  return EVM_TESTNET_CHAIN_IDS.has(chainId);
+}
+
+/**
  * Aggregate all RPC providers in precise priority order:
  * Infura -> dRPC -> ZAN.top -> Chainstack -> Public Nodes -> Alchemy (absolute last fallback)
  *
@@ -20,6 +35,9 @@ import { AlchemyProvider } from "./providers/AlchemyProvider";
  * whether to fall back to the public pool.
  */
 export function getPrivateRpcListFromPool(chainId: number): string[] {
+  // Testnets never touch the paid providers.
+  if (isEvmTestnetChainId(chainId)) return [];
+
   const list: string[] = [];
   const push = (u: string | null) => {
     if (u && !list.includes(u)) list.push(u);
@@ -35,6 +53,11 @@ export function getPrivateRpcListFromPool(chainId: number): string[] {
 }
 
 export function getRpcListFromPool(chainId: number): string[] {
+  // Testnets use public RPCs only — skip every paid/keyed provider.
+  if (isEvmTestnetChainId(chainId)) {
+    return PublicProvider.getRpcUrls(chainId).filter(Boolean);
+  }
+
   const list: string[] = [];
 
   const infura = InfuraProvider.getRpcUrl(chainId);

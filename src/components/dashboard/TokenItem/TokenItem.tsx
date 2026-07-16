@@ -47,7 +47,12 @@ export function TokenItem({ token, onClick, hideBalance }: TokenItemProps) {
 
       {/* Left: Info */}
       <div className="token-item-info">
-        <div className="token-item-symbol">{token.symbol}</div>
+        <div className="token-item-symbol">
+          {token.symbol}
+          {token.isTestnet && (
+            <span className="token-testnet-badge">TESTNET</span>
+          )}
+        </div>
         <div className="token-item-balance-text">
           {hideBalance
             ? "****"

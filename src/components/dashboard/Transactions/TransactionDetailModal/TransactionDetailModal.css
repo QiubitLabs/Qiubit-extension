@@ -158,6 +158,11 @@
   background: var(--success-bg);
 }
 
+.tx-status-badge.failed {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
 /* Details List */
 .tx-details-list {
   display: flex;
@@ -276,4 +281,51 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Replace-by-fee actions on pending EVM transactions */
+.tx-rbf-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+.tx-rbf-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-default, #333333);
+  background: var(--bg-elevated, #222222);
+  color: var(--text-primary);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.tx-rbf-btn:hover:not(:disabled) {
+  background: var(--bg-hover, #2a2a2a);
+}
+.tx-rbf-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.tx-rbf-btn.speedup {
+  border-color: var(--accent-primary, #00d4ff);
+  color: var(--accent-primary, #00d4ff);
+}
+.tx-rbf-btn.cancel {
+  border-color: var(--error, #ff5252);
+  color: var(--error, #ff5252);
+}
+.tx-rbf-result {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--success, #00c853);
+  word-break: break-all;
+}
+.tx-rbf-error {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--error, #ff5252);
 }

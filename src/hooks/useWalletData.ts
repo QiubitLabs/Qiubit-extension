@@ -7,11 +7,15 @@ import { SessionService } from "../services/core/SessionService";
 import { saveWalletsSecure } from "../utils/storage";
 import { loadSnapshot, saveSnapshot } from "../utils/walletSnapshot";
 import { evmBalanceCache } from "../utils/evmBalanceCache";
-import { withEvmFallbackForNetwork } from "../utils/evmProvider";
+import { withEvmFallbackForNetwork, getBalanceRpcList } from "../utils/evmProvider";
 import { getEvmTokensForNetwork, EVM_NETWORKS } from "../constants/evmNetworks";
 import { discoverAllChainTokens } from "../services/network/TokenDiscoveryService";
 import { NETWORK_REGISTRY } from "../constants/networks/registry";
-import { getUserNetworksSync } from "../services/network/UserNetworkService";
+import { isPreLaunchChain } from "../constants/networks/nativeGasToken";
+import {
+  getUserNetworksSync,
+  getUserNetworkByChainId,
+} from "../services/network/UserNetworkService";
 import { getCustomTokens } from "../services/features/CustomTokenService";
 import { getRpcList } from "../config/rpcEndpoints";
 import {
@@ -122,7 +126,10 @@ function buildDefaultTokens(wallet: Wallet): Token[] {
       continue;
     }
 
-    if (net.nativeToken) {
+    // Pre-launch chains (e.g. Arc mainnet) expose a phantom native balance via
+    // their testnet-mirroring RPC — priced at $1 for stablecoin-gas chains. Skip
+    // the native row until the chain is live; the chain still works for swaps.
+    if (net.nativeToken && !isPreLaunchChain(net.chainId ?? undefined)) {
       const { symbol, name, decimals, logoUrl } = net.nativeToken;
       const extra: Partial<Token> = {};
       if (net.addressType === "sui") extra.contractAddress = "sui";
@@ -219,6 +226,14 @@ function getNativeSymbol(chainId: number): string {
   if (chainId === 999) return "HYPE";
   if (chainId === 143) return "MON";
   if (chainId === 11155111) return "ETH";
+  if (chainId === 5042 || chainId === 5042002) return "USDC"; // Arc native gas
+  if (chainId === 1672) return "PROS"; // Pharos
+  if (chainId === 1625) return "G"; // Gravity
+  if (chainId === 4217) return "PUSD"; // Tempo (stablecoin gas)
+  if (chainId === 5031) return "SOMI"; // Somnia
+  if (chainId === 16661) return "0G"; // 0G
+  if (chainId === 9745) return "XPL"; // Plasma
+  // Robinhood (4663) & MegaETH (4326) use ETH → default
   return "ETH";
 }
 
@@ -506,7 +521,6 @@ export function useWalletData({
             const fetchSolanaChain =
               fetchAllChains ||
               network === "solana" ||
-              network === "solana-devnet" ||
               network === "solana-testnet";
             const fetchSuiChain =
               fetchAllChains || network === "sui" || network === "sui-testnet";
@@ -873,18 +887,45 @@ export function useWalletData({
                       try {
                         const { fetchBalancesMulticall } =
                           await import("../services/network/MulticallService");
-                        const { getEvmReadProviderForNetwork } =
-                          await import("../utils/evmProvider");
-                        const provider =
-                          getEvmReadProviderForNetwork(evmNetworkName);
-                        const res = await fetchBalancesMulticall(
-                          provider,
-                          evmAddress,
-                          evmErc20Configs.map((c) => ({
-                            contractAddress: c.contractAddress,
-                            decimals: c.decimals,
-                          })),
-                        );
+
+                        const rpcs = getBalanceRpcList(evmChainId);
+                        let res: any = null;
+
+                        if (rpcs.length > 0) {
+                          for (const rpcUrl of rpcs) {
+                            try {
+                              const provider = new ethers.JsonRpcProvider(rpcUrl);
+                              res = await fetchBalancesMulticall(
+                                provider,
+                                evmAddress,
+                                evmErc20Configs.map((c) => ({
+                                  contractAddress: c.contractAddress,
+                                  decimals: c.decimals,
+                                })),
+                              );
+                              break;
+                            } catch {
+                              // Try next RPC
+                            }
+                          }
+                        } else {
+                          const { getEvmReadProviderForNetwork } =
+                            await import("../utils/evmProvider");
+                          const provider = getEvmReadProviderForNetwork(evmNetworkName);
+                          res = await fetchBalancesMulticall(
+                            provider,
+                            evmAddress,
+                            evmErc20Configs.map((c) => ({
+                              contractAddress: c.contractAddress,
+                              decimals: c.decimals,
+                            })),
+                          );
+                        }
+
+                        if (!res) {
+                          throw new Error("All RPCs failed for active EVM ERC20 fetch");
+                        }
+
                         if (address !== activeAddressRef.current) return;
                         for (const cfg of evmErc20Configs) {
                           const raw = res.tokens[cfg.contractAddress.toLowerCase()];
@@ -915,70 +956,15 @@ export function useWalletData({
 
             const allSupportedChainIds = [
               1, 56, 137, 8453, 42161, 143, 999, 11155111,
+              // Additional EVM L1s (public-RPC only).
+              // NOTE: Arc mainnet (5042) is intentionally excluded — the chain
+              // is still pre-launch (Circle: "testnet only"), and its public
+              // RPC mirrors testnet state, which surfaced a phantom priced USDC
+              // balance in the portfolio. Re-add once Arc mainnet is live.
+              1672, 1625, 4663, 4326, 4217, 5031, 16661, 9745,
             ];
-            const otherChainNativePromises = (
-              fetchAllChains && evmAddress
-                ? allSupportedChainIds.filter(
-                    (id) => id !== evmChainId && getRpcList(id).length > 0,
-                  )
-                : []
-            )
-                  .map(async (chainId) => {
-                    if (!evmAddress || address !== activeAddressRef.current)
-                      return;
-                    const rpcs = getRpcList(chainId);
-                    const cacheKey = `${chainId}:${evmAddress.toLowerCase()}:native`;
-                    try {
-                      const val = await evmBalanceCache.swr(
-                        cacheKey,
-                        async () => {
-                          // RPC pool first (per-IP); Moralis (shared key) only
-                          // if every RPC endpoint fails.
-                          let lastErr: unknown;
-                          for (const rpcUrl of rpcs) {
-                            try {
-                              const provider = new ethers.JsonRpcProvider(
-                                rpcUrl,
-                              );
-                              const wei = await provider.getBalance(evmAddress);
-                              return parseFloat(
-                                parseFloat(ethers.formatEther(wei)).toFixed(8),
-                              ).toString();
-                            } catch (e) {
-                              lastErr = e;
-                            }
-                          }
-                          const viaMoralis = await fetchNativeBalanceMoralis(
-                            evmAddress,
-                            chainId,
-                          );
-                          if (viaMoralis !== null) return viaMoralis;
-                          throw lastErr;
-                        },
-                        opts.force,
-                      );
 
-                      if (address !== activeAddressRef.current) return;
-                      updateSingleToken(
-                        (t) =>
-                          t.isEVM === true &&
-                          t.chainId === chainId &&
-                          !t.contractAddress,
-                        { balance: val },
-                      );
-                    } catch {
-                      if (address !== activeAddressRef.current) return;
-                      const cached = evmBalanceCache.getAny(cacheKey) ?? "0";
-                      updateSingleToken(
-                        (t) =>
-                          t.isEVM === true &&
-                          t.chainId === chainId &&
-                          !t.contractAddress,
-                        { balance: cached },
-                      );
-                    }
-                  });
-
+            // Group the user's custom ERC-20s by their (non-active) chain
             const otherChainTokensByChain = new Map<
               number,
               typeof allUserCustomTokens
@@ -989,72 +975,193 @@ export function useWalletData({
               arr.push(ct);
               otherChainTokensByChain.set(ct.chainId, arr);
             }
-            const otherChainErc20Promises: Promise<void>[] = [];
-            if (fetchAllChains && evmAddress) {
-              otherChainTokensByChain.forEach((tokens, chainId) => {
-                const rpcs = getRpcList(chainId);
-                if (!rpcs.length) return;
-                for (const ct of tokens) {
-                  if (address !== activeAddressRef.current) return;
-                  const cacheKey = `${chainId}:${evmAddress.toLowerCase()}:erc20:${ct.contractAddress}`;
-                  const erc20Abi = [
-                    "function balanceOf(address owner) view returns (uint256)",
-                  ];
-                  const p = (async () => {
-                    try {
-                      const bal = await evmBalanceCache.swr(
-                        cacheKey,
-                        async () => {
-                          let lastErr: unknown;
-                          for (const rpcUrl of rpcs) {
-                            try {
-                              const provider = new ethers.JsonRpcProvider(
-                                rpcUrl,
-                              );
-                              const contract = new ethers.Contract(
-                                ct.contractAddress,
-                                erc20Abi,
-                                provider,
-                              );
-                              const b = await contract.balanceOf(evmAddress);
-                              return Number(
-                                ethers.formatUnits(b, ct.decimals),
-                              ).toFixed(ct.decimals > 6 ? 4 : 2);
-                            } catch (e) {
-                              lastErr = e;
-                            }
-                          }
-                          throw lastErr;
-                        },
-                        opts.force,
-                      );
 
-                      if (address !== activeAddressRef.current) return;
-                      updateSingleToken(
-                        (t) =>
-                          t.isEVM === true &&
-                          t.chainId === chainId &&
-                          t.contractAddress?.toLowerCase() ===
-                            ct.contractAddress.toLowerCase(),
-                        { balance: bal },
-                      );
-                    } catch {
-                      if (address !== activeAddressRef.current) return;
-                      const cached = evmBalanceCache.getAny(cacheKey) ?? "0";
-                      updateSingleToken(
-                        (t) =>
-                          t.isEVM === true &&
-                          t.chainId === chainId &&
-                          t.contractAddress?.toLowerCase() ===
-                            ct.contractAddress.toLowerCase(),
-                        { balance: cached },
-                      );
-                    }
-                  })();
-                  otherChainErc20Promises.push(p);
+            // "All networks" refresh: ONE Multicall3 eth_call per remaining
+            // chain fetches the native balance AND every tracked ERC-20 in a
+            // single request, instead of 1 call per chain + 1 call per token.
+            // Custom user-added chains must use THEIR OWN RPC — getRpcList()
+            // falls back to Ethereum mainnet for unknown chainIds, which would
+            // query the wrong chain entirely (and waste requests).
+            const rpcsForChain = (chainId: number): string[] => {
+              const userNet = getUserNetworkByChainId(chainId);
+              if (userNet?.rpcUrls?.length) return userNet.rpcUrls;
+              return allSupportedChainIds.includes(chainId)
+                ? getRpcList(chainId)
+                : [];
+            };
+
+            const otherChainIds =
+              fetchAllChains && evmAddress
+                ? Array.from(
+                    new Set([
+                      ...allSupportedChainIds.filter((id) => id !== evmChainId),
+                      ...otherChainTokensByChain.keys(),
+                    ]),
+                  ).filter((id) => rpcsForChain(id).length > 0)
+                : [];
+
+            const otherChainBatchPromises = otherChainIds.map(
+              async (chainId) => {
+                if (!evmAddress || address !== activeAddressRef.current)
+                  return;
+                const tokens = otherChainTokensByChain.get(chainId) ?? [];
+                const addrLower = evmAddress.toLowerCase();
+                const nativeKey = `${chainId}:${addrLower}:native`;
+                const tokenKey = (contractAddress: string) =>
+                  `${chainId}:${addrLower}:erc20:${contractAddress}`;
+
+                const applyNative = (val: string) =>
+                  updateSingleToken(
+                    (t) =>
+                      t.isEVM === true &&
+                      t.chainId === chainId &&
+                      !t.contractAddress,
+                    { balance: val },
+                  );
+                const applyToken = (ct: (typeof tokens)[number], val: string) =>
+                  updateSingleToken(
+                    (t) =>
+                      t.isEVM === true &&
+                      t.chainId === chainId &&
+                      t.contractAddress?.toLowerCase() ===
+                        ct.contractAddress.toLowerCase(),
+                    { balance: val },
+                  );
+
+                // SWR: show whatever is cached immediately…
+                const cachedNative = evmBalanceCache.getAny(nativeKey);
+                if (cachedNative !== null) applyNative(cachedNative);
+                for (const ct of tokens) {
+                  const c = evmBalanceCache.getAny(tokenKey(ct.contractAddress));
+                  if (c !== null) applyToken(ct, c);
                 }
-              });
-            }
+
+                // …and skip the network entirely when everything is fresh.
+                const allFresh =
+                  !opts.force &&
+                  evmBalanceCache.getFresh(nativeKey) !== null &&
+                  tokens.every(
+                    (ct) =>
+                      evmBalanceCache.getFresh(tokenKey(ct.contractAddress)) !==
+                      null,
+                  );
+                if (allFresh) return;
+
+                try {
+                  const { fetchBalancesMulticall } = await import(
+                    "../services/network/MulticallService"
+                  );
+                  const rpcs = rpcsForChain(chainId);
+                  let res: Awaited<
+                    ReturnType<typeof fetchBalancesMulticall>
+                  > | null = null;
+                  for (const rpcUrl of rpcs) {
+                    try {
+                      const provider = new ethers.JsonRpcProvider(rpcUrl);
+                      res = await fetchBalancesMulticall(
+                        provider,
+                        evmAddress,
+                        tokens.map((ct) => ({
+                          contractAddress: ct.contractAddress,
+                          decimals: ct.decimals,
+                        })),
+                      );
+                      break;
+                    } catch {
+                      /* try next endpoint */
+                    }
+                  }
+                  if (!res) throw new Error("all endpoints failed");
+                  if (address !== activeAddressRef.current) return;
+
+                  if (res.native !== null) {
+                    const nativeVal = parseFloat(
+                      parseFloat(res.native).toFixed(8),
+                    ).toString();
+                    evmBalanceCache.set(nativeKey, nativeVal);
+                    applyNative(nativeVal);
+                  }
+                  for (const ct of tokens) {
+                    const raw = res.tokens[ct.contractAddress.toLowerCase()];
+                    if (raw === undefined) continue;
+                    const formatted = Number(raw).toFixed(
+                      ct.decimals > 6 ? 4 : 2,
+                    );
+                    evmBalanceCache.set(tokenKey(ct.contractAddress), formatted);
+                    applyToken(ct, formatted);
+                  }
+                } catch {
+                  // Multicall3 unavailable on this chain (some custom chains
+                  // don't have it deployed) — fall back to direct calls on the
+                  // chain's own RPC, then Moralis as a last resort.
+                  const rpcs = rpcsForChain(chainId);
+                  const direct = await (async () => {
+                    for (const rpcUrl of rpcs) {
+                      try {
+                        const provider = new ethers.JsonRpcProvider(rpcUrl);
+                        const wei = await provider.getBalance(evmAddress);
+                        const nativeVal = parseFloat(
+                          parseFloat(ethers.formatEther(wei)).toFixed(8),
+                        ).toString();
+                        const tokenVals: Array<[string, string]> = [];
+                        for (const ct of tokens) {
+                          try {
+                            const contract = new ethers.Contract(
+                              ct.contractAddress,
+                              [
+                                "function balanceOf(address owner) view returns (uint256)",
+                              ],
+                              provider,
+                            );
+                            const b = await contract.balanceOf(evmAddress);
+                            tokenVals.push([
+                              ct.contractAddress,
+                              Number(ethers.formatUnits(b, ct.decimals)).toFixed(
+                                ct.decimals > 6 ? 4 : 2,
+                              ),
+                            ]);
+                          } catch {
+                            /* keep cached for this token */
+                          }
+                        }
+                        return { nativeVal, tokenVals };
+                      } catch {
+                        /* try next endpoint */
+                      }
+                    }
+                    return null;
+                  })();
+
+                  if (direct && address === activeAddressRef.current) {
+                    evmBalanceCache.set(nativeKey, direct.nativeVal);
+                    applyNative(direct.nativeVal);
+                    for (const [contractAddress, val] of direct.tokenVals) {
+                      evmBalanceCache.set(tokenKey(contractAddress), val);
+                      const ct = tokens.find(
+                        (t) => t.contractAddress === contractAddress,
+                      );
+                      if (ct) applyToken(ct, val);
+                    }
+                  } else {
+                    try {
+                      const viaMoralis = await fetchNativeBalanceMoralis(
+                        evmAddress,
+                        chainId,
+                      );
+                      if (
+                        viaMoralis !== null &&
+                        address === activeAddressRef.current
+                      ) {
+                        evmBalanceCache.set(nativeKey, viaMoralis);
+                        applyNative(viaMoralis);
+                      }
+                    } catch {
+                      /* cached values stay */
+                    }
+                  }
+                }
+              },
+            );
 
             const solanaPromise = (async () => {
               if (
@@ -1100,13 +1207,12 @@ export function useWalletData({
                 }
               })();
 
-              // Solana Devnet + Testnet native SOL balances (matched by each
+              // Solana Testnet native SOL balance (matched by
               // cluster's sentinel chainId so they never overwrite each other).
               const solClusters: Array<{
-                cluster: "devnet" | "testnet";
+                cluster: "testnet";
                 chainId: number;
               }> = [
-                { cluster: "devnet", chainId: 1151111081099720 },
                 { cluster: "testnet", chainId: 1151111081099721 },
               ];
               const devnetP = Promise.allSettled(
@@ -1365,8 +1471,12 @@ export function useWalletData({
                     bal = await fetchSuiBalance(currentWallet.suiAddress, rpc);
                   }
                   if (address === activeAddressRef.current) {
+                    // Target the NATIVE row specifically (no contractAddress) —
+                    // otherwise a discovered ERC-20 on the same custom chain
+                    // could absorb the native balance and the native shows 0.
                     updateSingleToken(
-                      (t) => t.chainId === un.chainIdDecimal,
+                      (t) =>
+                        t.chainId === un.chainIdDecimal && !t.contractAddress,
                       { balance: bal },
                     );
                   }
@@ -1410,8 +1520,7 @@ export function useWalletData({
             await Promise.allSettled([
               activeEvmNativePromise,
               ...activeEvmErc20Promises,
-              ...otherChainNativePromises,
-              ...otherChainErc20Promises,
+              ...otherChainBatchPromises,
               solanaPromise,
               suiPromise,
               bitcoinPromise,
@@ -1574,12 +1683,10 @@ export function useWalletData({
           );
           return;
         }
-        if (prefix === "solana-devnet" || prefix === "solana-testnet") {
-          const cid =
-            prefix === "solana-devnet" ? 1151111081099720 : 1151111081099721;
+        if (prefix === "solana-testnet") {
           applyByPredicate(
             (t) =>
-              t.isSolana === true && !t.contractAddress && t.chainId === cid,
+              t.isSolana === true && !t.contractAddress && t.chainId === 1151111081099721,
           );
           return;
         }

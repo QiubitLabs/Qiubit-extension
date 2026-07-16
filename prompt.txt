@@ -1,0 +1,176 @@
+# ROLE & OBJECTIVE
+You are a senior product designer + frontend engineer. Build a stunning, production-grade
+MARKETING LANDING PAGE for "Qiubit Wallet" — a self-custody, multichain crypto wallet
+browser extension. The page must feel like it was made by a top web3 design team (reference
+quality: phantom.com, metamask.io, rainbow.me, sui.io, rabby.io). It must be beautiful,
+modern, highly interactive, animation-rich, and deeply informative. This is a conversion page:
+the primary goal is "Add to Chrome / Install".
+
+# TECH STACK (STRICT)
+- React + TypeScript (.tsx components only — no plain .jsx)
+- Vite (or Next.js App Router if the platform defaults to it) with the /app or /src structure
+- Tailwind CSS for styling + CSS variables for design tokens
+- Framer Motion for all animations and scroll interactions
+- lucide-react for icons
+- Fully responsive (mobile-first): breakpoints at 375 / 768 / 1024 / 1440 / 1920
+- Dark theme by default (this is a crypto wallet — dark luxury aesthetic)
+- Clean component architecture: one component per section, in /components/sections
+- No backend needed — static marketing page. Mock any data locally.
+
+# BRAND & VISUAL IDENTITY
+Product name: Qiubit Wallet
+Tagline: "Your multichain gateway to Octra & beyond"
+Logo mark: a stylized letter "Q" (cyan/white). Use a placeholder <QiubitLogo /> SVG component
+   drawing a rounded "Q" — cyan glowing on dark.
+
+Color tokens (define as CSS variables in :root):
+  --bg:            #0a0a0b   (near-black page background)
+  --bg-elevated:   #141416   (cards / surfaces)
+  --bg-hover:      #1e1e22
+  --border:        #26262b
+  --text:          #ffffff
+  --text-muted:    #8b8b93
+  --accent:        #00d4ff   (cyan — the PRIMARY brand accent, use for glows, gradients, CTAs)
+  --accent-2:      #6366f1   (indigo — secondary accent)
+  --accent-3:      #a78bfa   (violet — tertiary, for multi-color gradients)
+  --success:       #00c853
+Signature gradient: linear/radial blends of cyan #00d4ff -> indigo #6366f1 -> violet #a78bfa.
+Use subtle cyan glow / bloom behind key elements. Add a faint animated grain/noise texture
+and soft radial light leaks in the background for atmosphere (never overpowering).
+
+Typography:
+  Headings: a modern geometric sans (e.g. "Space Grotesk" or "Satoshi" or "Clash Display")
+  Body: "Inter"
+  Use strong SCALE CONTRAST — huge hero headline (clamp up to ~6rem), calm body text.
+  Numeric/mono details (addresses, balances) in a monospace ("JetBrains Mono").
+
+Design direction: "Dark luxury + glassmorphism with real depth." Layered surfaces, soft
+shadows, glass cards with backdrop-blur, glowing accents, generous whitespace, editorial
+rhythm (not uniform padding everywhere). Avoid generic template look. Avoid flat gray-on-white.
+
+# PAGE STRUCTURE (build every section)
+
+## 1. HEADER / NAVBAR (sticky, glassmorphic)
+- Left: <QiubitLogo /> + "Qiubit" wordmark.
+- Center nav links (smooth-scroll to sections): Features, Chains, Security, Swap, Developers, FAQ.
+- Right: a subtle "GitHub" ghost link + a primary CTA button "Add to Chrome" (cyan gradient,
+  glow on hover, small Chrome icon).
+- Behavior: transparent at top, becomes frosted (backdrop-blur + subtle border) after scrolling
+  40px. On mobile: hamburger -> full-screen animated menu overlay.
+
+## 2. HERO
+- Massive headline: "One wallet. Every chain." with a gradient-animated word.
+- Sub-headline: "Qiubit is the self-custody multichain wallet for Octra, Ethereum, Solana,
+  Sui, Bitcoin and every EVM network — swap, bridge, and connect to any dApp in one place."
+- Two CTAs: primary "Add to Chrome — Free", secondary "See how it works" (ghost, with play icon).
+- Trust row under CTAs: "Non-custodial · Open source · Audited-grade encryption" with tiny icons.
+- HERO VISUAL (the showpiece): an animated, floating 3D-ish mockup of the wallet popup UI
+  (dark card, ~360x600) showing a portfolio with token rows, balances, and a cyan "Total
+  Balance" number that counts up on load. Around it, floating chain-logo chips (ETH, SOL, BTC,
+  SUI, Octra, Polygon, Base) orbit slowly with parallax on mouse-move. Add glow, soft shadow,
+  and a subtle continuous float animation. Use Framer Motion.
+- Background: animated aurora/gradient mesh (cyan->indigo->violet) drifting slowly + faint grid.
+
+## 3. LOGO / CHAINS MARQUEE
+- An infinite auto-scrolling marquee of supported chain logos (Octra, Ethereum, Polygon, BSC,
+  Base, Arbitrum, Optimism, Monad, Hyperliquid, Solana, Sui, Bitcoin). Greyscale, brighten on hover.
+- Caption above: "Natively supports 12+ chains — and any custom EVM network you add."
+
+## 4. FEATURES — BENTO GRID (the core informative section)
+Heading: "Everything you need to move across chains."
+A responsive BENTO grid (varied tile sizes, not uniform) of feature cards. Each card: an icon,
+a title, a one-line description, and a subtle micro-interaction/animation on hover or in-view.
+Include these features (each as a tile):
+  1. "True Multichain"  — Octra, all EVM chains, Solana, Sui, Bitcoin in one wallet. (big tile,
+     with mini animated chain-orbit visual)
+  2. "Cross-chain Swap" — Best-route swaps across chains powered by smart routing (LI.FI). Live
+     quotes, price impact, slippage control. (wide tile, show a mini animated swap card)
+  3. "OCT <-> wOCT Bridge" — Native bridge between Octra and Ethereum with a guided 3-step flow.
+  4. "Human-readable Sends" — Send to ENS (.eth), SNS (.sol), and SuiNS (.sui) names, not just
+     long addresses.
+  5. "Speed Up & Cancel" — Unstick pending EVM transactions with one tap (replace-by-fee).
+  6. "Privacy on Octra" — Shield, unshield, and private transfers for confidential balances.
+  7. "NFT Gallery" — View and manage NFTs across chains.
+  8. "Token Approvals Manager" — See and revoke risky token allowances to stay safe.
+  9. "dApp-ready" — Connect to any dApp via EIP-6963, Solana & Sui Wallet Standard, with
+     per-site permissions.
+  10. "Transaction Simulation" — Preview balance changes and get risk warnings BEFORE you sign.
+  11. "Address Book & Multi-wallet" — Manage many accounts and saved contacts.
+  12. "Custom Networks & Tokens" — Add any EVM chain or token in seconds.
+Make the tiles feel designed: glass surfaces, gradient borders on hover, glow, staggered
+reveal-on-scroll (Framer Motion whileInView with stagger).
+
+## 5. INTERACTIVE PRODUCT SHOWCASE (scrollytelling)
+A pinned/sticky section: on the left a phone/extension mockup, on the right scrolling copy.
+As the user scrolls, the mockup UI transitions between 4 states in sync:
+  - "Portfolio" (all balances, USD totals)
+  - "Send" (recipient with name resolution, amount + USD, MAX)
+  - "Swap" (from/to tokens, live rate, route)
+  - "Connect" (dApp approval screen with permissions)
+Use scroll progress to crossfade/slide the mockup screens. This should feel premium like the
+Phantom / Arc browser scrollytelling sections.
+
+## 6. SECURITY SECTION
+Heading: "Your keys. Your crypto. Always."
+Three columns with icons + copy:
+  - "Non-custodial" — Keys are generated and stored only on your device, never on a server.
+  - "Bank-grade encryption" — Vault secured with AES-GCM and PBKDF2 (1,000,000 iterations),
+    auto-lock, and a secure key wipe on lock.
+  - "Phishing & risk protection" — Transaction simulation, approval risk flags, and per-origin
+    dApp permissions.
+Add a reassuring visual: an animated shield / lock that assembles on scroll. Subtle, tasteful.
+
+## 7. SWAP / BRIDGE SPOTLIGHT
+A focused feature block with a live-looking (mock, animated) swap widget: token selectors,
+an animated exchange-rate line "1 ETH ≈ 3,500 USDC", a route card, and a glowing "Swap" button.
+Numbers subtly animate/refresh to feel live. Copy: "Swap and bridge across chains without
+leaving your wallet."
+
+## 8. STATS / SOCIAL PROOF STRIP
+A row of animated count-up stats (use placeholder numbers, clearly editable):
+  "12+ Chains" · "0 Custody" · "100% Open Source" · "<1s Balance loads".
+
+## 9. DEVELOPERS / dAPP SECTION (brief)
+"Integrate in minutes." — Mentions EIP-6963 + Wallet Standard auto-detection, a small code
+snippet card (syntax-highlighted, TSX) showing a dApp detecting the provider. Copy button on it.
+
+## 10. FAQ (accordion, animated)
+Smoothly animated accordion (Framer Motion height/opacity). Questions:
+  - Is Qiubit free? - Which chains are supported? - Is it non-custodial? - Can I import my
+    existing seed phrase / private key? - Does it support hardware wallets (roadmap)? -
+    How do swaps work? - Is my recovery phrase stored anywhere?
+
+## 11. FINAL CTA
+Big centered gradient panel with glow: "Ready to go multichain?" + "Add to Chrome — it's free"
+button + secondary "View on GitHub". Animated gradient background.
+
+## 12. FOOTER
+Columns: Product (Features, Swap, Security), Resources (Docs, GitHub, FAQ), Community (X/Twitter,
+Discord, Telegram), Legal (Privacy, Terms). Logo + tagline + copyright + a small "Built for the
+Octra Network" line. Subtle top border, muted text.
+
+# ANIMATION & INTERACTION REQUIREMENTS
+- Use Framer Motion everywhere: reveal-on-scroll (whileInView) with tasteful stagger, parallax
+  on hero, count-up numbers, hover lift + glow on cards and buttons, animated gradient text,
+  the scrollytelling mockup transitions, and the FAQ accordion.
+- Buttons: designed hover/focus/active states (glow, slight scale, gradient shift). Never flat.
+- Respect prefers-reduced-motion: gracefully disable non-essential motion.
+- Custom cursor glow or spotlight-follow effect on the hero is a nice touch (optional, subtle).
+- Smooth scroll behavior for nav anchors.
+- Keep it performant: animate only transform/opacity, lazy-mount heavy sections, no layout thrash.
+
+# QUALITY BAR (must-haves)
+- Clear visual hierarchy through scale contrast; intentional, non-uniform spacing rhythm.
+- Real depth: layering, glass, shadows, glow — not a flat page.
+- Cohesive design system: consistent radii (use rounded-2xl for cards), spacing scale, and the
+  cyan/indigo/violet palette used semantically.
+- Every section must look believable in a real product screenshot. No lorem-ipsum-looking filler.
+- Accessible: semantic HTML (header/nav/main/section/footer), aria labels, good color contrast,
+  keyboard-navigable nav, focus rings.
+- Ship clean, typed, well-structured .tsx components with meaningful names.
+
+# TONE OF COPY
+Confident, clear, slightly technical but friendly. Crypto-native but not hypey. Short punchy
+headlines, benefit-driven subtext. Avoid jargon walls.
+
+Deliver the full working project with all sections above, polished and animated.

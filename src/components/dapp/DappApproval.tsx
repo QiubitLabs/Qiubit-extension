@@ -691,7 +691,13 @@ export function DappApproval({
       if (onApprove) await onApprove(connectResult);
       window.close();
     } catch (err: unknown) {
-      setError(cleanErrorMessage(err, "Transaction failed"));
+      // Pass the chainId so cleanErrorMessage can resolve the correct native
+      // gas token symbol (e.g. SEI for Sei Atlantic, not OCT).
+      const txChainId =
+        request.action === "ethSendTransaction"
+          ? request.params?.chainId ?? null
+          : null;
+      setError(cleanErrorMessage(err, "Transaction failed", 140, txChainId));
     } finally {
       setIsLoading(false);
     }

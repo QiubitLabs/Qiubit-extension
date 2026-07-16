@@ -107,6 +107,64 @@ export const RPC_ENDPOINTS: Record<number, string[]> = {
   ],
 
   999: ["https://rpc.hyperliquid.xyz/evm"],
+
+  // Circle Arc — public RPCs only (verified live, return chainId 5042).
+  // NOTE: the runtime RPC pool actually reads PublicProvider.PUBLIC_ENDPOINTS;
+  // keep this in sync with it.
+  5042: [
+    "https://5042.rpc.thirdweb.com",
+    "https://rpc.blockdaemon.mainnet.arc.io",
+    "https://arc.drpc.org",
+  ],
+
+  // Arc Testnet — public RPCs only (verified live, return chainId 5042002).
+  5042002: [
+    "https://rpc.testnet.arc.network",
+    "https://arc-testnet.drpc.org",
+    "https://rpc.drpc.testnet.arc.network",
+    "https://rpc.blockdaemon.testnet.arc.network",
+    "https://5042002.rpc.thirdweb.com",
+  ],
+
+  // Additional EVM L1s — public RPCs only
+  1672: [
+    "https://rpc.pharos.xyz",
+    "https://pharos.drpc.org",
+  ], // Pharos
+  1625: [
+    "https://rpc.gravity.xyz",
+    "https://1625.rpc.thirdweb.com",
+    "https://rpc.ankr.com/gravity",
+  ], // Gravity
+  4663: ["https://rpc.mainnet.chain.robinhood.com"], // Robinhood Chain
+  4326: [
+    "https://mainnet.megaeth.com/rpc",
+    "https://4326.rpc.thirdweb.com",
+    "https://megaeth.drpc.org",
+  ], // MegaETH
+  4217: [
+    "https://rpc.tempo.xyz",
+    "https://tempo.drpc.org",
+    "https://1rpc.io/tempo",
+    "https://tempo-rpc.publicnode.com",
+    "https://rpc.mainnet.tempo.xyz",
+  ], // Tempo (stablecoin gas)
+  5031: [
+    "https://api.infra.mainnet.somnia.network",
+    "https://somnia-rpc.publicnode.com",
+    "https://5031.rpc.thirdweb.com",
+  ], // Somnia
+  16661: [
+    "https://evmrpc.0g.ai",
+    "https://16661.rpc.thirdweb.com",
+    "https://0g.drpc.org",
+    "https://0g-rpc.publicnode.com",
+  ], // 0G
+  9745: [
+    "https://rpc.plasma.to",
+    "https://9745.rpc.thirdweb.com",
+    "https://plasma.drpc.org",
+  ], // Plasma
 };
 
 /** Returns all RPC URLs for a chain (primary + fallbacks). */

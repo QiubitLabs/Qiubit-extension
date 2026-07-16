@@ -29,6 +29,7 @@ import {
   handleGetPublicKey,
 } from "./handlers/connection";
 import { handleResolveApproval } from "./handlers/approval";
+import { syncApprovalBadge } from "./badge";
 import {
   handleGetBalance,
   handleSignMessage,
@@ -135,6 +136,10 @@ const connectionsReady = Promise.all([
   loadSolanaConnections(),
   loadSuiConnections(),
 ]);
+
+// The in-memory approval queue is empty on a fresh service-worker start, so
+// clear any toolbar badge left over from a previous (crashed) session.
+syncApprovalBadge();
 
 const PRIVILEGED_MSG_TYPES = new Set([
   "KEYRING_ACTION",

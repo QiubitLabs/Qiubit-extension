@@ -44,7 +44,7 @@ export const CHAINS: Record<string, BaseChainConfig> = {
 export function getChainConfig(
   networkIdOrChainId: string | number | null,
 ): BaseChainConfig | null {
-  if (!networkIdOrChainId) return CHAINS.octra;
+  if (!networkIdOrChainId) return null;
 
   if (typeof networkIdOrChainId === "string") {
     const found = CHAINS[networkIdOrChainId.toLowerCase()];
