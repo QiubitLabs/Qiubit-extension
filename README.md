@@ -1,115 +1,146 @@
-# Qiubit Wallet - Browser Extension
+# Qiubit Wallet - Multichain Browser Extension
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Status](https://img.shields.io/badge/status-production--ready-green)
 [![X: QiubitLabs](https://img.shields.io/badge/X-QiubitLabs-black.svg?logo=x)](https://x.com/qiubitlabs)
 
-</div>
-
 ## Overview
-Qiubit Wallet is a secure, non-custodial cryptocurrency wallet extension for the Qiubit Network. It is designed to run as a browser extension (Chrome, Edge, Firefox, Brave) to provide a seamless and secure experience for managing your Qiubit assets.
+
+Qiubit Wallet is a secure, non-custodial **multichain** cryptocurrency wallet extension for Chrome, Edge, Brave, and Firefox. It supports the Octra Network, all major EVM chains, Solana, Sui, and Bitcoin — all from a single interface. Manage assets across 20+ networks, swap tokens cross-chain, and bridge OCT to Ethereum, with full privacy and security built in.
+
+## Supported Networks
+
+| Network | Type | Native Token |
+|---|---|---|
+| **Octra** | Octra | OCT |
+| **Ethereum** | EVM | ETH |
+| **BNB Smart Chain** | EVM | BNB |
+| **Polygon** | EVM | POL |
+| **Base** | EVM | ETH |
+| **Arbitrum One** | EVM | ETH |
+| **Monad** | EVM | MON |
+| **Hyperliquid EVM** | EVM | HYPE |
+| **Arc** | EVM | ARC |
+| **Pharos** | EVM | GAS |
+| **Gravity** | EVM | G |
+| **Robinhood Chain** | EVM | HOOD |
+| **MegaETH** | EVM | ETH |
+| **Tempo** | EVM | TEMPO |
+| **Somnia** | EVM | STT |
+| **0G** | EVM | A0GI |
+| **Plasma** | EVM | ETH |
+| **Solana** | Solana | SOL |
+| **Sui** | Sui | SUI |
+| **Bitcoin** | Bitcoin | BTC |
+
+> Custom EVM networks can also be added manually via the Chainlist integration in Settings.
 
 ## Features
-- **Non-Custodial**: You own your keys. Your private keys never leave your device.
-- **Secure Storage**: Advanced client-side encryption (AES-256-GCM) protecting your wallet data.
-- **Privacy First**: No tracking, no analytics, no external data collection. Direct communication with Qiubit RPC nodes.
-- **Full Functionality**: Send and receive OCT, view transaction history, and manage multiple wallets.
-- **Modern UI**: Clean, responsive, and intuitive interface with dark mode support.
+
+### Multichain
+- **20+ Networks** built-in — Octra, Ethereum, BSC, Polygon, Base, Arbitrum, Monad, Hyperliquid, Solana, Sui, Bitcoin, and more.
+- **Add Custom EVM Networks** via integrated Chainlist database with 1-click import.
+- **Unified Dashboard** — view and manage all assets across every chain in one place.
+
+### Swap & Bridge
+- **Cross-Chain Swap** — swap tokens across EVM chains powered by LI.FI aggregation.
+- **OCT Bridge** — native bridge between Octra and Ethereum (OCT to wOCT and back).
+- **Token Discovery** — search and import any EVM token by contract address.
+
+### Security & Privacy
+- **Non-Custodial** — your keys never leave your device.
+- **AES-256-GCM Encryption** — all sensitive data encrypted locally with PBKDF2-derived keys.
+- **No Tracking** — zero analytics, zero telemetry, zero data collection.
+- **Transaction Simulation** — preview transaction effects before signing.
+- **Keystore Export** — export encrypted keystore files for backup.
+
+### Wallet Management
+- **Multiple Wallets** — create and manage multiple wallets with HD derivation.
+- **Import Options** — seed phrase (12/24 word), private key, or keystore file.
+- **Address Book** — save and label frequently used addresses.
+- **Display Currency** — view portfolio value in USD, EUR, GBP, JPY, IDR, and more.
+
+### dApp Integration
+- **EVM dApp Support** — full EIP-1193 provider injection (MetaMask-compatible).
+- **Solana dApp Support** — Phantom-compatible wallet adapter.
+- **Sui dApp Support** — Sui Wallet Standard integration.
+- **Transaction Approval** — review and approve dApp transactions with decoded details.
 
 ## Installation (Developer Mode)
 
-Since this is a browser extension, you cannot "run" it like a standard website. You must install it into your browser.
-
 ### 1. Build the Extension
-First, you need to build the project from source.
 
 **Prerequisites:**
 - Node.js (v18+)
 - npm (v9+)
 
 **Steps:**
-1.  Clone the repository:
+1. Clone the repository:
     ```bash
-    git clone https://github.com/ubaaa1/qiubit-wallet.git
-    cd qiubit-wallet
+    git clone https://github.com/irhamuba/wallet.git
+    cd wallet
     ```
-2.  Install dependencies:
+2. Install dependencies:
     ```bash
     npm install
     ```
-3.  Build the project:
+3. Build the project:
     ```bash
     npm run build
     ```
-    This will create a `dist/` folder containing the compiled extension.
+    This creates a `dist/` folder containing the compiled extension.
 
 ### 2. Load into Browser
 
 #### Chrome / Brave / Edge
-1.  Open your browser and navigate to the Extensions management page:
+1. Navigate to the Extensions page:
     - Chrome: `chrome://extensions`
     - Edge: `edge://extensions`
     - Brave: `brave://extensions`
-2.  Enable **Developer mode** (usually a toggle in the top-right corner).
-3.  Click **Load unpacked**.
-4.  Select the `dist` folder generated in the build step.
-5.  The Qiubit Wallet extension should now appear in your browser toolbar.
-
-
-## Usage Guide
-
-1.  **Open the Wallet**: Click the Qiubit icon in your browser toolbar to open the popup.
-2.  **Create or Import**:
-    - **Create New Wallet**: Follow the prompts to generate a new seed phrase. **Write this down safely!**
-    - **Import Wallet**: Use an existing seed phrase or private key to restore your wallet.
-3.  **Dashboard**:
-    - View your balance in QIUBIT.
-    - Copy your wallet address.
-    - Switch between different wallets if you have multiple.
-4.  **Send**: Click "Send", enter the recipient address and amount. Confirm the transaction details before signing.
-5.  **Receive**: Click "Receive" to show your QR code and public address.
-6.  **Settings**: access security settings, manage networks (RPC), and export keys.
+2. Enable **Developer mode** (toggle in the top-right corner).
+3. Click **Load unpacked**.
+4. Select the `dist` folder.
+5. The Qiubit Wallet icon should appear in your browser toolbar.
 
 ## Development
 
-If you are developing or contributing to the code:
+```bash
+# Development server
+npm run dev
 
--   **Development Server**:
-    ```bash
-    npm run dev
-    ```
-    Note that strict extension APIs (like `chrome.storage`) may not work fully in a standard browser tab. It is recommended to rebuild and reload the extension in the browser for accurate testing.
+# Lint
+npm run lint
+
+# Type check
+npx tsc --noEmit
+
+# Run tests
+npm test
+```
+
+> Note: Extension APIs like `chrome.storage` require loading the built extension into the browser for accurate testing.
 
 ## Security Architecture
 
--   **Local Storage**: All sensitive data is encrypted and stored locally using the browser's storage API.
--   **Encryption**: We use industry-standard AES-256 encryption derived from your password (PBKDF2).
--   **Signing**: Transaction signing happens entirely within the extension; private keys are never exposed to any server.
-
-## Experience
-
-### 1. Get Started Instantly
-**Begin Your Journey.** Create a new wallet or import existing keys in seconds. Simple, fast, and no registration required—just you and the blockchain.
-
-### 2. Your Digital Vault
-**Safe & Secure.** Access your wallet with a password that only you know. Your keys are encrypted on your device—we never see them, so only you hold the keys to your funds.
-
-### 3. Your Money, Clear & Simple
-**Everything at a Glance.** Check your balance, copy your address, and switch between wallets instantly. No complicated menus—just your money, ready when you are.
-
-### 4. Privacy by Design
-**You Are Invisible.** We don't track who you are, where you are, or what you do. No analytics, no spying. Your financial life stays private, exactly how it should be.
+- **Local Storage** — all sensitive data encrypted with AES-256-GCM and stored locally via browser storage APIs and IndexedDB.
+- **Key Derivation** — PBKDF2 with 600,000 iterations derives encryption keys from your password.
+- **Signing** — transaction signing happens entirely client-side; private keys are never sent to any server.
+- **Session Management** — auto-lock after configurable timeout with secure session handling.
 
 ## Support
 
-If you find this project helpful and want to support its development, you can send donations to:
+If you find this project helpful and want to support its development:
 
-**Qiubit Address:**
+**Octra Address:**
 ```
 octHSp2A5VdWZYTCgts4voPPmdDSEwwKaqJzbxrFJeP3n1E
 ```
 
-Your support helps maintain and improve the Qiubit Wallet. Thank you!
+**Ethereum / EVM Address:**
+```
+0x742d35Cc6634C0532925a3b844Bc9e7595f5bA16
+```
 
 ## License
+
 Licensed under the MIT License. See [LICENSE](LICENSE) for more information.
