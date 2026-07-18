@@ -127,20 +127,6 @@ npm test
 - **Signing** — transaction signing happens entirely client-side; private keys are never sent to any server.
 - **Session Management** — auto-lock after configurable timeout with secure session handling.
 
-## Support
-
-If you find this project helpful and want to support its development:
-
-**Octra Address:**
-```
-octHSp2A5VdWZYTCgts4voPPmdDSEwwKaqJzbxrFJeP3n1E
-```
-
-**Ethereum / EVM Address:**
-```
-0x742d35Cc6634C0532925a3b844Bc9e7595f5bA16
-```
-
 ## License
 
 Licensed under the MIT License. See [LICENSE](LICENSE) for more information.
