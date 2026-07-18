@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  PlusIcon,
   CheckIcon,
   CopyIcon,
   WalletIcon,
@@ -76,7 +75,6 @@ export function WalletSelector({
   activeAddress,
   activeWalletTokens,
   onSelect,
-  onAddWallet,
   onEditWallet,
   networkSetting = "all",
 }: WalletSelectorProps) {
@@ -189,14 +187,6 @@ export function WalletSelector({
           );
         })}
       </div>
-
-      {/* Simple Add Wallet Button */}
-      <button className="wallet-add-btn-minimal" onClick={onAddWallet}>
-        <div className="add-icon-circle">
-          <PlusIcon size={14} />
-        </div>
-        <span>Add Wallet</span>
-      </button>
     </div>
   );
 }

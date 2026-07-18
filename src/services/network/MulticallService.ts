@@ -7,6 +7,7 @@
  */
 
 import { ethers } from "ethers";
+import { sanitizeNativeBalance } from "../tokens/tokenVisibility";
 
 export const MULTICALL3_ADDRESS =
   "0xcA11bde05977b3631167028862bE2a173976CA11";
@@ -76,7 +77,8 @@ export async function fetchBalancesMulticall(
         "getEthBalance",
         nativeRes.returnData,
       )[0] as bigint;
-      out.native = ethers.formatEther(wei);
+      // Pre-launch/test chains can report absurd joke balances — clamp them.
+      out.native = sanitizeNativeBalance(ethers.formatEther(wei));
     } catch {
       /* leave null */
     }

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { exportWalletSecure as exportWallet } from "../../utils/storage";
 import { ConfirmModal } from "../shared";
 import { useWallet } from "../../context/WalletContext";
 import { useSession } from "../../context/SessionContext";
@@ -9,6 +8,7 @@ import { SettingsMenu } from "./Menu/SettingsMenu";
 import { ChangePassword } from "./Security/ChangePassword/ChangePassword";
 import { ExportPrivateKey } from "./Security/ExportPrivateKey/ExportPrivateKey";
 import { RecoveryPhrase } from "./Security/RecoveryPhrase/RecoveryPhrase";
+import { ExportKeystore } from "./Security/ExportKeystore/ExportKeystore";
 import { ConnectedSites } from "./ConnectedSites/ConnectedSites";
 import { AutoLockSettings } from "./AutoLockSettings/AutoLockSettings";
 import { AddressBookView } from "./AddressBook/AddressBookView";
@@ -30,16 +30,10 @@ export function SettingsScreen({ onPasswordChange }: SettingsScreenProps) {
   } = useWallet();
   const { lock, clearActiveSession, password } = useSession(); // Get password and lock
 
-  const [view, setView] = useState("main"); // 'main' | 'network' | 'export' | 'recovery-phrase' | 'change-password' | 'connected-sites' | 'auto-lock'
+  const [view, setView] = useState("main"); // 'main' | 'network' | 'export' | 'recovery-phrase' | 'change-password' | 'connected-sites' | 'auto-lock' | 'export-keystore'
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
   if (!wallet) return null;
-
-  const handleExportKeystore = () => {
-    const timestamp = Math.floor(Date.now() / 1000);
-    const filename = `octra_wallet_${wallet.address.slice(-8)}_${timestamp}.json`;
-    exportWallet(wallet, filename);
-  };
 
   const handleDisconnect = () => {
     setShowDisconnectModal(true);
@@ -92,6 +86,10 @@ export function SettingsScreen({ onPasswordChange }: SettingsScreenProps) {
     return <ExportPrivateKey wallet={wallet} onBack={() => setView("main")} />;
   }
 
+  if (view === "export-keystore") {
+    return <ExportKeystore wallet={wallet} onBack={() => setView("main")} />;
+  }
+
   if (view === "change-password") {
     return (
       <ChangePassword
@@ -139,8 +137,9 @@ export function SettingsScreen({ onPasswordChange }: SettingsScreenProps) {
           }
         }
         onViewChange={setView}
+        onUpdateSettings={updateSettings}
         onBack={onBackToDashboard}
-        onExportKeystore={handleExportKeystore}
+        onExportKeystore={() => setView("export-keystore")}
         onDisconnect={handleDisconnect}
         onLock={onPanicLock}
       />

@@ -11,7 +11,10 @@ for (let i = 0; i < BASE58_ALPHABET.length; i++)
   BASE58_MAP[BASE58_ALPHABET.charCodeAt(i)] = i;
 
 export function base58ToBytes(str: string): Uint8Array {
-  const bytes = [0];
+  // Seed must be empty (standard base-x): a [0] seed plus the leading-'1'
+  // loop below emits one extra zero byte for all-'1' inputs, e.g. the System
+  // Program ID decoded to 33 bytes instead of 32.
+  const bytes: number[] = [];
   for (let i = 0; i < str.length; i++) {
     const val = BASE58_MAP[str.charCodeAt(i)];
     if (val === 255) throw new Error("Invalid base58 character");
@@ -31,7 +34,9 @@ export function base58ToBytes(str: string): Uint8Array {
 }
 
 export function bytesToBase58(bytes: Uint8Array): string {
-  const digits = [0];
+  // Empty seed for the same reason as base58ToBytes: a [0] seed appends a
+  // spurious '1' when the input is all zero bytes.
+  const digits: number[] = [];
   for (const byte of bytes) {
     let carry: number = byte;
     for (let j = 0; j < digits.length; j++) {

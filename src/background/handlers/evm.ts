@@ -1,4 +1,5 @@
 import { getPrimaryRpc, RPC_ENDPOINTS } from "../../config/rpcEndpoints";
+import { NETWORK_REGISTRY } from "../../constants/networks/registry";
 import { dappConnections, activeSessionCache, setActiveSessionCache } from "../store";
 import {
   getWalletFromStorage,
@@ -13,6 +14,20 @@ import {
 } from "../helpers";
 import { requestApproval } from "./approval";
 import type { DappResponse } from "../types";
+
+/**
+ * Built-in EVM network from NETWORK_REGISTRY by decimal chainId. RPC_ENDPOINTS
+ * and the registry are maintained separately, so a chain registered in only
+ * one of them must still count as "known" to the dapp switch/add flow —
+ * otherwise a 4902 makes every dapp SDK re-open its add-network dialog.
+ */
+function findBuiltinEvmNetwork(chainIdDecimal: number) {
+  return (
+    Object.values(NETWORK_REGISTRY).find(
+      (n) => n.isEVM && n.chainId === chainIdDecimal,
+    ) ?? null
+  );
+}
 
 export async function handleEthSendTransaction(
   origin: string,
@@ -144,6 +159,8 @@ export async function handleEvmRpcPassthrough(
 ): Promise<DappResponse> {
   const chainId = getConnectionChainId(origin);
   let rpcUrl = getPrimaryRpc(chainId);
+  // Registry-only chains (no RPC_ENDPOINTS entry) still carry their own RPC.
+  if (!rpcUrl) rpcUrl = findBuiltinEvmNetwork(chainId)?.rpcUrl || "";
   if (!rpcUrl) {
     const userNets = await getUserNetworksFromStorage();
     const userNet = userNets.find(
@@ -229,15 +246,30 @@ export async function handleAddEthereumChain(
       },
     };
   }
-  if (RPC_ENDPOINTS[chainIdDecimal]) return { result: null };
+  // MetaMask semantics: wallet_addEthereumChain for a chain the wallet already
+  // knows is an implicit switch. Returning a bare success here (the old
+  // behavior) left eth_chainId on the previous network, so dapps that use
+  // add-and-switch in one call kept re-prompting the user to "add" the chain.
+  const isBuiltin =
+    !!RPC_ENDPOINTS[chainIdDecimal] || !!findBuiltinEvmNetwork(chainIdDecimal);
   const existing = await getUserNetworksFromStorage();
-  if (existing.some((n: any) => n.chainIdDecimal === chainIdDecimal))
-    return { result: null };
+  const known = existing.find((n: any) => n.chainIdDecimal === chainIdDecimal);
+  if (isBuiltin || (known && (!known.vm || known.vm === "evm"))) {
+    return handleSwitchEthereumChain(origin, [
+      { chainId: networkParams.chainId },
+    ]);
+  }
+  // Known but non-EVM (custom Solana-VM / Sui-VM entry): not an Ethereum chain.
+  if (known) return { result: null };
   const wallet = await getWalletFromStorage();
   try {
     await requestApproval(origin, "addNetwork", { networkParams }, wallet);
     await saveUserNetworkToStorage(networkParams);
-    return { result: null };
+    // A freshly added chain becomes the active one for this origin, matching
+    // the EIP-3085 add-then-switch behavior dapps expect.
+    return handleSwitchEthereumChain(origin, [
+      { chainId: networkParams.chainId },
+    ]);
   } catch (err: any) {
     return {
       error: {
@@ -263,7 +295,7 @@ export async function handleSwitchEthereumChain(
   }
   const chainIdDecimal = parseChainId(switchParams.chainId);
   let networkSetting: string | null = null;
-  if (RPC_ENDPOINTS[chainIdDecimal]) {
+  if (RPC_ENDPOINTS[chainIdDecimal] || findBuiltinEvmNetwork(chainIdDecimal)) {
     networkSetting = chainIdToNetworkSetting(chainIdDecimal);
   } else {
     const userNets = await getUserNetworksFromStorage();

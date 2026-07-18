@@ -25,6 +25,7 @@
 
 .btn:active:not(:disabled) {
   opacity: 0.85;
+  transform: none !important;
 }
 
 .btn:disabled {
@@ -43,6 +44,7 @@
 
 .btn-primary:active:not(:disabled) {
   opacity: 0.85;
+  transform: none !important;
 }
 
 /* Disabled primary must not look pressable */

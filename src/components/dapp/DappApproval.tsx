@@ -208,6 +208,12 @@ export function DappApproval({
 
   const sessionNetSetting = request?.params?.networkSetting;
   const requestChain = request?.params?.chain;
+  // Namespaces a wallet-standard connect was scoped to ("solana" / "sui").
+  // Empty when the dapp called connect() without a chains hint.
+  const requestedNs: string[] = Array.isArray(request?.params?.requestedChains)
+    ? request.params.requestedChains
+    : [];
+  const scopedNs = requestedNs.length === 1 ? requestedNs[0] : null;
   const currentNetwork = sessionNetSetting
     ? resolveNetwork(sessionNetSetting)
     : null;
@@ -250,8 +256,11 @@ export function DappApproval({
               : ""));
 
     if (chain === "multichain") {
-      // Merged Solana+Sui connect (Wallet Standard). Show a non-EVM address —
-      // prefer Sui, fall back to Solana — never the EVM address.
+      // Merged Solana+Sui connect (Wallet Standard). When the dapp scoped the
+      // request to one namespace, show that chain's address; otherwise show a
+      // non-EVM address — prefer Sui, fall back to Solana — never the EVM one.
+      if (scopedNs === "solana")
+        return w.solanaAddress || w.suiAddress || octraAddr;
       return w.suiAddress || w.solanaAddress || octraAddr;
     }
     if (chain === "sui") {
@@ -290,13 +299,23 @@ export function DappApproval({
 
   useEffect(() => {
     if (userPickedRef.current || wallets.length === 0) return;
+    // Chain sign/send requests carry the account the dapp connected with.
+    // That binding must win over the extension-wide active wallet: they can
+    // diverge when the user switches wallets between connect and sign, and a
+    // signature from a key the dapp never saw fails its verification (e.g.
+    // pump.fun SIWS "Sign in didn't complete").
+    const boundAddr = request?.params?.selectedOctraAddress;
+    if (boundAddr && wallets.some((w) => w.address === boundAddr)) {
+      setSelectedOctraAddr(boundAddr);
+      return;
+    }
     const activeAddr = keyringService.getActiveAddress();
     const candidate =
       activeAddr && wallets.some((w) => w.address === activeAddr)
         ? activeAddr
         : (wallets[activeWalletIndex]?.address ?? wallets[0].address);
     setSelectedOctraAddr(candidate);
-  }, [wallets, activeWalletIndex]);
+  }, [wallets, activeWalletIndex, request]);
 
   useEffect(() => {
     if (!propRequest || propRequest.action !== "ethSendTransaction") return;
@@ -756,7 +775,11 @@ export function DappApproval({
     : (txNetwork?.displayName ??
       settingNetwork?.displayName ??
       (requestChain === "multichain"
-        ? "Sui / Solana"
+        ? scopedNs === "solana"
+          ? "Solana"
+          : scopedNs === "sui"
+            ? "Sui"
+            : "Sui / Solana"
         : requestChain === "sui"
           ? "Sui"
           : requestChain === "solana"
@@ -776,8 +799,10 @@ export function DappApproval({
     ? "#00D4FF"
     : (txNetwork?.badgeColor ??
       settingNetwork?.badgeColor ??
-      (requestChain && chainColors[requestChain]
-        ? chainColors[requestChain]
+      (requestChain === "multichain" && scopedNs && chainColors[scopedNs]
+        ? chainColors[scopedNs]
+        : requestChain && chainColors[requestChain]
+          ? chainColors[requestChain]
         : netSetting === "sepolia"
           ? "#8B5CF6"
           : netSetting === "octra"
@@ -805,7 +830,22 @@ export function DappApproval({
 
   const renderBody = () => {
     switch (request.action) {
-      case "connect":
+      case "connect": {
+        // Unscoped multichain connect grants both chains at once — list each
+        // address with its chain so the user isn't shown a lone Sui 0x… hex
+        // that reads like an EVM address on a Solana dapp.
+        const connWallet = wallets.find((x) => x.address === selectedOctraAddr);
+        const multichainAddresses =
+          requestChain === "multichain" && !scopedNs && connWallet
+            ? (
+                [
+                  { label: "Solana", address: connWallet.solanaAddress },
+                  { label: "Sui", address: connWallet.suiAddress },
+                ] as Array<{ label: string; address?: string | null }>
+              ).filter((r): r is { label: string; address: string } =>
+                Boolean(r.address),
+              )
+            : undefined;
         return (
           <ConnectApproval
             request={request}
@@ -813,8 +853,10 @@ export function DappApproval({
             selectedOctraAddr={selectedOctraAddr}
             getDisplayAddress={getDisplayAddress}
             onWalletSelectClick={() => setShowPicker(true)}
+            multichainAddresses={multichainAddresses}
           />
         );
+      }
 
       case "ethPersonalSign":
       case "signMessage":

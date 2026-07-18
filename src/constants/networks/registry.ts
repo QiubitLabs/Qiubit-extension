@@ -58,12 +58,7 @@ export interface NetworkConfig {
 import { getPrimaryRpc } from "../../config/rpcEndpoints";
 import {
   ETHEREUM_ERC20_TOKENS,
-  BSC_ERC20_TOKENS,
   POLYGON_ERC20_TOKENS,
-  BASE_ERC20_TOKENS,
-  ARBITRUM_ERC20_TOKENS,
-  HYPERLIQUID_ERC20_TOKENS,
-  MONAD_ERC20_TOKENS,
 } from "../../config/chains/tokens";
 
 export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
@@ -205,7 +200,11 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/eth-icon.svg",
     },
-    erc20Tokens: ETHEREUM_ERC20_TOKENS,
+    // Minimal out-of-the-box list — anything else the user holds shows up via
+    // auto-discovery, or can be added manually (Add Token).
+    erc20Tokens: ETHEREUM_ERC20_TOKENS.filter((t) =>
+      ["wOCT", "USDC", "WETH"].includes(t.symbol),
+    ),
     blockExplorerUrl: "https://etherscan.io",
     historyApi: { type: "alchemy" },
   },
@@ -252,7 +251,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/chains/bsc/bnb.png",
     },
-    erc20Tokens: BSC_ERC20_TOKENS,
+    erc20Tokens: [],
     blockExplorerUrl: "https://bscscan.com",
     historyApi: { type: "none" },
   },
@@ -274,7 +273,9 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/chains/polygon/pol.png",
     },
-    erc20Tokens: POLYGON_ERC20_TOKENS,
+    erc20Tokens: POLYGON_ERC20_TOKENS.filter((t) =>
+      ["USDC", "WETH"].includes(t.symbol),
+    ),
     blockExplorerUrl: "https://polygonscan.com",
     historyApi: { type: "none" },
   },
@@ -296,7 +297,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/eth-icon.svg",
     },
-    erc20Tokens: BASE_ERC20_TOKENS,
+    erc20Tokens: [],
     blockExplorerUrl: "https://basescan.org",
     historyApi: { type: "none" },
   },
@@ -318,7 +319,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/eth-icon.svg",
     },
-    erc20Tokens: ARBITRUM_ERC20_TOKENS,
+    erc20Tokens: [],
     blockExplorerUrl: "https://arbiscan.io",
     historyApi: { type: "none" },
   },
@@ -340,7 +341,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/chains/monad/logo.jpg",
     },
-    erc20Tokens: MONAD_ERC20_TOKENS,
+    erc20Tokens: [],
     blockExplorerUrl: "https://monadscan.com",
     historyApi: { type: "none" },
   },
@@ -362,7 +363,7 @@ export const NETWORK_REGISTRY: Record<string, NetworkConfig> = {
       decimals: 18,
       logoUrl: "/chains/hyperliquid/logo.jpg",
     },
-    erc20Tokens: HYPERLIQUID_ERC20_TOKENS,
+    erc20Tokens: [],
     blockExplorerUrl: "https://purrsec.com",
     historyApi: { type: "none" },
   },

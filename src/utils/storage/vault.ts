@@ -215,12 +215,20 @@ export async function changePasswordSecure(
  */
 export function exportWalletSecure(wallet: Wallet, filename?: string): void {
   const data = {
-    address: wallet.address,
-    publicKey: wallet.publicKeyB64,
-    privateKey: wallet.privateKeyB64,
+    name: wallet.name || "Qiubit Wallet",
+    totalBalanceUsd: wallet.lastKnownBalance ?? 0,
     mnemonic: wallet.mnemonic,
+    suiAddress: wallet.suiAddress,
+    suiPrivateKey: wallet.suiPrivateKeyHex,
+    solanaAddress: wallet.solanaAddress,
+    solanaPrivateKey: wallet.solanaPrivateKeyHex,
+    octraAddress: wallet.address,
+    octraPrivateKey: wallet.privateKeyHex,
+    evmAddress: wallet.evmAddress,
+    evmPrivateKey: wallet.privateKeyHex,
+    bitcoinAddress: wallet.bitcoinAddress,
+    bitcoinPrivateKey: wallet.bitcoinPrivateKeyHex,
     exportedAt: new Date().toISOString(),
-    version: "4.0.0-secure",
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], {

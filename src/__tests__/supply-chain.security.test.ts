@@ -104,8 +104,19 @@ describe("Manifest CSP — extension page security", () => {
   it("extension_pages CSP has script-src self (no unsafe-inline or unsafe-eval)", () => {
     const csp: string = manifest.content_security_policy?.extension_pages || "";
     expect(csp).toContain("script-src 'self'");
-    expect(csp).not.toContain("'unsafe-inline'");
     expect(csp).not.toContain("'unsafe-eval'");
+    // 'unsafe-inline' is only acceptable for styles — never for any
+    // script-executing directive (script-src, default-src, worker-src, ...).
+    const directives = csp
+      .split(";")
+      .map((d) => d.trim())
+      .filter(Boolean);
+    for (const directive of directives) {
+      const [name] = directive.split(/\s+/);
+      if (name !== "style-src") {
+        expect(directive).not.toContain("'unsafe-inline'");
+      }
+    }
   });
 
   it("extension_pages CSP blocks object-src", () => {

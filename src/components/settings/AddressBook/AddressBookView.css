@@ -28,7 +28,7 @@
 .ab-input {
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--bg-primary, #0b0f14);
+  background: var(--bg-primary, #151516);
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
   color: var(--text-primary, #fff);
   font-size: 14px;

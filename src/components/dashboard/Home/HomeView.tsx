@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { PlusIcon, ChevronRightIcon } from "../../shared/Icons";
 import { FeedbackLottie } from "../../shared/FeedbackLottie";
+import { useDisplayCurrency } from "../../../hooks/useDisplayCurrency";
+import { SUPPORTED_CURRENCIES, setDisplayCurrency } from "../../../services/network/CurrencyService";
 import "./HomeView.css";
 import { TokenItem } from "../TokenItem";
 import {
@@ -14,6 +16,7 @@ import "./AddTokenModal.css";
 import { Wallet, Token } from "../../../types";
 import { filterTokensByNetwork } from "../../../constants/networks/registry";
 import { resolveNetwork } from "../../../services/network/NetworkResolver";
+import { splitMainAndLowAssets } from "../../../services/tokens/tokenVisibility";
 
 interface HomeViewProps {
   wallet: Wallet;
@@ -29,6 +32,8 @@ interface HomeViewProps {
   isLoadingTokens: boolean;
   onRefresh: () => void;
   networkSetting?: string;
+  /** Settings toggle: fold zero-balance default tokens into "low assets". */
+  hideZeroBalances?: boolean;
 }
 
 export function HomeView({
@@ -41,7 +46,10 @@ export function HomeView({
   isLoadingTokens,
   onRefresh,
   networkSetting = "all",
+  hideZeroBalances = false,
 }: HomeViewProps) {
+  const { currency } = useDisplayCurrency();
+  const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState("crypto");
   const [showAddTokenModal, setShowAddTokenModal] = useState(false);
   const [isLowValueExpanded, setIsLowValueExpanded] = useState(false);
@@ -346,46 +354,18 @@ export function HomeView({
           price: entry?.price || 0,
           change24h: entry?.change24h ?? 0,
         };
-      })
-      .filter((t) => {
-        if (t.isNative) return true;
-        const upperSymbol = t.symbol.toUpperCase();
-        const balanceNum =
-          typeof t.balance === "string"
-            ? parseFloat(t.balance)
-            : t.balance || 0;
-        if (balanceNum > 0) return true;
-
-        const popularSymbols = [
-          "ETH",
-          "WOCT",
-          "USDC",
-          "USDT",
-          "DAI",
-          "WBTC",
-          "LINK",
-          "UNI",
-          "PEPE",
-          "SHIB",
-          "MATIC",
-          "POL",
-          "BNB",
-          "GRT",
-          "AAVE",
-          "MKR",
-          "LDO",
-          "MON",
-          "HYPE",
-          "SOL",
-          "SUI",
-          "BTC",
-        ];
-        return popularSymbols.includes(upperSymbol);
       });
+    // No symbol whitelist here anymore: everything in `tokens` is already
+    // curated (minimal defaults, chain natives, user-added, or discovered
+    // with a balance). A hardcoded "popular symbols" list silently hid the
+    // native coins of newly registered chains (Pharos/Tempo/Gravity/…).
 
     // Octra's own tokens are pinned to the top regardless of fiat value:
-    // OCT (native) first, then wOCT (wrapped), then everything else by USD desc.
+    // OCT (native) first, then wOCT (wrapped), then everything else by USD
+    // desc. Testnet tokens always sink to the very bottom (no real value),
+    // like MetaMask/OKX — but stay in the main list, never in "low assets".
     const rank = (t: Token & { price?: number }): number => {
+      if (t.isTestnet) return 3;
       const sym = (t.symbol || "").toUpperCase();
       if (t.isNative || sym === "OCT") return 0;
       if (sym === "WOCT") return 1;
@@ -416,29 +396,12 @@ export function HomeView({
     const noPriceNetwork =
       netConfig?.isTestnet === true || networkSetting.startsWith("user_");
 
-    const main: (Token & { price: number; change24h: number })[] = [];
-    const low: (Token & { price: number; change24h: number })[] = [];
-
-    sortedTokensWithPrices.forEach((t) => {
-      const isNativeToken =
-        t.isNative ||
-        !t.contractAddress ||
-        t.symbol === "OCT" ||
-        t.symbol === "ETH" ||
-        t.symbol === nativeSymbol;
-      const hasPrice = t.price && t.price > 0;
-
-      // OCS-01 tokens have no market price but are the user's own Octra tokens,
-      // so keep them in the main list rather than the collapsed low-value area.
-      if (noPriceNetwork || isNativeToken || hasPrice || t.isOCS01) {
-        main.push(t);
-      } else {
-        low.push(t);
-      }
+    return splitMainAndLowAssets(sortedTokensWithPrices, {
+      nativeSymbol,
+      noPriceNetwork,
+      hideZeroBalances,
     });
-
-    return { mainTokens: main, lowValueTokens: low };
-  }, [sortedTokensWithPrices, networkSetting]);
+  }, [sortedTokensWithPrices, networkSetting, hideZeroBalances]);
 
   return (
     <>
@@ -448,49 +411,132 @@ export function HomeView({
         onClick={onToggleBalance}
         style={{ cursor: "pointer" }}
       >
-        {isLoadingTokens && balance === 0 && !allTokens?.length ? (
-          <div className="flex-col items-center gap-sm">
-            <div
-              className="skeleton"
-              style={{ width: "120px", height: "32px", borderRadius: "6px" }}
-            />
-            <div
-              className="skeleton"
-              style={{
-                width: "100px",
-                height: "14px",
-                borderRadius: "4px",
-                marginTop: "8px",
-              }}
-            />
-          </div>
-        ) : isBalanceHidden ? (
-          <div className="balance-amount">
-            <span className="balance-hidden">••••••</span>
-          </div>
-        ) : (
-          <>
-            {/* Total Portfolio USD */}
-            <div className="balance-usd">{displayUsdValue}</div>
+        {/* Ambient textures and reflections */}
+        <div className="balance-card-texture" />
+        <div className="balance-card-reflection" />
 
-            {/* 24h Change Row */}
-            {totalUsdValue > 0 && (
-              <div className="portfolio-change-row">
-                <span
-                  className={`portfolio-change-usd ${portfolioChangeUsd >= 0 ? "positive" : "negative"}`}
-                >
-                  {portfolioChangeUsd >= 0 ? "+" : ""}
-                  {formatUsd(portfolioChangeUsd)}
-                </span>
-                <span
-                  className={`portfolio-change-pct ${portfolioChangePct >= 0 ? "positive" : "negative"}`}
-                >
-                  {portfolioChangePct >= 0 ? "+" : ""}
-                  {portfolioChangePct.toFixed(2)}%
-                </span>
-              </div>
+        {/* Card Inner Content */}
+        <div className="balance-card-content">
+          {/* Top Row: Value title & Currency Label */}
+          <div className="balance-card-top">
+            <div className="balance-card-label-container" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span className="balance-card-label">Est. Total Value</span>
+              {isBalanceHidden ? (
+                <svg className="balance-eye-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              ) : (
+                <svg className="balance-eye-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              )}
+            </div>
+            
+            {/* Clickable Currency Selector */}
+            <div
+              className="balance-card-currency"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCurrencyDropdown((prev) => !prev);
+              }}
+            >
+              <span>{currency}</span>
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          {/* Middle Row: Balance */}
+          <div className="balance-card-middle">
+            {isLoadingTokens && balance === 0 && !allTokens?.length ? (
+              <div
+                className="skeleton"
+                style={{ width: "140px", height: "36px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.1)" }}
+              />
+            ) : isBalanceHidden ? (
+              <span className="balance-card-hidden">••••••</span>
+            ) : (
+              <h2 className="balance-card-amount">{displayUsdValue}</h2>
             )}
-          </>
+          </div>
+
+          {/* Bottom Row: Trend & Owner Name */}
+          <div className="balance-card-bottom">
+            <div className="balance-card-info-group">
+              {/* Trend Indicator */}
+              {isLoadingTokens && balance === 0 && !allTokens?.length ? (
+                <div
+                  className="skeleton"
+                  style={{ width: "90px", height: "18px", borderRadius: "4px", background: "rgba(255, 255, 255, 0.1)" }}
+                />
+              ) : !isBalanceHidden && totalUsdValue > 0 ? (
+                <div className={`balance-card-trend ${portfolioChangeUsd >= 0 ? "positive" : "negative"}`}>
+                  {portfolioChangeUsd >= 0 ? (
+                    <svg className="balance-card-trend-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="19" x2="12" y2="5"></line>
+                      <polyline points="5 12 12 5 19 12"></polyline>
+                    </svg>
+                  ) : (
+                    <svg className="balance-card-trend-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"></line>
+                      <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                  )}
+                  <span>
+                    {portfolioChangeUsd >= 0 ? "+" : ""}
+                    {formatUsd(portfolioChangeUsd)} ({portfolioChangePct >= 0 ? "+" : ""}
+                    {portfolioChangePct.toFixed(2)}%)
+                  </span>
+                </div>
+              ) : null}
+
+              {/* Owner Info */}
+              <div>
+                <div className="balance-card-holder-label">Card Holder</div>
+                <div className="balance-card-holder-name">
+                  {wallet.name || "Main Wallet"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Currency Dropdown overlay & menu */}
+        {showCurrencyDropdown && (
+          <div
+            className="currency-dropdown-backdrop"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCurrencyDropdown(false);
+            }}
+          />
+        )}
+        {showCurrencyDropdown && (
+          <div
+            className="currency-dropdown-menu"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {SUPPORTED_CURRENCIES.map((opt) => (
+              <button
+                key={opt.code}
+                type="button"
+                className={`currency-dropdown-item ${opt.code === currency ? "active" : ""}`}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await setDisplayCurrency(opt.code);
+                  window.dispatchEvent(new CustomEvent("qiubit:currency-changed"));
+                  setShowCurrencyDropdown(false);
+                }}
+              >
+                <span className="currency-dropdown-code">{opt.code}</span>
+                <span className="currency-dropdown-symbol">{opt.symbol}</span>
+                <span className="currency-dropdown-label">{opt.label}</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

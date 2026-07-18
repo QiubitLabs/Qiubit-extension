@@ -4,7 +4,6 @@ import {
   getCachedPrices,
   getMultipleTokenPrices,
   formatUsd,
-  formatPrice,
 } from "../../../services/network/PriceService";
 import { ChevronLeftIcon, SearchIcon } from "../../shared/Icons";
 import { TokenIcon } from "../../shared/TokenIcon";
@@ -95,8 +94,13 @@ export function TokenSelectView({
         chainFilter === "all" || tokenNetId(token) === chainFilter;
       return matchesSearch && matchesChain;
     })
-    // Highest USD value first
-    .sort((a, b) => tokenUsd(b) - tokenUsd(a));
+    // Highest USD value first; testnet tokens always sink to the bottom
+    // (they carry no real value), like MetaMask/OKX.
+    .sort((a, b) => {
+      const testnetOrder = (a.isTestnet ? 1 : 0) - (b.isTestnet ? 1 : 0);
+      if (testnetOrder !== 0) return testnetOrder;
+      return tokenUsd(b) - tokenUsd(a);
+    });
 
   return (
     <div className="token-select-view animate-fade-in">
@@ -211,6 +215,7 @@ export function TokenSelectView({
           </div>
         ) : (
           filteredTokens.map((token) => {
+            const net = resolveNetworkForToken(token);
             const priceData = token.isTestnet
               ? null
               : priceMap.get(token.symbol);
@@ -231,23 +236,37 @@ export function TokenSelectView({
                   <TokenIcon
                     symbol={token.symbol}
                     logoUrl={token.logoUrl}
-                    size={32}
+                    size={36}
                     contractAddress={token.contractAddress}
                     chainId={token.chainId}
                   />
+                  {net?.iconUrl && (
+                    <img
+                      className="token-select-net-badge"
+                      src={net.iconUrl}
+                      alt=""
+                    />
+                  )}
                 </div>
                 <div className="token-select-info">
-                  <span className="token-select-symbol">{token.symbol}</span>
-                  <span className="token-select-balance-text">
-                    {formatAmount(token.balance)}
+                  <span className="token-select-symbol">
+                    {token.symbol}
+                    {token.isTestnet && (
+                      <span className="token-testnet-badge">TESTNET</span>
+                    )}
+                  </span>
+                  <span className="token-select-network">
+                    {/* Testnet registry names already say "Testnet"; the badge
+                        marks it too — never append it again. */}
+                    {net?.displayName ?? ""}
                   </span>
                 </div>
                 <div className="token-select-market">
                   <span className="token-market-value">
-                    {formatUsd(usdValue)}
+                    {formatAmount(token.balance)}
                   </span>
                   <span className="token-market-price">
-                    {formatPrice(price)}
+                    {token.isTestnet ? "testnet" : formatUsd(usdValue)}
                   </span>
                 </div>
               </button>

@@ -7,6 +7,7 @@ import {
   CheckIcon,
   KeyIcon,
   LockIcon,
+  AlertIcon,
 } from "../../../shared/Icons";
 import { verifyPasswordSecure as verifyPassword } from "../../../../utils/storage";
 import { Wallet } from "../../../../types";
@@ -149,6 +150,7 @@ export function RecoveryPhrase({ wallet, onBack }: RecoveryPhraseProps) {
 
             {/* Recovery Notice */}
             <div className="recovery-notice">
+              <AlertIcon className="recovery-notice-icon" size={16} style={{ flexShrink: 0 }} />
               <p>
                 Write these words down on paper and keep them safe. Do not take
                 a screenshot.

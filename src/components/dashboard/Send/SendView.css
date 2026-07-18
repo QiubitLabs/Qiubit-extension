@@ -24,29 +24,98 @@
 
 /* Balance Card */
 .send-balance-card {
-  background: var(--bg-card);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--bg-card) 0%,
+    rgba(29, 29, 31, 0.45) 100%
+  );
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: var(--space-lg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.send-balance-top {
   display: flex;
   align-items: center;
   gap: var(--space-md);
 }
 
-.send-balance-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-subtle);
-}
-
 .send-balance-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.send-balance-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.send-balance-amount {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.send-balance-symbol {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.send-balance-refresh {
+  margin-left: auto;
+  align-self: flex-start;
+  display: flex;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.send-balance-refresh:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.send-balance-refresh:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.send-balance-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.send-balance-usd-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.send-balance-usd-pill {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--success);
+  background: var(--success-bg);
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
 }
 
 /* Form Styles */
@@ -62,26 +131,83 @@
   margin-bottom: var(--space-xs);
 }
 
-.send-max-btn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 4px 10px;
-  background: transparent;
+/* Minimal single-surface field: input + ghost action share one container */
+.send-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  border-radius: var(--radius-lg);
+  padding: 4px 6px 4px 14px;
+  transition: border-color var(--transition-fast);
 }
 
-.send-max-btn:hover {
+.send-field:focus-within {
+  border-color: var(--border-default);
+}
+
+.send-field-error {
+  border-color: var(--error);
+}
+
+.send-field-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+}
+
+.send-field-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.send-amount-input {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.send-address-input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.send-ghost-btn {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.send-ghost-btn:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
-  border-color: var(--border-default);
+}
+
+.send-usd-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.send-resolve-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--success);
 }
 
 .form-error {

@@ -1,17 +1,17 @@
-/* Security.css - Shared styles for security components */
+/* Security.css - Premium styles for security components */
 
 /* Animated Icon Container */
 .security-icon-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .security-icon-pulse {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: var(--bg-elevated);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -21,40 +21,71 @@
 }
 
 @keyframes pulse-subtle {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
     opacity: 1;
   }
-
   50% {
-    transform: scale(1.05);
-    opacity: 0.8;
+    transform: scale(1.04);
+    opacity: 0.95;
   }
 }
 
-/* Security Notice */
+/* Premium Security Warning Notice */
 .security-notice {
-  padding: 12px 14px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--text-tertiary);
+  padding: 14px 16px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 12px;
   margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-.security-notice p {
+.security-notice-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.security-notice-text {
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-secondary);
   margin: 0;
-  text-align: center;
+}
+
+/* Recovery Notice (Yellow/Amber warning) */
+.recovery-notice {
+  padding: 14px 16px;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.recovery-notice-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.recovery-notice p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 /* Secret Display (Private Key / Mnemonic) */
 .secret-display {
   padding: 16px;
-  background: var(--bg-elevated);
-  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border-radius: 12px;
   border: 1px solid var(--border-subtle);
   margin-bottom: 16px;
   word-break: break-all;
@@ -68,60 +99,73 @@
   width: 100%;
 }
 
-/* Secret Button Base */
+/* Secret Button Base - Premium Glass Style */
 .secret-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 16px;
-  background: var(--bg-elevated);
+  padding: 13px 16px;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
+  border-radius: 12px;
+  color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .secret-btn:hover {
   background: var(--bg-hover);
   border-color: var(--border-default);
-}
-
-.secret-btn:active {
-  transform: scale(0.98);
-}
-
-/* Toggle Button (Show/Hide) - 20% */
-.secret-btn-toggle {
-  flex: 0 0 20%;
-  color: var(--text-secondary);
-}
-
-.secret-btn-toggle:hover {
   color: var(--text-primary);
 }
 
-/* Copy Button - 80% */
+/* NO Shrink / Scale active state for all verification buttons */
+.secret-btn:active,
+.btn:active,
+.btn-primary:active,
+.btn-secondary:active,
+.action-btn-mini:active {
+  transform: none !important;
+  opacity: 0.85 !important;
+}
+
+/* Toggle Button (Show/Hide) */
+.secret-btn-toggle {
+  flex: 0 0 52px;
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+/* Copy Button */
 .secret-btn-copy {
   flex: 1;
 }
 
 .secret-btn-copy.copied {
-  background: var(--bg-hover);
+  background: var(--bg-secondary);
   border-color: var(--border-default);
+  color: var(--text-primary);
 }
 
 /* Lock Icon Circle */
 .lock-icon-circle {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: var(--bg-elevated);
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.lock-icon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }

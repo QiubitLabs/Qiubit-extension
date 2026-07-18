@@ -206,5 +206,5 @@ export async function handleGetPublicKey(
     lockedMessage: "Wallet locked. Please unlock the extension.",
   });
   if (guard.error) return { error: guard.error };
-  return { result: guard.wallet.publicKeyB64 };
+  return { result: guard.wallet!.publicKeyB64 };
 }

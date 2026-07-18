@@ -24,13 +24,15 @@ import nacl from "tweetnacl";
 import { ethers } from "ethers";
 import {
   bufferToHex,
-  hexToBuffer,
   bufferToBase64,
   base64ToBuffer,
   createOctraAddress,
   base58Encode,
-  base58Decode,
 } from "./format";
+import { detectPrivateKey } from "./keyDetect";
+
+export { detectPrivateKey } from "./keyDetect";
+export type { DetectedKey } from "./keyDetect";
 
 export {
   deriveEvmAddressFromMnemonic,
@@ -154,12 +156,20 @@ export async function generateWallet(): Promise<WalletKeys> {
  * Import wallet from mnemonic
  * Matches CLI import flow with hd_version=2
  */
+/**
+ * Collapse any whitespace (newlines, tabs, double spaces) to single spaces so
+ * phrases pasted from notes/files validate the same as hand-typed ones.
+ */
+function normalizeMnemonicInput(phrase: string): string {
+  return phrase.trim().toLowerCase().split(/\s+/).join(" ");
+}
+
 export async function importFromMnemonic(
   mnemonicPhrase: string,
   hdIndex: number = 0,
   hdVersion: number = 2,
 ): Promise<WalletKeys> {
-  const mnemonic = mnemonicPhrase.trim().toLowerCase();
+  const mnemonic = normalizeMnemonicInput(mnemonicPhrase);
 
   if (!bip39.validateMnemonic(mnemonic)) {
     throw new Error("Invalid mnemonic phrase");
@@ -209,87 +219,11 @@ export async function importFromMnemonic(
 
 /**
  * Auto-detect and normalize any private key format to a 32-byte Uint8Array.
- * Tries (in order): Sui bech32, Bitcoin WIF, Solana base58 keypair, hex 64/128, base64.
+ * Detection logic lives in keyDetect.ts (shared with the import UI badge).
  */
 function normalizePrivateKeyInput(input: string): Uint8Array {
-  let clean = input.replace(/\s+/g, "");
-
-  if (clean.toLowerCase().startsWith("suiprivkey1")) {
-    try {
-      const b32chars = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-      const data = clean.slice(11).toLowerCase();
-      const decoded: number[] = [];
-      for (const ch of data.slice(0, -6)) {
-        const v = b32chars.indexOf(ch);
-        if (v < 0) throw new Error("bad char");
-        decoded.push(v);
-      }
-      let acc = 0,
-        bits = 0;
-      const bytes: number[] = [];
-      for (const val of decoded) {
-        acc = (acc << 5) | val;
-        bits += 5;
-        while (bits >= 8) {
-          bits -= 8;
-          bytes.push((acc >> bits) & 0xff);
-        }
-      }
-      if (bytes.length >= 33) return new Uint8Array(bytes.slice(1, 33));
-    } catch (_) {
-      /* fall through */
-    }
-  }
-
-  if (/^[5KL][1-9A-HJ-NP-Za-km-z]{50,52}$/.test(clean)) {
-    try {
-      const decoded = base58Decode(clean);
-      if (decoded.length >= 37) return new Uint8Array(decoded.slice(1, 33));
-    } catch (_) {
-      /* fall through */
-    }
-  }
-
-  if (/^[1-9A-HJ-NP-Za-km-z]{80,100}$/.test(clean)) {
-    try {
-      const decoded = base58Decode(clean);
-      if (decoded.length >= 32) return new Uint8Array(decoded.slice(0, 32));
-    } catch (_) {
-      /* fall through */
-    }
-  }
-
-  if (clean.startsWith("0x") || clean.startsWith("0X")) {
-    clean = clean.substring(2);
-  }
-
-  if (/^[a-fA-F0-9]{64}$/.test(clean)) {
-    return new Uint8Array(hexToBuffer(clean));
-  }
-
-  if (/^[a-fA-F0-9]{128}$/.test(clean)) {
-    return new Uint8Array(hexToBuffer(clean).slice(0, 32));
-  }
-
-  // Bare 32-byte Solana secret in base58 (~43-44 chars). Tried before the
-  // base64 fallback: a real base64 32-byte key carries '='/'+'/'/' padding
-  // that the base58 charset excludes, so Octra base64 keys are not shadowed.
-  if (/^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(clean)) {
-    try {
-      const decoded = base58Decode(clean);
-      if (decoded.length === 32) return new Uint8Array(decoded);
-    } catch (_) {
-      /* fall through */
-    }
-  }
-
-  try {
-    const decoded = base64ToBuffer(clean);
-    if (decoded.length >= 64) return new Uint8Array(decoded.slice(0, 32));
-    if (decoded.length === 32) return new Uint8Array(decoded);
-  } catch (_) {
-    /* fall through */
-  }
+  const detected = detectPrivateKey(input);
+  if (detected) return detected.key;
 
   throw new Error(
     "Unrecognized private key format. Supported: Octra base64/hex, EVM 0x hex, Solana base58, Sui suiprivkey1..., Bitcoin WIF.",
@@ -457,7 +391,7 @@ export async function deriveHdAccount(
  * Matches CLI validate_mnemonic()
  */
 export function validateMnemonic(mnemonic: string): boolean {
-  return bip39.validateMnemonic(mnemonic.trim().toLowerCase());
+  return bip39.validateMnemonic(normalizeMnemonicInput(mnemonic));
 }
 
 /**
@@ -465,9 +399,5 @@ export function validateMnemonic(mnemonic: string): boolean {
  * Matches CLI looks_like_mnemonic()
  */
 export function looksLikeMnemonic(input: string): boolean {
-  let spaces = 0;
-  for (const c of input) {
-    if (c === " ") spaces++;
-  }
-  return spaces >= 11;
+  return input.trim().split(/\s+/).length >= 12;
 }

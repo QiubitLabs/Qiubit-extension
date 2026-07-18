@@ -103,9 +103,16 @@ export async function requireConnectedWallet(
     notConnectedMessage: string;
     lockedCode?: number;
     lockedMessage?: string;
+    /** Sign flows route through the approval popup, whose lockscreen handles
+     * unlock — for them a locked keyring must open that popup instead of
+     * failing fast. The MV3 service worker drops the in-memory keyring ~30s
+     * after going idle, so by the time a dapp sends its sign request (e.g.
+     * Privy SIWS after a nonce fetch) the background is often "locked" again;
+     * the instant 4100 surfaced dapp-side as "Sign in didn't complete". */
+    allowLocked?: boolean;
   },
 ): Promise<
-  | { wallet: WalletInfo; error?: undefined }
+  | { wallet: WalletInfo | null; error?: undefined }
   | { wallet?: undefined; error: DappGuardError }
 > {
   if (!connection?.connected) {
@@ -113,6 +120,7 @@ export async function requireConnectedWallet(
   }
   const wallet = await getWalletFromStorage();
   if (!keyringService.isUnlocked()) {
+    if (opts.allowLocked) return { wallet: null };
     return {
       error: {
         code: opts.lockedCode ?? 4100,
@@ -120,7 +128,10 @@ export async function requireConnectedWallet(
       },
     };
   }
-  if (!wallet) return { error: { code: 4100, message: "Wallet not found" } };
+  if (!wallet) {
+    if (opts.allowLocked) return { wallet: null };
+    return { error: { code: 4100, message: "Wallet not found" } };
+  }
   return { wallet };
 }
 

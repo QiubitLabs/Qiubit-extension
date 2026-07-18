@@ -1,9 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
-
 /* --- Unified Swap & Bridge Redesign Styles --- */
 /* --- Scoped Premium Tailored HSL Dark Theme System --- */
 .swap-view-container {
-  --bg-primary: var(--bg-primary, #0d0d0d); /* Real pitch dark background */
+  --bg-primary: var(--bg-primary, #151516); /* Real pitch dark background */
   --bg-secondary: var(--bg-secondary, #141414); /* Real container background */
   --bg-card: var(--bg-card, #1a1a1a); /* Real row/card color */
   --bg-elevated: var(--bg-elevated, #222222); /* Real hover / focus states */
@@ -155,7 +153,6 @@
   border: 1px solid var(--widget-border-subtle);
 }
 
-/* --- Main Card --- */
 .swap-widget-card {
   background: transparent;
   border: none;
@@ -163,9 +160,20 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* small gap between stacked widgets */
+  gap: 0; /* Merged together, no gap */
   position: relative;
   margin-bottom: 10px;
+}
+
+.widget-section.top-widget {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+
+.widget-section.bottom-widget {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 /* --- Input Sections (Unified style matching the premium design) --- */
@@ -337,7 +345,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: -11px 0;
+  margin: -18px 0;
   z-index: 10;
   position: relative;
 }
@@ -349,8 +357,8 @@
 }
 
 .swap-action-trigger {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   background: var(--widget-bg-secondary);
   border: 1px solid var(--widget-border-subtle);
   border-radius: 50%;
@@ -359,8 +367,24 @@
   justify-content: center;
   color: var(--widget-text-primary);
   cursor: pointer;
-  transition: all var(--transition-smooth);
+  transition: all var(--transition-smooth), transform 0.1s ease;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.swap-action-trigger:active:not(:disabled) {
+  transform: scale(0.88);
+}
+
+.swap-icon-rotate-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(0deg);
+}
+
+.swap-action-trigger.rotated .swap-icon-rotate-wrapper {
+  transform: rotate(180deg);
 }
 
 .swap-action-trigger:hover:not(:disabled) {
@@ -2091,7 +2115,7 @@
   margin-bottom: 6px;
   border: 1px solid var(--border-subtle, #2a2a2a);
   border-radius: 8px;
-  background: var(--bg-primary, #0d0d0d);
+  background: var(--bg-primary, #151516);
   color: var(--text-tertiary);
 }
 

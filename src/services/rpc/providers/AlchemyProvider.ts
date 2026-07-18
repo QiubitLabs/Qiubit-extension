@@ -24,6 +24,9 @@ const ALCHEMY_HOSTS: Record<number, string> = {
   // (testnet slug arc-testnet.g.alchemy.com is verified but intentionally
   // unused — testnets stay on public RPCs).
   5042: "arc-mainnet",
+  // Robinhood Chain — verified live with our key (eth_chainId 0x1237,
+  // block height matches the official rpc.mainnet.chain.robinhood.com).
+  4663: "robinhood-mainnet",
 };
 
 export const AlchemyProvider = {

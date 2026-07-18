@@ -74,6 +74,7 @@ export async function handleMultichainConnect(
   origin: string,
   title: string | undefined,
   favicon: string | undefined,
+  requestedChains?: string[],
 ): Promise<DappResponse> {
   const existingSol = solanaConnections.get(origin);
   const existingSui = suiConnections.get(origin);
@@ -111,7 +112,9 @@ export async function handleMultichainConnect(
     approvalResult = await requestApproval(
       origin,
       "connect",
-      { title, favicon, chain: "multichain" },
+      // requestedChains lets the popup label the request with the namespace(s)
+      // the dapp actually asked for instead of the generic dual-chain label.
+      { title, favicon, chain: "multichain", requestedChains },
       wallet,
     );
   } catch (err: any) {

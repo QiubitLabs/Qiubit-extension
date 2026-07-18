@@ -6,7 +6,6 @@ import {
   CheckIcon,
   CopyIcon,
   QrCodeIcon,
-  ChevronDownIcon,
 } from "../../../shared/Icons";
 import { useClipboard } from "../../../../hooks/useClipboard";
 
@@ -24,167 +23,73 @@ interface AddressDrawerProps {
   ) => void;
 }
 
-interface AddressSectionProps {
+function truncateAddr(addr: string): string {
+  if (!addr) return "";
+  if (addr.length <= 16) return addr;
+  return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+}
+
+interface NetworkCardProps {
   label: string;
   address: string;
   logoUrl: string;
   hasCopied: boolean;
-  onCopy: (addr: string) => void;
-  onShowQR: (addr: string, label: string) => void;
+  onCopy: () => void;
+  onShowQR: () => void;
 }
 
-function AddressSection({
+function NetworkCard({
   label,
   address,
   logoUrl,
   hasCopied,
   onCopy,
   onShowQR,
-}: AddressSectionProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
+}: NetworkCardProps) {
   return (
-    <div
-      className="address-section-collapsible"
-      style={{ marginBottom: "12px" }}
-    >
-      {/* Header / Network Bar */}
-      <div
-        className={`network-header-bar ${isOpen ? "active" : ""}`}
-        onClick={() => setIsOpen((prev) => !prev)}
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "var(--bg-secondary)",
-          border: "1px solid var(--border-color)",
-          borderRadius: isOpen ? "12px 12px 0 0" : "12px",
-          padding: "14px 16px",
-          cursor: "pointer",
-          transition: "all 0.2s ease-in-out",
-          borderBottom: isOpen ? "none" : "1px solid var(--border-color)",
-        }}
-      >
-        <div
-          className="network-info"
-          style={{ display: "flex", alignItems: "center", gap: "10px" }}
-        >
-          <img
-            src={logoUrl}
-            alt={label}
-            style={{ width: "20px", height: "20px", borderRadius: "50%" }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-          <span
-            className="network-name-text"
-            style={{
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              color: "var(--text-primary)",
-            }}
-          >
-            {label}
-          </span>
-        </div>
-        <ChevronDownIcon
-          size={16}
-          style={{
-            transform: isOpen ? "rotate(180deg)" : "none",
-            transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-            color: "var(--text-tertiary)",
+    <div className="addr-network-card">
+      <div className="addr-network-left">
+        <img
+          src={logoUrl}
+          alt={label}
+          className="addr-network-logo"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
           }}
         />
+        <div className="addr-network-text">
+          <span className="addr-network-name">{label}</span>
+          <span className="addr-network-addr font-mono">
+            {truncateAddr(address)}
+          </span>
+        </div>
       </div>
-
-      {/* Dropdown address block */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            style={{ overflow: "hidden" }}
-          >
-            <div
-              className="address-dropdown-inner"
-              style={{
-                padding: "12px 16px",
-                background: "var(--bg-secondary)",
-                border: "1px solid var(--border-color)",
-                borderTop: "none",
-                borderRadius: "0 0 12px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              <span
-                className="address-display-text font-mono"
-                style={{
-                  fontSize: "0.8125rem",
-                  color: "var(--text-secondary)",
-                  wordBreak: "break-all",
-                  lineHeight: "1.4",
-                  flex: 1,
-                  userSelect: "all",
-                }}
-              >
-                {address}
-              </span>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="action-btn-mini"
-                  onClick={() => onCopy(address)}
-                  title="Copy Address"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-tertiary)",
-                    padding: "6px",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  {hasCopied ? (
-                    <CheckIcon size={14} className="text-success" />
-                  ) : (
-                    <CopyIcon size={14} />
-                  )}
-                </button>
-                <button
-                  className="action-btn-mini"
-                  onClick={() => onShowQR(address, label)}
-                  title="Show QR Code"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-tertiary)",
-                    padding: "6px",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <QrCodeIcon size={14} />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="addr-network-actions">
+        <button
+          className="addr-action-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCopy();
+          }}
+          title="Copy Address"
+        >
+          {hasCopied ? (
+            <CheckIcon size={15} className="text-success" />
+          ) : (
+            <CopyIcon size={15} />
+          )}
+        </button>
+        <button
+          className="addr-action-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onShowQR();
+          }}
+          title="Show QR Code"
+        >
+          <QrCodeIcon size={15} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -259,6 +164,34 @@ export function AddressDrawer({
     setActiveQR({ address: addr, label });
   };
 
+  // Network list definition
+  const networks: {
+    label: string;
+    address: string;
+    logoUrl: string;
+    type: "octra" | "evm" | "solana" | "sui" | "bitcoin" | "bsc" | "monad" | "hyperliquid";
+    hasCopied: boolean;
+  }[] = [];
+
+  if (evmAddress) {
+    networks.push({ label: "Ethereum / EVM", address: evmAddress, logoUrl: "/eth-icon.svg", type: "evm", hasCopied: hasCopiedEvm });
+  }
+  networks.push({ label: "Octra Network", address: octraAddress, logoUrl: "/octra-icon.svg", type: "octra", hasCopied: hasCopiedOctra });
+  if (solanaAddress) {
+    networks.push({ label: "Solana Network", address: solanaAddress, logoUrl: "/chains/solana/sol.png", type: "solana", hasCopied: hasCopiedSolana });
+  }
+  if (bitcoinAddress) {
+    networks.push({ label: "Bitcoin Network", address: bitcoinAddress, logoUrl: "/chains/bitcoin/btc.png", type: "bitcoin", hasCopied: hasCopiedBitcoin });
+  }
+  if (suiAddress) {
+    networks.push({ label: "Sui Network", address: suiAddress, logoUrl: "/chains/sui/sui.png", type: "sui", hasCopied: hasCopiedSui });
+  }
+  if (evmAddress) {
+    networks.push({ label: "Binance Smart Chain", address: evmAddress, logoUrl: "/chains/bsc/logo.png", type: "bsc", hasCopied: hasCopiedBsc });
+    networks.push({ label: "Monad Network", address: evmAddress, logoUrl: "/chains/monad/logo.jpg", type: "monad", hasCopied: hasCopiedMonad });
+    networks.push({ label: "Hyperliquid EVM", address: evmAddress, logoUrl: "/chains/hyperliquid/logo.jpg", type: "hyperliquid", hasCopied: hasCopiedHyperliquid });
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -288,102 +221,22 @@ export function AddressDrawer({
             </div>
 
             <div
-              className="drawer-body"
-              style={{ minHeight: "260px", paddingBottom: "16px" }}
+              className="drawer-body no-scrollbar"
+              style={{ minHeight: "200px", paddingBottom: "16px" }}
             >
-              {/* 1. Ethereum / EVM Address */}
-              {evmAddress && (
-                <AddressSection
-                  label="Ethereum / EVM"
-                  address={evmAddress}
-                  logoUrl="/eth-icon.svg"
-                  hasCopied={hasCopiedEvm}
-                  onCopy={(addr) => handleCopy(addr, "evm")}
-                  onShowQR={handleShowQR}
-                />
-              )}
-
-              {/* 2. Octra Address */}
-              <AddressSection
-                label="Octra Network"
-                address={octraAddress}
-                logoUrl="/octra-icon.svg"
-                hasCopied={hasCopiedOctra}
-                onCopy={(addr) => handleCopy(addr, "octra")}
-                onShowQR={handleShowQR}
-              />
-
-              {/* 3. Solana Address */}
-              {solanaAddress && (
-                <AddressSection
-                  label="Solana Network"
-                  address={solanaAddress}
-                  logoUrl="/chains/solana/sol.png"
-                  hasCopied={hasCopiedSolana}
-                  onCopy={(addr) => handleCopy(addr, "solana")}
-                  onShowQR={handleShowQR}
-                />
-              )}
-
-              {/* 4. Bitcoin Address */}
-              {bitcoinAddress && (
-                <AddressSection
-                  label="Bitcoin Network"
-                  address={bitcoinAddress}
-                  logoUrl="/chains/bitcoin/btc.png"
-                  hasCopied={hasCopiedBitcoin}
-                  onCopy={(addr) => handleCopy(addr, "bitcoin")}
-                  onShowQR={handleShowQR}
-                />
-              )}
-
-              {/* 5. Sui Address */}
-              {suiAddress && (
-                <AddressSection
-                  label="Sui Network"
-                  address={suiAddress}
-                  logoUrl="/chains/sui/sui.png"
-                  hasCopied={hasCopiedSui}
-                  onCopy={(addr) => handleCopy(addr, "sui")}
-                  onShowQR={handleShowQR}
-                />
-              )}
-
-              {/* 6. Binance Smart Chain Address */}
-              {evmAddress && (
-                <AddressSection
-                  label="Binance Smart Chain"
-                  address={evmAddress}
-                  logoUrl="/chains/bsc/logo.png"
-                  hasCopied={hasCopiedBsc}
-                  onCopy={(addr) => handleCopy(addr, "bsc")}
-                  onShowQR={handleShowQR}
-                />
-              )}
-
-              {/* 7. Monad Address */}
-              {evmAddress && (
-                <AddressSection
-                  label="Monad Network"
-                  address={evmAddress}
-                  logoUrl="/chains/monad/logo.jpg"
-                  hasCopied={hasCopiedMonad}
-                  onCopy={(addr) => handleCopy(addr, "monad")}
-                  onShowQR={handleShowQR}
-                />
-              )}
-
-              {/* 8. Hyperliquid Address */}
-              {evmAddress && (
-                <AddressSection
-                  label="Hyperliquid EVM"
-                  address={evmAddress}
-                  logoUrl="/chains/hyperliquid/logo.jpg"
-                  hasCopied={hasCopiedHyperliquid}
-                  onCopy={(addr) => handleCopy(addr, "hyperliquid")}
-                  onShowQR={handleShowQR}
-                />
-              )}
+              <div className="addr-network-list">
+                {networks.map((net) => (
+                  <NetworkCard
+                    key={net.type}
+                    label={net.label}
+                    address={net.address}
+                    logoUrl={net.logoUrl}
+                    hasCopied={net.hasCopied}
+                    onCopy={() => handleCopy(net.address, net.type)}
+                    onShowQR={() => handleShowQR(net.address, net.label)}
+                  />
+                ))}
+              </div>
             </div>
 
             <div className="drawer-footer">

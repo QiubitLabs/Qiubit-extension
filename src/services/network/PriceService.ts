@@ -21,6 +21,10 @@ const COINGECKO_API_KEY =
 
 const CACHE_TTL = 5 * 60 * 1000;
 const CACHE_STORAGE_KEY = "_price_cache";
+// Symbols any surface has ever asked to price — the background service
+// worker refreshes these on an alarm so the popup opens with warm prices.
+const WATCHED_SYMBOLS_KEY = "_price_watched_symbols";
+const WATCHED_SYMBOLS_MAX = 80;
 
 interface PriceData {
   price: number;
@@ -100,6 +104,13 @@ const TOKEN_ID_MAP: Record<string, string | null> = {
   MON: "monad", // CoinGecko coin ID confirmed: api.coingecko.com/v3/simple/price?ids=monad
   SOL: "solana",
   SUI: "sui",
+  // Native gas tokens of the newly added chains — IDs verified against the
+  // CoinGecko /search API (2026-07).
+  G: "g-token", // Gravity (by Galxe)
+  PROS: "pharos-network",
+  SOMI: "somnia",
+  "0G": "zero-gravity",
+  XPL: "plasma",
 };
 
 const GECKO_TERMINAL_NATIVE: Record<string, string> = {};
@@ -138,7 +149,17 @@ async function getGeckoTerminalNativePrice(
 }
 
 // Stablecoins have no meaningful CEX pair (they ARE the quote) — treat as $1.
-const CEX_STABLE = new Set(["USDT", "USDC", "DAI", "BUSD", "TUSD", "FDUSD"]);
+// PUSD is Tempo's USD-pegged gas token; USDT0 is the omnichain USDT wrapper.
+const CEX_STABLE = new Set([
+  "USDT",
+  "USDC",
+  "DAI",
+  "BUSD",
+  "TUSD",
+  "FDUSD",
+  "PUSD",
+  "USDT0",
+]);
 
 /**
  * Live CEX fallback (Binance public ticker, no API key) for symbol-priced
@@ -184,6 +205,8 @@ export async function getTokenPrice(symbol: string): Promise<PriceData | null> {
   const coinId = TOKEN_ID_MAP[upperSym];
 
   if (!coinId) {
+    // USD-pegged gas tokens (PUSD, USDT0, …) are $1 by definition.
+    if (CEX_STABLE.has(upperSym)) return { price: 1, change24h: 0 };
     // No price source for this token — report unavailable rather than a guess.
     return null;
   }
@@ -281,10 +304,36 @@ export function getCachedPrices(): Map<
  * @param {string[]} symbols - Array of token symbols
  * @returns {Promise<Map<string, {price: number, change24h: number}>>}
  */
+async function rememberWatchedSymbols(symbols: string[]): Promise<void> {
+  try {
+    const prev: string[] = (await getPublicCache(WATCHED_SYMBOLS_KEY)) ?? [];
+    const merged = Array.from(
+      new Set([...prev, ...symbols.map((s) => s.toUpperCase())]),
+    ).slice(-WATCHED_SYMBOLS_MAX);
+    if (merged.length !== prev.length) {
+      await savePublicCache(WATCHED_SYMBOLS_KEY, merged);
+    }
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
+ * Background-worker entrypoint: re-price every symbol any surface has asked
+ * about. The shared chrome.storage cache means the next popup open renders
+ * prices instantly instead of fetching first.
+ */
+export async function refreshWatchedPrices(): Promise<void> {
+  const symbols: string[] = (await getPublicCache(WATCHED_SYMBOLS_KEY)) ?? [];
+  if (!Array.isArray(symbols) || symbols.length === 0) return;
+  await getMultipleTokenPrices(symbols).catch(() => {});
+}
+
 export async function getMultipleTokenPrices(
   symbols: string[],
 ): Promise<Map<string, { price: number; change24h: number }>> {
   const results = new Map<string, { price: number; change24h: number }>();
+  void rememberWatchedSymbols(symbols);
 
   const remainingSymbols = symbols;
 
@@ -306,6 +355,15 @@ export async function getMultipleTokenPrices(
       if (data && data.price > 0)
         results.set(symbol, { price: data.price, change24h: data.change24h });
     });
+  }
+
+  // USD-pegged gas tokens (PUSD, USDT0, …) are $1 by definition — they have
+  // no CoinGecko id, so set them here or they'd never get a price.
+  for (const s of remainingSymbols) {
+    const up = s.toUpperCase();
+    if (CEX_STABLE.has(up) && !TOKEN_ID_MAP[up] && !results.has(s)) {
+      results.set(s, { price: 1, change24h: 0 });
+    }
   }
 
   const coinIds = remainingSymbols

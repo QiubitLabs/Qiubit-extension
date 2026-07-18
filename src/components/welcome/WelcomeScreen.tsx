@@ -22,7 +22,9 @@ import {
 } from "../shared/Icons";
 import { OnboardingLottie } from "./OnboardingLottie";
 import { FeedbackLottie } from "../shared/FeedbackLottie";
+import { MnemonicInput } from "../shared/MnemonicInput";
 import { StepHeader } from "./StepHeader/StepHeader";
+import { detectPrivateKey } from "../../utils/crypto/keyDetect";
 import { version as pkgVersion } from "../../../package.json";
 import { calculatePasswordStrength } from "../../utils/validation";
 import { Wallet } from "../../types";
@@ -607,6 +609,7 @@ export function ImportWalletScreen({
     "mnemonic" | "privateKey" | null
   >(null);
   const [mnemonic, setMnemonic] = useState("");
+  const [mnemonicComplete, setMnemonicComplete] = useState(false);
   const [privateKey, setPrivateKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -839,7 +842,7 @@ export function ImportWalletScreen({
                 <div className="onboarding-option-content">
                   <div className="onboarding-option-title">Recovery Phrase</div>
                   <div className="onboarding-option-desc">
-                    Import using 12-word mnemonic phrase
+                    Import using 12 or 24-word mnemonic phrase
                   </div>
                 </div>
                 <ChevronRightIcon
@@ -885,6 +888,8 @@ export function ImportWalletScreen({
             totalSteps={3}
             onBack={() => {
               setImportType(null);
+              setMnemonic("");
+              setMnemonicComplete(false);
               setError("");
               setStep(1);
             }}
@@ -901,7 +906,7 @@ export function ImportWalletScreen({
 
             <p className="step-description">
               {importType === "mnemonic"
-                ? "Enter your 12-word recovery phrase"
+                ? "Enter your 12 or 24-word recovery phrase"
                 : "Enter your private key"}
             </p>
 
@@ -909,19 +914,14 @@ export function ImportWalletScreen({
               {importType === "mnemonic" ? (
                 <div className="form-group">
                   <label className="form-label">Recovery Phrase</label>
-                  <textarea
-                    className="input input-mono"
-                    value={mnemonic}
-                    onChange={(e) => {
-                      setMnemonic(e.target.value);
+                  <MnemonicInput
+                    autoFocus
+                    onChange={(phrase, isComplete) => {
+                      setMnemonic(phrase);
+                      setMnemonicComplete(isComplete);
                       setError("");
                     }}
-                    placeholder="Enter your 12 words separated by spaces..."
-                    rows={4}
-                    style={{ resize: "none", lineHeight: "1.6" }}
-                    autoFocus
                   />
-                  <p className="form-hint">Separate each word with a space</p>
                 </div>
               ) : (
                 <div className="form-group">
@@ -932,7 +932,9 @@ export function ImportWalletScreen({
                       className="input input-mono"
                       value={privateKey}
                       onChange={(e) => {
-                        setPrivateKey(e.target.value);
+                        // Keys never contain whitespace — strip it so pastes
+                        // from notes/files come out clean automatically.
+                        setPrivateKey(e.target.value.replace(/\s+/g, ""));
                         setError("");
                       }}
                       placeholder="Paste your private key..."
@@ -951,10 +953,37 @@ export function ImportWalletScreen({
                       )}
                     </button>
                   </div>
-                  <p className="form-hint">
-                    Supports Octra, EVM (0x…), Solana, Sui (suiprivkey1…) and
-                    Bitcoin (WIF) keys.
-                  </p>
+                  {privateKey.trim() ? (
+                    (() => {
+                      const detected = detectPrivateKey(privateKey);
+                      return detected ? (
+                        <p
+                          className="form-hint"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            color: "var(--color-success, #10b981)",
+                          }}
+                        >
+                          <CheckIcon size={13} /> Detected: {detected.label}
+                        </p>
+                      ) : (
+                        <p
+                          className="form-hint"
+                          style={{ color: "var(--color-danger)" }}
+                        >
+                          Format not recognized yet — keep typing or check the
+                          key
+                        </p>
+                      );
+                    })()
+                  ) : (
+                    <p className="form-hint">
+                      Supports Octra, EVM (0x…), Solana, Sui (suiprivkey1…) and
+                      Bitcoin (WIF) keys.
+                    </p>
+                  )}
                   <div className="import-key-note">
                     <AlertIcon size={14} />
                     <span>
@@ -980,8 +1009,8 @@ export function ImportWalletScreen({
                 disabled={
                   isLoading ||
                   (importType === "mnemonic"
-                    ? !mnemonic.trim()
-                    : !privateKey.trim())
+                    ? !mnemonicComplete
+                    : !detectPrivateKey(privateKey))
                 }
               >
                 {isLoading ? <span className="loading-spinner" /> : "Continue"}

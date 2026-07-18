@@ -51,8 +51,13 @@ export function resolveNetworkForToken(token: {
   isSolana?: boolean;
   isSui?: boolean;
   isBitcoin?: boolean;
+  isOCS01?: boolean;
+  vm?: string;
 }): NetworkConfig | null {
   if (token.isNative) return NETWORK_REGISTRY.octra;
+  // OCS-01 tokens live on Octra; their sentinel chainId isn't in any registry,
+  // so without this they'd fall through to the Ethereum fallback below.
+  if (token.isOCS01 || token.vm === "octra") return NETWORK_REGISTRY.octra;
   // Non-EVM chain flags first — a Solana/Sui/Bitcoin token must never fall
   // through to Octra (it used to when it carried no chainId, which made e.g.
   // testnet SUI render with the Octra logo in the token detail view).

@@ -13,6 +13,10 @@ import type { DappResponse } from "../types";
 const SOLANA_GUARD = {
   notConnectedMessage: "Solana wallet not connected",
   lockedMessage: "Wallet locked. Please unlock.",
+  // Solana signing happens client-side in the approval popup, which shows its
+  // lockscreen first — so a locked keyring opens the popup instead of
+  // rejecting the dapp request outright.
+  allowLocked: true,
 };
 
 export async function handleSolanaConnect(
@@ -112,6 +116,11 @@ export async function handleSolanaSignMessage(
       {
         message: params.message || params,
         publicKey: connection!.address,
+        // Bind the sign to the account this origin connected with — the
+        // global active wallet can diverge, and a signature from a different
+        // key than the connected publicKey fails dapp-side verification
+        // (pump.fun SIWS: "Sign in didn't complete").
+        selectedOctraAddress: connection!.octraAddress,
         chain: "solana",
       },
       wallet,
@@ -142,6 +151,7 @@ export async function handleSolanaSignTransaction(
       {
         transaction: params.transaction || params,
         publicKey: connection!.address,
+        selectedOctraAddress: connection!.octraAddress,
         chain: "solana",
       },
       wallet,
@@ -172,6 +182,7 @@ export async function handleSolanaSignAllTransactions(
       {
         transactions: params.transactions || params,
         publicKey: connection!.address,
+        selectedOctraAddress: connection!.octraAddress,
         chain: "solana",
       },
       wallet,
@@ -205,6 +216,7 @@ export async function handleSolanaSendTransaction(
         // (e.g. "solana:devnet") from Wallet Standard callers.
         options: params.options,
         publicKey: connection!.address,
+        selectedOctraAddress: connection!.octraAddress,
         chain: "solana",
       },
       wallet,

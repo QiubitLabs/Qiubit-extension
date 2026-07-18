@@ -16,6 +16,9 @@ interface ConnectApprovalProps {
   selectedOctraAddr: string;
   getDisplayAddress: (addr: string) => string;
   onWalletSelectClick: () => void;
+  /** Per-chain addresses for an unscoped multichain connect — when set, every
+   * granted address is listed with its chain instead of a single ambiguous one. */
+  multichainAddresses?: Array<{ label: string; address: string }>;
 }
 
 function truncate(addr: string, front = 6, back = 4): string {
@@ -29,6 +32,7 @@ export function ConnectApproval({
   selectedOctraAddr,
   getDisplayAddress,
   onWalletSelectClick,
+  multichainAddresses,
 }: ConnectApprovalProps) {
   const [imgFailed, setImgFailed] = useState(false);
   const connectDisplayAddr = getDisplayAddress(selectedOctraAddr);
@@ -81,9 +85,21 @@ export function ConnectApproval({
           </div>
           <div className="da-connect-wallet-info">
             <span className="da-connect-wallet-name">{connectLabel}</span>
-            <span className="da-connect-wallet-addr">
-              {truncate(connectDisplayAddr || selectedOctraAddr, 8, 6)}
-            </span>
+            {multichainAddresses && multichainAddresses.length > 0 ? (
+              multichainAddresses.map((row) => (
+                <span
+                  key={row.label}
+                  className="da-connect-wallet-addr"
+                  title={row.address}
+                >
+                  {row.label}: {truncate(row.address, 8, 6)}
+                </span>
+              ))
+            ) : (
+              <span className="da-connect-wallet-addr">
+                {truncate(connectDisplayAddr || selectedOctraAddr, 8, 6)}
+              </span>
+            )}
           </div>
           {wallets.length > 1 && (
             <span className="da-connect-wallet-chevron">&#8250;</span>

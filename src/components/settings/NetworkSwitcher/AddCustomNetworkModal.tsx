@@ -11,6 +11,11 @@ import {
   addCustomNetwork,
   type NetworkVm,
 } from "../../../services/network/UserNetworkService";
+import {
+  getChainlistEntry,
+  getCleanRpcUrls,
+  getPrimaryExplorer,
+} from "../../../services/network/ChainlistService";
 
 interface AddCustomNetworkModalProps {
   onClose: () => void;
@@ -37,11 +42,31 @@ export function AddCustomNetworkModal({
   const [explorerUrl, setExplorerUrl] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [autofilledFrom, setAutofilledFrom] = useState("");
 
   const pickVm = (next: NetworkVm) => {
     setVm(next);
     const dec = VM_OPTIONS.find((o) => o.value === next)?.defaultDecimals ?? 18;
     setNativeDecimals(String(dec));
+  };
+
+  const handleChainIdChange = (value: string) => {
+    setChainId(value);
+    if (vm !== "evm") return;
+    const cid = parseInt(value.trim(), 10);
+    const known = Number.isFinite(cid) ? getChainlistEntry(cid) : null;
+    if (!known) {
+      setAutofilledFrom("");
+      return;
+    }
+    if (!name.trim()) setName(known.name);
+    if (!nativeSymbol.trim()) setNativeSymbol(known.nativeCurrency.symbol);
+    setNativeDecimals(String(known.nativeCurrency.decimals));
+    const rpc = getCleanRpcUrls(known)[0];
+    const explorer = getPrimaryExplorer(known);
+    if (!rpcUrl.trim() && rpc) setRpcUrl(rpc);
+    if (!explorerUrl.trim() && explorer) setExplorerUrl(explorer);
+    setAutofilledFrom(known.name);
   };
 
   const handleSave = async () => {
@@ -132,10 +157,15 @@ export function AddCustomNetworkModal({
               <input
                 className="acn-input"
                 value={chainId}
-                onChange={(e) => setChainId(e.target.value)}
+                onChange={(e) => handleChainIdChange(e.target.value)}
                 placeholder="4441"
                 inputMode="numeric"
               />
+              {autofilledFrom && (
+                <div className="acn-label" style={{ opacity: 0.75 }}>
+                  ✓ Autofilled from public chainlist: {autofilledFrom}
+                </div>
+              )}
             </>
           )}
 

@@ -19,6 +19,7 @@ import { ocs01Manager } from "../features/OCS01TokenService";
 import { ethers } from "ethers";
 import { getBalanceRpcList } from "../../utils/evmProvider";
 import { getTransactionRpcList } from "../../config/rpcEndpoints";
+import { sanitizeNativeBalance } from "../tokens/tokenVisibility";
 
 /**
  * WalletService - Manages wallet data fetching and synchronization.
@@ -259,7 +260,9 @@ class WalletServiceImpl {
           ) {
             const balanceWei = await provider.getBalance(walletAddress);
             return parseFloat(
-              ethers.formatUnits(balanceWei, token.decimals ?? 18),
+              sanitizeNativeBalance(
+                ethers.formatUnits(balanceWei, token.decimals ?? 18),
+              ),
             );
           }
 

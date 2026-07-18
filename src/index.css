@@ -1,6 +1,7 @@
 /* Qiubit Wallet - Design System Manifest */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+/* No remote fonts: the extension CSP (default-src 'self') blocks them anyway,
+   and the request itself gets flagged in store review. System fallbacks apply. */
 
 /* 1. Tokens & Base */
 @import "./styles/variables.css";

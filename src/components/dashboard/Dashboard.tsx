@@ -480,6 +480,7 @@ export function Dashboard({
               onToggleBalance={() => setIsBalanceHidden(!isBalanceHidden)}
               onRefresh={refreshBalance}
               networkSetting={settings?.network || "all"}
+              hideZeroBalances={settings?.hideZeroBalances === true}
             />
           )}
 

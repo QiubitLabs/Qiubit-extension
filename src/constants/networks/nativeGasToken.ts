@@ -72,19 +72,18 @@ export function isStablecoinGasChain(chainId?: number | null): boolean {
 }
 
 /**
- * Chains that are registered (so they appear in Swap / LI.FI routing) but whose
- * MAINNET is not live yet — their public RPC mirrors testnet state, so reading
- * a native balance yields a phantom number. That is especially misleading for
- * stablecoin-gas chains, where the phantom native gets priced at $1 (e.g. a
- * fake "$19 USDC" on Arc mainnet while only testnet was funded).
+ * Chains registered while their MAINNET is not officially live. Adding a
+ * chainId here disables its balance fetch (useWalletData filters it out of
+ * allSupportedChainIds) while its 0-balance native row stays visible on Home.
  *
- * For these, we skip building/pricing the native token row. The chain stays
- * usable for swaps; testnets are unaffected (they're separate chainIds and are
- * clearly labelled). Remove a chainId from here once its mainnet is live.
+ * Currently EMPTY by design: every chain fetches normally so nothing needs a
+ * code change on launch day. Pre-launch garbage state is handled by
+ * sanitizeNativeBalance() instead, which rejects impossible balances (e.g.
+ * Tempo reporting 4.2e57 PUSD). Re-add a chainId here only if a pre-launch
+ * chain reports PLAUSIBLE-looking phantom balances that the sanity guard
+ * can't catch.
  */
-export const PRE_LAUNCH_CHAIN_IDS = new Set<number>([
-  5042, // Arc mainnet — Circle: "testnet only" for now
-]);
+export const PRE_LAUNCH_CHAIN_IDS = new Set<number>([]);
 
 export function isPreLaunchChain(chainId?: number | null): boolean {
   return chainId != null && PRE_LAUNCH_CHAIN_IDS.has(chainId);

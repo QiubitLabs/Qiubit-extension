@@ -7,16 +7,13 @@ import {
   ExportIcon,
   LockIcon,
   AlertIcon,
-  CheckIcon,
   CopyIcon,
   LinkIcon,
   ShieldIcon,
 } from "../../shared/Icons";
-import { truncateAddress } from "../../../utils/crypto";
 import { keyringService } from "../../../services/core/KeyringService";
 import { Wallet, Settings } from "../../../types";
 import { getNetworkLabel } from "../../../constants/networks/registry";
-import { useState } from "react";
 import "./SettingsMenu.css";
 import {
   AUTO_LOCK_DURATIONS,
@@ -29,6 +26,7 @@ interface SettingsMenuProps {
   wallet: Wallet;
   settings: Settings;
   onViewChange: (view: string) => void;
+  onUpdateSettings?: (newSettings: Partial<Settings>) => Promise<void> | void;
   onBack: () => void;
   onExportKeystore: () => void;
   onDisconnect: () => void;
@@ -39,23 +37,12 @@ export function SettingsMenu({
   wallet,
   settings,
   onViewChange,
+  onUpdateSettings,
   onBack,
   onExportKeystore,
   onDisconnect,
   onLock,
 }: SettingsMenuProps) {
-  const [copied, setCopied] = useState("");
-
-  const handleCopy = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(label);
-      setTimeout(() => setCopied(""), 2000);
-    } catch {
-      console.error("Failed to copy");
-    }
-  };
-
   const handlePanicLock = () => {
     keyringService.panicLock();
     if (onLock) onLock();
@@ -76,53 +63,7 @@ export function SettingsMenu({
         className="wallet-content animate-fade-in"
         style={{ paddingBottom: 0 }}
       >
-        {/* Wallet Info */}
-        <div className="settings-section">
-          <div className="settings-section-title">Wallet</div>
 
-          <div className="card mb-md">
-            <div className="flex items-center gap-lg">
-              <div
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: "var(--radius-md)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <img
-                  src="/qiubit-icon.svg"
-                  alt="Wallet Icon"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                  }}
-                />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold mb-xs">
-                  {wallet.name || "Qiubit Wallet"}
-                </p>
-                <p className="text-mono text-sm text-secondary">
-                  {truncateAddress(wallet.address, 10, 8)}
-                </p>
-              </div>
-              <button
-                className="header-icon-btn"
-                onClick={() => handleCopy(wallet.address, "address")}
-              >
-                {copied === "address" ? (
-                  <CheckIcon size={18} />
-                ) : (
-                  <CopyIcon size={18} />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* Network */}
         <div className="settings-section">
@@ -142,6 +83,34 @@ export function SettingsMenu({
               </div>
             </div>
             <ChevronRightIcon size={18} className="text-tertiary" />
+          </div>
+
+          <div
+            className="settings-item"
+            onClick={() =>
+              onUpdateSettings?.({
+                hideZeroBalances: !(settings.hideZeroBalances === true),
+              })
+            }
+          >
+            <div className="flex items-center gap-md">
+              <ShieldIcon size={20} />
+              <div className="settings-item-content">
+                <div className="settings-item-label">
+                  Hide Zero-Balance Tokens
+                </div>
+                <div className="settings-item-value">
+                  Fold empty default tokens into Low assets
+                </div>
+              </div>
+            </div>
+            <span
+              className={`settings-switch ${settings.hideZeroBalances === true ? "on" : ""}`}
+              role="switch"
+              aria-checked={settings.hideZeroBalances === true}
+            >
+              <span className="settings-switch-knob" />
+            </span>
           </div>
 
           <div

@@ -32,11 +32,9 @@ import {
   gweiToWei,
   getBalanceRpcList,
 } from "../../../utils/evmProvider";
-import {
-  isEvmNetwork,
-  getNetworkByChainId,
-} from "../../../constants/networks/registry";
+import { getNetworkByChainId } from "../../../constants/networks/registry";
 import { resolveNetworkForToken } from "../../../services/network/NetworkResolver";
+import { buildSendTokenList } from "../../../services/tokens/tokenVisibility";
 import { getTokenPrice } from "../../../services/network/PriceService";
 import { sendSolanaTransaction } from "../../../services/network/SolanaSendService";
 import {
@@ -106,24 +104,9 @@ export function SendView({
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
   const [tokenBalance, setTokenBalance] = useState<number>(balance);
 
-  const [allTokens, setAllTokens] = useState<Token[]>(() => {
-    const isEvmMode = isEvmNetwork(settings?.network || "all");
-    const nativeToken: Token = {
-      symbol: "OCT",
-      name: "Octra",
-      balance: balance,
-      isNative: true,
-      logoType: "native",
-    };
-    if (!tokensFromParent || tokensFromParent.length === 0) {
-      return isEvmMode ? [] : [nativeToken];
-    }
-    if (isEvmMode) {
-      return tokensFromParent.filter((t) => !t.isNative);
-    }
-    const hasNative = tokensFromParent.some((t) => t.isNative);
-    return hasNative ? tokensFromParent : [nativeToken, ...tokensFromParent];
-  });
+  const [allTokens, setAllTokens] = useState<Token[]>(() =>
+    buildSendTokenList(tokensFromParent, balance, settings?.network || "all"),
+  );
   const [recipient, setRecipient] = useState("");
   // Name resolution (ENS / SNS / SuiNS): resolved for the CURRENT input only
   const [resolvedName, setResolvedName] = useState<{
@@ -208,30 +191,9 @@ export function SendView({
   }, [step]);
 
   useEffect(() => {
-    const isEvmMode = isEvmNetwork(settings?.network || "all");
-    const nativeToken: Token = {
-      symbol: "OCT",
-      name: "Octra",
-      balance: balance,
-      isNative: true,
-      logoType: "native",
-    };
-
-    if (tokensFromParent && tokensFromParent.length > 0) {
-      const updatedTokens = tokensFromParent.map((t) =>
-        t.isNative ? { ...t, balance: balance } : t,
-      );
-      if (isEvmMode) {
-        setAllTokens(updatedTokens.filter((t) => !t.isNative));
-      } else {
-        const hasNative = updatedTokens.some((t) => t.isNative);
-        setAllTokens(
-          hasNative ? updatedTokens : [nativeToken, ...updatedTokens],
-        );
-      }
-    } else {
-      setAllTokens(isEvmMode ? [] : [nativeToken]);
-    }
+    setAllTokens(
+      buildSendTokenList(tokensFromParent, balance, settings?.network || "all"),
+    );
   }, [tokensFromParent, balance, settings?.network]);
 
   useEffect(() => {
@@ -1183,80 +1145,72 @@ export function SendView({
 
           {/* Token Balance Display */}
           <div className="send-balance-card mb-lg">
-            <div className="send-balance-icon">
+            <div className="send-balance-top">
               <TokenIcon
                 symbol={selectedToken?.symbol || ""}
                 logoUrl={selectedToken?.logoUrl}
-                size={24}
+                size={36}
                 chainId={selectedToken?.chainId}
                 contractAddress={selectedToken?.contractAddress}
               />
-            </div>
-            <div className="send-balance-info flex-1">
-              <div className="flex items-center justify-between w-full">
-                <span className="text-secondary text-xs">
-                  Available Balance
-                </span>
-                <button
-                  className="header-icon-btn p-none"
-                  onClick={handleFastRefresh}
-                  disabled={isLoadingBalance}
-                  title="Refresh Balance"
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    display: "flex",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    className={isLoadingBalance ? "spin-animation" : ""}
-                  >
-                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                  </svg>
-                </button>
-              </div>
-              <span className="text-lg font-bold block">
-                {isLoadingBalance ? "..." : formatAmount(tokenBalance, 6)}{" "}
-                {selectedToken?.symbol}
-                {sendTokenPriceUsd != null && !isLoadingBalance && (
-                  <span
-                    className="text-xs text-tertiary"
-                    style={{ marginLeft: "6px", fontWeight: 500 }}
-                  >
-                    ≈ $
-                    {(tokenBalance * sendTokenPriceUsd).toLocaleString(
-                      "en-US",
-                      { maximumFractionDigits: 2 },
-                    )}
+              <div className="send-balance-info flex-1">
+                <span className="send-balance-label">Available Balance</span>
+                <span className="send-balance-amount">
+                  {isLoadingBalance ? "..." : formatAmount(tokenBalance, 6)}{" "}
+                  <span className="send-balance-symbol">
+                    {selectedToken?.symbol}
                   </span>
-                )}
-              </span>
+                </span>
+              </div>
+              <button
+                className="send-balance-refresh"
+                onClick={handleFastRefresh}
+                disabled={isLoadingBalance}
+                title="Refresh Balance"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className={isLoadingBalance ? "spin-animation" : ""}
+                >
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                </svg>
+              </button>
             </div>
+            {sendTokenPriceUsd != null && (
+              <div className="send-balance-footer">
+                <span className="send-balance-usd-label">USD Value</span>
+                <span className="send-balance-usd-pill">
+                  ≈ $
+                  {isLoadingBalance
+                    ? "..."
+                    : (tokenBalance * sendTokenPriceUsd).toLocaleString(
+                        "en-US",
+                        { maximumFractionDigits: 2 },
+                      )}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
             <label className="form-label">Amount</label>
-            <div className="relative">
+            <div className="send-field">
               <input
                 type="number"
-                className="input input-lg"
+                className="send-field-input send-amount-input"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
                 min="0"
                 step="0.000001"
-                style={{ paddingRight: "80px" }}
               />
               <button
-                className="send-max-btn"
+                className="send-ghost-btn"
                 onClick={() =>
                   // The fee is paid in the NATIVE coin — only subtract it
                   // when that's also the coin being sent.
@@ -1272,7 +1226,7 @@ export function SendView({
               </button>
             </div>
             {sendTokenPriceUsd != null && parseFloat(amount) > 0 && (
-              <p className="form-hint" style={{ marginTop: "6px" }}>
+              <p className="send-usd-hint">
                 ≈ $
                 {(parseFloat(amount) * sendTokenPriceUsd).toLocaleString(
                   "en-US",
@@ -1285,10 +1239,12 @@ export function SendView({
 
           <div className="form-group">
             <label className="form-label">Recipient Address</label>
-            <div className="relative">
+            <div
+              className={`send-field ${recipient && !isAddressValid(effectiveRecipient) && !isResolvingName ? "send-field-error" : ""}`}
+            >
               <input
                 type="text"
-                className={`input input-mono ${recipient && !isAddressValid(effectiveRecipient) && !isResolvingName ? "input-error" : ""}`}
+                className="send-field-input send-address-input"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 placeholder={
@@ -1302,11 +1258,10 @@ export function SendView({
                           ? "Bitcoin address..."
                           : "oct..."
                 }
-                style={{ paddingRight: "70px" }}
               />
               {!recipient && (
                 <button
-                  className="send-max-btn"
+                  className="send-ghost-btn"
                   onClick={async () => {
                     try {
                       const text = await navigator.clipboard.readText();
@@ -1326,10 +1281,7 @@ export function SendView({
             {!isResolvingName &&
               resolvedName &&
               resolvedName.name === recipient.trim().toLowerCase() && (
-                <p
-                  className="form-hint"
-                  style={{ color: "var(--accent-primary)" }}
-                >
+                <p className="send-resolve-hint">
                   {resolvedName.name} →{" "}
                   {resolvedName.address.slice(0, 8)}…
                   {resolvedName.address.slice(-6)}

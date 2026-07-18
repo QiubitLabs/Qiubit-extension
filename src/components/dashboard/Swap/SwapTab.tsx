@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { ethers } from "ethers";
 import { NETWORK_REGISTRY } from "../../../constants/networks/registry";
+import { filterSwapEligibleTokens } from "../../../services/tokens/tokenVisibility";
 import { keyringService } from "../../../services/core/KeyringService";
 import { ChevronDownIcon } from "../../shared/Icons";
 import { TokenIcon } from "../../shared/TokenIcon/TokenIcon";
@@ -117,6 +118,7 @@ export function SwapTab({
   const [showTokenSelector, setShowTokenSelector] = useState<
     "from" | "to" | null
   >(null);
+  const [rotateTrigger, setRotateTrigger] = useState(false);
 
   const [quote, setQuote] = useState<any>(null);
   const [isFetchingQuote, setIsFetchingQuote] = useState(false);
@@ -167,6 +169,13 @@ export function SwapTab({
     }
     return HORIZONTAL_NETWORKS;
   }, [activeTab]);
+
+  // Swap only supports registry chains (LI.FI has no routes on user-added
+  // custom networks) — the rule lives in tokenVisibility.
+  const swapEligibleTokens = useMemo(
+    () => filterSwapEligibleTokens(allTokens),
+    [allTokens],
+  );
 
   const [customToken, setCustomToken] = useState<any>(null);
   const [isResolvingToken, setIsResolvingToken] = useState(false);
@@ -540,6 +549,7 @@ export function SwapTab({
   };
 
   const handleSwapDirection = () => {
+    setRotateTrigger((prev) => !prev);
     const tempChain = fromChain;
     const tempToken = fromToken;
 
@@ -1403,7 +1413,7 @@ export function SwapTab({
 
             <div className="swap-widget-card">
               {/* Source Block (Aligned to the provided screenshot layout) */}
-              <div className="widget-section">
+              <div className="widget-section top-widget">
                 <div className="section-header">
                   <div className="section-label-group">
                     <span>From</span>
@@ -1484,29 +1494,33 @@ export function SwapTab({
               <div className="mid-swap-divider">
                 <div className="divider-line" />
                 <button
-                  className="swap-action-trigger"
+                  className={`swap-action-trigger ${rotateTrigger ? "rotated" : ""}`}
                   onClick={handleSwapDirection}
                   disabled={isInputDisabled}
+                  type="button"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M7 20V4M7 4L3 8M7 4L11 8" />
-                    <path d="M17 4v16M17 20l4-4M17 20l-4-4" />
-                  </svg>
+                  <div className="swap-icon-rotate-wrapper">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                      <path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                      <path d="M16 16h5v5"/>
+                    </svg>
+                  </div>
                 </button>
                 <div className="divider-line" />
               </div>
 
               {/* Destination Block */}
-              <div className="widget-section">
+              <div className="widget-section bottom-widget">
                 <div className="section-header">
                   <div className="section-label-group">
                     <span>To</span>
@@ -1729,7 +1743,7 @@ export function SwapTab({
       {showTokenSelector && (
         <TokenSelectorModal
           target={showTokenSelector}
-          allTokens={allTokens}
+          allTokens={swapEligibleTokens}
           networks={modalNetworks}
           activeChainFilter={activeChainFilter}
           setActiveChainFilter={(id) => {

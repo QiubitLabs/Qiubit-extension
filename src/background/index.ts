@@ -68,6 +68,7 @@ import {
   handleSuiSignAndExecuteTransaction,
 } from "./handlers/sui";
 import { handleMultichainConnect } from "./handlers/multichain";
+import { refreshWatchedPrices } from "../services/network/PriceService";
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "octra-dapp-channel") return;
@@ -99,7 +100,14 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 chrome.alarms.create("bgBalanceSync", { periodInMinutes: 3 });
+// Keep the shared price cache warm so the popup opens with prices already
+// rendered (getMultipleTokenPrices skips the network when the cache is fresh).
+chrome.alarms.create("bgPriceRefresh", { periodInMinutes: 5 });
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === "bgPriceRefresh") {
+    await refreshWatchedPrices().catch(() => {});
+    return;
+  }
   if (alarm.name === AUTO_LOCK_ALARM) {
     const locked = await SessionService.enforceAutoLock();
     if (locked) {
@@ -312,7 +320,12 @@ async function handleDappRequest(message: any, _sender: any) {
     case "eth_maxPriorityFeePerGas":
       return handleEvmRpcPassthrough(origin, method, params);
     case "multichain_connect":
-      return handleMultichainConnect(origin, title, favicon);
+      return handleMultichainConnect(
+        origin,
+        title,
+        favicon,
+        params?.requestedChains,
+      );
     case "solana_connect":
       return handleSolanaConnect(origin, title, favicon);
     case "solana_disconnect":

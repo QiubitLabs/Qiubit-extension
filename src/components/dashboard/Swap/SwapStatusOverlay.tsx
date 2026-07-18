@@ -50,30 +50,50 @@ export function SwapStatusOverlay({
 }: SwapStatusOverlayProps) {
   if (swapStep === "submitting" || swapStep === "waiting") {
     return createPortal(
-      <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
-        <div className="complete-card">
-          <FeedbackLottie kind="pending" size={110} />
-          <div className="complete-title">Executing Swap</div>
-          <div className="complete-subtitle-amount">
-            {fromAmount} {fromToken.symbol} to {toAmount || "..."}{" "}
-            {toToken.symbol}
-          </div>
-
-          <div className="progress-steps-list">
-            <div className="progress-step-item completed">
-              <div className="step-icon-wrap">
-                <CheckIcon size={14} />
-              </div>
-              <div className="step-text-label">Submit Transaction</div>
+      <div className="swap-view-container">
+        <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
+          <div className="complete-card">
+            <FeedbackLottie kind="pending" size={110} />
+            <div className="complete-title">Executing Swap</div>
+            <div className="complete-subtitle-amount">
+              {fromAmount} {fromToken.symbol} to {toAmount || "..."}{" "}
+              {toToken.symbol}
             </div>
-            <div className="step-connector-line" />
-            <div
-              className={`progress-step-item ${swapStep === "waiting" ? "active" : ""}`}
-            >
-              <div className="step-icon-wrap">
-                {swapStep === "waiting" ? (
-                  <div className="spinner-small" />
-                ) : (
+
+            <div className="progress-steps-list">
+              <div className="progress-step-item completed">
+                <div className="step-icon-wrap">
+                  <CheckIcon size={14} />
+                </div>
+                <div className="step-text-label">Submit Transaction</div>
+              </div>
+              <div className="step-connector-line" />
+              <div
+                className={`progress-step-item ${swapStep === "waiting" ? "active" : ""}`}
+              >
+                <div className="step-icon-wrap">
+                  {swapStep === "waiting" ? (
+                    <div className="spinner-small" />
+                  ) : (
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "currentColor",
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="step-text-label">
+                  {lifiStatus === "PENDING"
+                    ? "Bridging Assets"
+                    : "Waiting for Source Confirmation"}
+                </div>
+              </div>
+              <div className="step-connector-line" />
+              <div className="progress-step-item">
+                <div className="step-icon-wrap">
                   <div
                     style={{
                       width: 6,
@@ -82,46 +102,37 @@ export function SwapStatusOverlay({
                       background: "currentColor",
                     }}
                   />
+                </div>
+                <div className="step-text-label">Completed on {toChain.name}</div>
+              </div>
+            </div>
+
+            <div className="progress-notice-card">
+              <div className="notice-text-content">
+                {execStatus}
+                {txHash && (
+                  <div>
+                    <a
+                      href={`https://etherscan.io/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="explorer-link"
+                    >
+                      View on Block Explorer
+                    </a>
+                  </div>
                 )}
               </div>
-              <div className="step-text-label">
-                {lifiStatus === "PENDING"
-                  ? "Bridging Assets"
-                  : "Waiting for Source Confirmation"}
-              </div>
             </div>
-            <div className="step-connector-line" />
-            <div className="progress-step-item">
-              <div className="step-icon-wrap">
-                <div
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: "currentColor",
-                  }}
-                />
-              </div>
-              <div className="step-text-label">Completed on {toChain.name}</div>
-            </div>
-          </div>
 
-          <div className="progress-notice-card">
-            <div className="notice-text-content">
-              {execStatus}
-              {txHash && (
-                <div>
-                  <a
-                    href={`https://etherscan.io/tx/${txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="explorer-link"
-                  >
-                    View on Block Explorer
-                  </a>
-                </div>
-              )}
-            </div>
+            <button
+              className="done-action-btn"
+              onClick={onReset}
+              style={{ marginTop: "24px", maxWidth: "240px" }}
+              type="button"
+            >
+              Back to Swap
+            </button>
           </div>
         </div>
       </div>,
@@ -131,48 +142,50 @@ export function SwapStatusOverlay({
 
   if (swapStep === "success") {
     return createPortal(
-      <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
-        <div className="complete-card">
-          <div className="success-icon-wrap">
-            <FeedbackLottie kind="swap" size={120} />
-          </div>
-          <div className="complete-title">Swap Complete</div>
-          <div className="success-amount-display">
-            {toAmount} {toToken.symbol}
-          </div>
-
-          <div className="success-route-container">
-            <div className="success-chain-item">
-              <img
-                src={fromChain.logoUrl}
-                alt=""
-                style={{ width: 14, height: 14, borderRadius: "50%" }}
-              />
-              <span>{fromChain.name.split(" ")[0]}</span>
+      <div className="swap-view-container">
+        <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
+          <div className="complete-card">
+            <div className="success-icon-wrap">
+              <FeedbackLottie kind="swap" size={120} />
             </div>
-            <div className="success-arrow-label">to</div>
-            <div className="success-chain-item">
-              <img
-                src={toChain.logoUrl}
-                alt=""
-                style={{ width: 14, height: 14, borderRadius: "50%" }}
-              />
-              <span>{toChain.name.split(" ")[0]}</span>
+            <div className="complete-title">Swap Complete</div>
+            <div className="success-amount-display">
+              {toAmount} {toToken.symbol}
             </div>
-          </div>
 
-          <div
-            className="progress-notice-card"
-            style={{ marginBottom: "16px" }}
-          >
-            <div className="notice-text-content">
-              Your transaction succeeded! Assets have been swapped successfully.
+            <div className="success-route-container">
+              <div className="success-chain-item">
+                <img
+                  src={fromChain.logoUrl}
+                  alt=""
+                  style={{ width: 14, height: 14, borderRadius: "50%" }}
+                />
+                <span>{fromChain.name.split(" ")[0]}</span>
+              </div>
+              <div className="success-arrow-label">to</div>
+              <div className="success-chain-item">
+                <img
+                  src={toChain.logoUrl}
+                  alt=""
+                  style={{ width: 14, height: 14, borderRadius: "50%" }}
+                />
+                <span>{toChain.name.split(" ")[0]}</span>
+              </div>
             </div>
-          </div>
 
-          <button className="done-action-btn" onClick={onReset}>
-            Done
-          </button>
+            <div
+              className="progress-notice-card"
+              style={{ marginBottom: "16px" }}
+            >
+              <div className="notice-text-content">
+                Your transaction succeeded! Assets have been swapped successfully.
+              </div>
+            </div>
+
+            <button className="done-action-btn" onClick={onReset}>
+              Done
+            </button>
+          </div>
         </div>
       </div>,
       document.body,
@@ -181,37 +194,39 @@ export function SwapStatusOverlay({
 
   if (swapStep === "failed") {
     return createPortal(
-      <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
-        <div className="complete-card">
-          <div className="success-icon-wrap">
-            <FeedbackLottie kind="failed" size={120} />
-          </div>
-          <div
-            className="complete-title"
-            style={{ color: "var(--accent-red, #ef4444)" }}
-          >
-            Execution Failed
-          </div>
-
-          <div
-            className="progress-notice-card"
-            style={{
-              marginBottom: "16px",
-              borderColor: "rgba(239, 68, 68, 0.2)",
-              background: "rgba(239, 68, 68, 0.04)",
-            }}
-          >
-            <div
-              className="notice-text-content"
-              style={{ color: "var(--accent-red, #f87171)" }}
-            >
-              {execError}
+      <div className="swap-view-container">
+        <div className="full-page-overlay swap-status-overlay" style={OVERLAY_STYLE}>
+          <div className="complete-card">
+            <div className="success-icon-wrap">
+              <FeedbackLottie kind="failed" size={120} />
             </div>
-          </div>
+            <div
+              className="complete-title"
+              style={{ color: "var(--accent-red, #ef4444)" }}
+            >
+              Execution Failed
+            </div>
 
-          <button className="done-action-btn" onClick={onReset}>
-            Try Again
-          </button>
+            <div
+              className="progress-notice-card"
+              style={{
+                marginBottom: "16px",
+                borderColor: "rgba(239, 68, 68, 0.2)",
+                background: "rgba(239, 68, 68, 0.04)",
+              }}
+            >
+              <div
+                className="notice-text-content"
+                style={{ color: "var(--accent-red, #f87171)" }}
+              >
+                {execError}
+              </div>
+            </div>
+
+            <button className="done-action-btn" onClick={onReset}>
+              Try Again
+            </button>
+          </div>
         </div>
       </div>,
       document.body,

@@ -37,7 +37,10 @@ const OCTRA_GUARD = {
 
 async function guardOctraRequest(
   origin: string,
-): Promise<{ wallet?: WalletInfo; error?: { code: number; message: string } }> {
+): Promise<{
+  wallet?: WalletInfo | null;
+  error?: { code: number; message: string };
+}> {
   return requireConnectedWallet(dappConnections.get(origin), OCTRA_GUARD);
 }
 

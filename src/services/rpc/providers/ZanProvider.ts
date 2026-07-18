@@ -12,6 +12,9 @@ const ZAN_CHAINS: Record<number, string> = {
   137: "polygon",
   8453: "base",
   42161: "arbitrum",
+  // Robinhood Chain — verified live with our key (fake slugs are rejected
+  // with "ecosystem not supported", so coverage is real, not a proxy).
+  4663: "robinhood",
 };
 
 export const ZanProvider = {

@@ -13,6 +13,10 @@ import type { DappResponse } from "../types";
 const SUI_GUARD = {
   notConnectedMessage: "Sui wallet not connected",
   lockedMessage: "Wallet locked. Please unlock.",
+  // Sui signing happens client-side in the approval popup, which shows its
+  // lockscreen first — so a locked keyring opens the popup instead of
+  // rejecting the dapp request outright.
+  allowLocked: true,
 };
 
 export async function handleSuiConnect(
@@ -122,6 +126,9 @@ export async function handleSuiSignMessage(
       {
         message: params.message || params,
         address: connection!.address,
+        // Bind the sign to the account this origin connected with — the
+        // global active wallet can diverge and would sign with the wrong key.
+        selectedOctraAddress: connection!.octraAddress,
         chain: "sui",
       },
       wallet,
@@ -154,6 +161,7 @@ export async function handleSuiSignTransaction(
         // the signer never receives the envelope object.
         transaction: params.transaction || params.txBlock || params,
         address: connection!.address,
+        selectedOctraAddress: connection!.octraAddress,
         chain: "sui",
       },
       wallet,
@@ -187,6 +195,7 @@ export async function handleSuiSignAndExecuteTransaction(
         transaction: params.transaction || params.txBlock || params,
         options: params.options,
         address: connection!.address,
+        selectedOctraAddress: connection!.octraAddress,
         chain: "sui",
       },
       wallet,

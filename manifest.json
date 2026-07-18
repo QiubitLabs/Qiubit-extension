@@ -10,7 +10,6 @@
         "storage",
         "alarms",
         "sidePanel",
-        "tabs",
         "favicon",
         "notifications"
     ],
@@ -58,7 +57,7 @@
         }
     ],
     "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'self'; connect-src https: wss:; img-src 'self' data: https:; default-src 'self';"
+        "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'self'; connect-src https: wss:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; default-src 'self';"
     },
     "web_accessible_resources": [
         {

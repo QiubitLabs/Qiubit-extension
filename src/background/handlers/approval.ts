@@ -7,6 +7,25 @@ import { syncApprovalBadge } from "../badge";
 // style). New requests queue into dappApprovals and the one window steps
 // through them, instead of stacking N popups.
 let approvalWindowId: number | null = null;
+// Set synchronously before chrome.windows.create so a second request arriving
+// during the async create can't see "no window" and spawn a duplicate.
+let approvalWindowOpening = false;
+// The window id also lives in storage.session: the MV3 service worker can die
+// while the window stays open, and after restart the in-memory id is gone —
+// without this, the next request would open a second window next to the
+// orphaned one (one popup unlocked, one stuck on its old state).
+const APPROVAL_WINDOW_KEY = "qiubit_approval_window";
+
+chrome.windows.onRemoved.addListener((removedId: number) => {
+  if (removedId !== approvalWindowId) return;
+  approvalWindowId = null;
+  chrome.storage.session.remove(APPROVAL_WINDOW_KEY).catch(() => {});
+  // Closing the window cancels everything still waiting.
+  rejectAllPending({
+    code: 4001,
+    message: "User closed the approval window",
+  });
+});
 
 /** Reject every still-pending request (used when the window is closed). */
 function rejectAllPending(reason: { code: number; message: string }): void {
@@ -40,31 +59,49 @@ export async function requestApproval(
       reject,
     });
     syncApprovalBadge();
-
-    // If an approval window is already open, queue into it: focus it and let
-    // the UI advance to this request after the current one is handled.
-    if (approvalWindowId !== null) {
-      chrome.windows.get(approvalWindowId, (win) => {
-        if (chrome.runtime.lastError || !win) {
-          // Stale reference — the window is gone; open a fresh one.
-          approvalWindowId = null;
-          openApprovalWindow(approvalId);
-          return;
-        }
-        chrome.windows.update(approvalWindowId!, { focused: true });
-        // Nudge the open UI to pick up the newly queued request if it's idle.
-        chrome.runtime
-          .sendMessage({ type: "APPROVAL_QUEUE_CHANGED" })
-          .catch(() => {});
-      });
-      return;
-    }
-
-    openApprovalWindow(approvalId);
+    void routeApproval(approvalId);
   });
 }
 
+/** Focus the existing approval window (queueing into it) or open the one
+ * shared window. Never opens a second window: creation is single-flight and
+ * a window that survived a service-worker restart is recovered and reused. */
+async function routeApproval(approvalId: string): Promise<void> {
+  if (approvalWindowOpening) return; // creating — the new UI drains the queue
+
+  if (approvalWindowId === null) {
+    // Recover a window that outlived a service-worker restart.
+    try {
+      const data = await chrome.storage.session.get(APPROVAL_WINDOW_KEY);
+      const storedId = data?.[APPROVAL_WINDOW_KEY];
+      if (typeof storedId === "number") {
+        const win = await chrome.windows.get(storedId).catch(() => null);
+        if (win) approvalWindowId = storedId;
+        else await chrome.storage.session.remove(APPROVAL_WINDOW_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (approvalWindowId !== null) {
+    try {
+      await chrome.windows.update(approvalWindowId, { focused: true });
+      // Nudge the open UI to pick up the newly queued request if it's idle.
+      chrome.runtime
+        .sendMessage({ type: "APPROVAL_QUEUE_CHANGED" })
+        .catch(() => {});
+      return;
+    } catch {
+      approvalWindowId = null; // stale reference — fall through and reopen
+    }
+  }
+
+  if (!approvalWindowOpening) openApprovalWindow(approvalId);
+}
+
 function openApprovalWindow(approvalId: string): void {
+  approvalWindowOpening = true;
   chrome.windows.create(
     {
       url: "index.html#/dapp/approve?id=" + approvalId,
@@ -73,19 +110,12 @@ function openApprovalWindow(approvalId: string): void {
       height: 600,
     },
     (win) => {
+      approvalWindowOpening = false;
       if (!win?.id) return;
       approvalWindowId = win.id;
-      const onWindowRemoved = (removedId: number) => {
-        if (removedId !== approvalWindowId) return;
-        chrome.windows.onRemoved.removeListener(onWindowRemoved);
-        approvalWindowId = null;
-        // Closing the window cancels everything still waiting.
-        rejectAllPending({
-          code: 4001,
-          message: "User closed the approval window",
-        });
-      };
-      chrome.windows.onRemoved.addListener(onWindowRemoved);
+      chrome.storage.session
+        .set({ [APPROVAL_WINDOW_KEY]: win.id })
+        .catch(() => {});
     },
   );
 }

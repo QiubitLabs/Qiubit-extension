@@ -13,6 +13,10 @@ import { discoverAllChainTokens } from "../services/network/TokenDiscoveryServic
 import { NETWORK_REGISTRY } from "../constants/networks/registry";
 import { isPreLaunchChain } from "../constants/networks/nativeGasToken";
 import {
+  isLikelySpamToken,
+  sanitizeNativeBalance,
+} from "../services/tokens/tokenVisibility";
+import {
   getUserNetworksSync,
   getUserNetworkByChainId,
 } from "../services/network/UserNetworkService";
@@ -126,10 +130,11 @@ function buildDefaultTokens(wallet: Wallet): Token[] {
       continue;
     }
 
-    // Pre-launch chains (e.g. Arc mainnet) expose a phantom native balance via
-    // their testnet-mirroring RPC — priced at $1 for stablecoin-gas chains. Skip
-    // the native row until the chain is live; the chain still works for swaps.
-    if (net.nativeToken && !isPreLaunchChain(net.chainId ?? undefined)) {
+    // Pre-launch chains (e.g. Arc mainnet) DO get a native row (so the chain
+    // is visible the moment it goes live), but their balance is never fetched
+    // (allSupportedChainIds excludes them) — the row honestly shows 0 instead
+    // of the phantom testnet-mirrored balance the RPC would report.
+    if (net.nativeToken) {
       const { symbol, name, decimals, logoUrl } = net.nativeToken;
       const extra: Partial<Token> = {};
       if (net.addressType === "sui") extra.contractAddress = "sui";
@@ -494,7 +499,14 @@ export function useWalletData({
       const fetchTokens = async (nativeBalance: number) => {
         suppressEvmEvents.current = true;
         try {
-          const tokenList = await WalletService.getTokens(address);
+          // Drop placeholder/junk OCS-01 entries whose symbol is just the
+          // standard's name — real user tokens carry their own symbol.
+          const tokenList = (await WalletService.getTokens(address)).filter(
+            (t) => {
+              const s = (t.symbol || "").toUpperCase();
+              return s !== "OCS01" && s !== "OSC01";
+            },
+          );
           if (
             isMounted.current &&
             address === activeAddressRef.current &&
@@ -733,6 +745,9 @@ export function useWalletData({
 
                 for (const nt of newTokens) {
                   if (isOscScamToken(nt)) continue;
+                  // Airdrop-spam heuristics apply ONLY to auto-discovered
+                  // tokens — user-added tokens never pass through here.
+                  if (isLikelySpamToken(nt)) continue;
                   const idx = next.findIndex(
                     (t) =>
                       (t.contractAddress &&
@@ -957,12 +972,13 @@ export function useWalletData({
             const allSupportedChainIds = [
               1, 56, 137, 8453, 42161, 143, 999, 11155111,
               // Additional EVM L1s (public-RPC only).
-              // NOTE: Arc mainnet (5042) is intentionally excluded — the chain
-              // is still pre-launch (Circle: "testnet only"), and its public
-              // RPC mirrors testnet state, which surfaced a phantom priced USDC
-              // balance in the portfolio. Re-add once Arc mainnet is live.
               1672, 1625, 4663, 4326, 4217, 5031, 16661, 9745,
-            ];
+              // Pre-launch chains (Arc mainnet 5042) get a visible 0-balance
+              // row but NO balance fetch — their RPC mirrors testnet state and
+              // would report a phantom priced balance. isPreLaunchChain is the
+              // single switch to flip on launch day.
+              5042,
+            ].filter((id) => !isPreLaunchChain(id));
 
             // Group the user's custom ERC-20s by their (non-active) chain
             const otherChainTokensByChain = new Map<
@@ -1459,9 +1475,11 @@ export function useWalletData({
                     const provider = new ethers.JsonRpcProvider(rpc);
                     const wei = await provider.getBalance(evmAddress);
                     const dec = un.nativeCurrency?.decimals ?? 18;
-                    bal = parseFloat(
-                      Number(ethers.formatUnits(wei, dec)).toFixed(8),
-                    ).toString();
+                    bal = sanitizeNativeBalance(
+                      parseFloat(
+                        Number(ethers.formatUnits(wei, dec)).toFixed(8),
+                      ).toString(),
+                    );
                   } else if (vm === "svm" && currentWallet.solanaAddress) {
                     bal = await fetchSolanaBalanceCustom(
                       currentWallet.solanaAddress,

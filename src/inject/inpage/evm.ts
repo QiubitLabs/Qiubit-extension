@@ -565,8 +565,15 @@ export function initEvm(bridge: Bridge): EvmInit {
   // ─── EIP-6963 ─────────────────────────────────────────────────────────────
 
   const eip6963Info = Object.freeze({
-    uuid: "b8f8b5a0-4e2d-4c6a-9f3b-1d7e5c9a2f40",
-    name: "Qiubit Wallet",
+    // EIP-6963 requires a fresh UUIDv4 per page load — a constant id is a spec
+    // violation that stricter discovery libraries drop, leaving the wallet in
+    // the generic "Browser Wallet" bucket instead of a named entry.
+    uuid:
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : "b8f8b5a0-4e2d-4c6a-9f3b-1d7e5c9a2f40",
+    name: "Qiubit",
     icon: QIUBIT_ICON,
     rdns: "io.qiubit.wallet",
   });
@@ -580,6 +587,21 @@ export function initEvm(bridge: Bridge): EvmInit {
   }
   announceEvmProvider();
   window.addEventListener("eip6963:requestProvider", announceEvmProvider);
+  // Defensive re-announce for dapps that attach their 6963 listener late and
+  // never dispatch requestProvider (mirrors reannounceWallets in index.ts).
+  // Consumers dedupe announcements by uuid, so repeats are harmless.
+  try {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", announceEvmProvider, {
+        once: true,
+      });
+    }
+    window.addEventListener("load", announceEvmProvider, { once: true });
+    setTimeout(announceEvmProvider, 500);
+    setTimeout(announceEvmProvider, 1500);
+  } catch {
+    /* ignore */
+  }
 
   return { evmProvider, octraProvider, evmEmitter };
 }

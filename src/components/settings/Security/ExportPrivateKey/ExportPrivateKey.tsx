@@ -8,6 +8,7 @@ import {
   CopyIcon,
   LockIcon,
   ChevronDownIcon,
+  AlertIcon,
 } from "../../../shared/Icons";
 import { verifyPasswordSecure as verifyPassword } from "../../../../utils/storage";
 import {
@@ -367,8 +368,9 @@ export function ExportPrivateKey({ wallet, onBack }: ExportPrivateKeyProps) {
             }}
           >
             {/* Security Warning - Professional */}
-            <div className="security-notice" style={{ marginBottom: "16px" }}>
-              <p>
+            <div className="security-notice">
+              <AlertIcon className="security-notice-icon" size={16} style={{ flexShrink: 0 }} />
+              <p className="security-notice-text">
                 Never share your private key. Anyone with this key has full
                 control of your wallet.
               </p>
